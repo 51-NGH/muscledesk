@@ -2,7 +2,13 @@ import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
+import { MemberAvatar } from "@/components/ui/member-avatar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePayments, useMembers, useCreatePayment, useMembershipPlans, useDashboardStats } from "@/hooks/useGymData";
+import { format } from "date-fns";
 import {
   DollarSign,
   CheckCircle,
@@ -11,41 +17,30 @@ import {
   Download,
   Search,
   Filter,
-  MoreVertical,
   CreditCard,
+  Plus,
+  Banknote,
+  Smartphone,
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
 
+type PaymentMode = "cash" | "upi" | "card";
 type PaymentStatus = "completed" | "pending" | "failed";
-type PlanType = "premium" | "standard" | "basic";
-
-interface Transaction {
-  id: string;
-  member: string;
-  plan: PlanType;
-  amount: number;
-  method: string;
-  status: PaymentStatus;
-  date: string;
-}
-
-const transactions: Transaction[] = [
-  { id: "TXN-2847", member: "Sarah Johnson", plan: "premium", amount: 89.99, method: "Visa ••••4242", status: "completed", date: "2024-12-27" },
-  { id: "TXN-2846", member: "Mike Chen", plan: "standard", amount: 59.99, method: "Mastercard ••••8901", status: "completed", date: "2024-12-27" },
-  { id: "TXN-2845", member: "Emma Wilson", plan: "premium", amount: 89.99, method: "Visa ••••3456", status: "completed", date: "2024-12-26" },
-  { id: "TXN-2844", member: "David Brown", plan: "standard", amount: 59.99, method: "PayPal", status: "pending", date: "2024-12-26" },
-  { id: "TXN-2843", member: "Lisa Anderson", plan: "premium", amount: 89.99, method: "Amex ••••7890", status: "completed", date: "2024-12-25" },
-  { id: "TXN-2842", member: "James Wilson", plan: "basic", amount: 39.99, method: "Visa ••••1234", status: "failed", date: "2024-12-25" },
-  { id: "TXN-2841", member: "Maria Garcia", plan: "premium", amount: 89.99, method: "Mastercard ••••5678", status: "completed", date: "2024-12-24" },
-];
 
 const filterTabs = ["All", "Completed", "Pending", "Failed"] as const;
-
-const planColors: Record<PlanType, string> = {
-  premium: "plan-premium",
-  standard: "plan-standard",
-  basic: "plan-basic",
-};
 
 const statusConfig: Record<PaymentStatus, { icon: typeof CheckCircle; className: string }> = {
   completed: { icon: CheckCircle, className: "status-completed" },
@@ -53,58 +48,164 @@ const statusConfig: Record<PaymentStatus, { icon: typeof CheckCircle; className:
   failed: { icon: XCircle, className: "status-failed" },
 };
 
+const paymentModeIcons: Record<PaymentMode, typeof Banknote> = {
+  cash: Banknote,
+  upi: Smartphone,
+  card: CreditCard,
+};
+
 export default function Payments() {
+  const { gymId } = useAuth();
   const [activeFilter, setActiveFilter] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isAddPaymentOpen, setIsAddPaymentOpen] = useState(false);
+  const [newPayment, setNewPayment] = useState({
+    member_id: "",
+    amount: "",
+    payment_mode: "cash" as PaymentMode,
+    plan_id: "",
+    extend_days: "30",
+  });
 
-  const filteredTransactions = transactions.filter((txn) => {
-    const matchesSearch = txn.member.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      txn.id.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = activeFilter === "All" || txn.status === activeFilter.toLowerCase();
+  const { data: payments = [], isLoading } = usePayments();
+  const { data: members = [] } = useMembers();
+  const { data: plans = [] } = useMembershipPlans();
+  const { data: stats } = useDashboardStats();
+  const createPayment = useCreatePayment();
+
+  const filteredPayments = payments.filter((p) => {
+    const matchesSearch =
+      p.member?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.member?.member_id?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = activeFilter === "All" || p.status === activeFilter.toLowerCase();
     return matchesSearch && matchesFilter;
   });
 
+  const paymentStats = {
+    total: payments.reduce((sum, p) => p.status === "completed" ? sum + Number(p.amount) : sum, 0),
+    completed: payments.filter((p) => p.status === "completed").length,
+    pending: payments.filter((p) => p.status === "pending").length,
+    failed: payments.filter((p) => p.status === "failed").length,
+  };
+
+  const handleAddPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!newPayment.member_id || !newPayment.amount) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+
+    const member = members.find((m) => m.id === newPayment.member_id);
+    const plan = plans.find((p) => p.id === newPayment.plan_id);
+
+    // Calculate new dates
+    const currentExpiry = member ? new Date(member.expiry_date) : new Date();
+    const newStart = currentExpiry > new Date() ? currentExpiry : new Date();
+    const extendDays = newPayment.plan_id ? (plan?.duration_days || 30) : parseInt(newPayment.extend_days);
+    const newExpiry = new Date(newStart);
+    newExpiry.setDate(newExpiry.getDate() + extendDays);
+
+    try {
+      await createPayment.mutateAsync({
+        member_id: newPayment.member_id,
+        amount: parseFloat(newPayment.amount),
+        payment_mode: newPayment.payment_mode,
+        plan_id: newPayment.plan_id || undefined,
+        plan_name: plan?.name,
+        new_start_date: newStart.toISOString().split("T")[0],
+        new_expiry_date: newExpiry.toISOString().split("T")[0],
+      });
+      setIsAddPaymentOpen(false);
+      setNewPayment({ member_id: "", amount: "", payment_mode: "cash", plan_id: "", extend_days: "30" });
+    } catch (error) {
+      // Error handled by mutation
+    }
+  };
+
+  const handlePlanSelect = (planId: string) => {
+    const plan = plans.find((p) => p.id === planId);
+    setNewPayment({
+      ...newPayment,
+      plan_id: planId,
+      amount: plan ? plan.price.toString() : newPayment.amount,
+    });
+  };
+
+  const handleExport = () => {
+    // Create CSV content
+    const headers = ["Date", "Member", "Amount", "Method", "Status", "Plan"];
+    const rows = filteredPayments.map((p) => [
+      format(new Date(p.created_at), "yyyy-MM-dd HH:mm"),
+      p.member?.full_name || "Unknown",
+      `₹${p.amount}`,
+      p.payment_mode,
+      p.status,
+      p.plan_name || "-",
+    ]);
+    
+    const csv = [headers, ...rows].map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `payments-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Export downloaded!");
+  };
+
+  if (!gymId) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-foreground mb-2">No Gym Found</h2>
+            <p className="text-muted-foreground">Please wait for your gym to be assigned.</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
-      <PageHeader
-        title="Payments & Billing"
-        description="Manage transactions and revenue streams"
-      >
-        <Button>
+      <PageHeader title="Payments & Billing" description="Manage transactions and revenue">
+        <Button variant="outline" onClick={handleExport}>
           <Download className="mr-2 h-4 w-4" />
-          Export Report
+          Export
+        </Button>
+        <Button onClick={() => setIsAddPaymentOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Record Payment
         </Button>
       </PageHeader>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         <StatCard
-          title="Total Revenue"
-          value="$127,450"
+          title="Monthly Revenue"
+          value={`₹${(stats?.monthlyRevenue || 0).toLocaleString()}`}
           icon={DollarSign}
           iconVariant="teal"
-          change={18.2}
         />
         <StatCard
-          title="Successful Payments"
-          value="2,847"
+          title="Completed"
+          value={paymentStats.completed}
           icon={CheckCircle}
           iconVariant="green"
-          change={12.5}
         />
         <StatCard
           title="Pending"
-          value="23"
+          value={paymentStats.pending}
           icon={Clock}
           iconVariant="orange"
-          change={3.1}
         />
         <StatCard
-          title="Failed"
-          value="12"
-          icon={XCircle}
-          iconVariant="red"
-          change={-8.4}
+          title="Net Profit"
+          value={`₹${(stats?.profit || 0).toLocaleString()}`}
+          icon={DollarSign}
+          iconVariant="green"
         />
       </div>
 
@@ -113,16 +214,12 @@ export default function Payments() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search transactions..."
+            placeholder="Search by member name or ID..."
             className="pl-10"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <Button variant="outline">
-          <Filter className="mr-2 h-4 w-4" />
-          Filter
-        </Button>
         <div className="flex items-center rounded-lg border border-border p-1">
           {filterTabs.map((tab) => (
             <button
@@ -144,61 +241,175 @@ export default function Payments() {
       <div className="rounded-xl border border-border bg-card">
         <div className="p-5 border-b border-border">
           <h3 className="text-lg font-semibold text-foreground">Recent Transactions</h3>
-          <p className="text-sm text-muted-foreground">Latest payment activities</p>
+          <p className="text-sm text-muted-foreground">{filteredPayments.length} payment records</p>
         </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b border-border">
-              <tr className="text-left text-sm text-muted-foreground">
-                <th className="px-5 py-3 font-medium">Transaction ID</th>
-                <th className="px-5 py-3 font-medium">Member</th>
-                <th className="px-5 py-3 font-medium">Plan</th>
-                <th className="px-5 py-3 font-medium">Amount</th>
-                <th className="px-5 py-3 font-medium">Payment Method</th>
-                <th className="px-5 py-3 font-medium">Status</th>
-                <th className="px-5 py-3 font-medium">Date</th>
-                <th className="px-5 py-3 font-medium"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTransactions.map((txn) => {
-                const StatusIcon = statusConfig[txn.status].icon;
-                return (
-                  <tr key={txn.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
-                    <td className="px-5 py-4 text-sm font-medium text-foreground">{txn.id}</td>
-                    <td className="px-5 py-4 text-sm text-foreground">{txn.member}</td>
-                    <td className="px-5 py-4">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs ${planColors[txn.plan]}`}>
-                        {txn.plan.charAt(0).toUpperCase() + txn.plan.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-sm font-medium text-foreground">${txn.amount.toFixed(2)}</td>
-                    <td className="px-5 py-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="h-4 w-4" />
-                        {txn.method}
-                      </div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs ${statusConfig[txn.status].className}`}>
-                        <StatusIcon className="h-3 w-3" />
-                        {txn.status.charAt(0).toUpperCase() + txn.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-sm text-muted-foreground">{txn.date}</td>
-                    <td className="px-5 py-4">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+
+        {isLoading ? (
+          <div className="p-10 text-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent" />
+          </div>
+        ) : filteredPayments.length === 0 ? (
+          <div className="p-10 text-center">
+            <DollarSign className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">No Payments</h3>
+            <p className="text-muted-foreground mb-4">
+              {searchQuery ? "No payments match your search" : "No payment records yet"}
+            </p>
+            <Button onClick={() => setIsAddPaymentOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Record First Payment
+            </Button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b border-border">
+                <tr className="text-left text-sm text-muted-foreground">
+                  <th className="px-5 py-3 font-medium">Member</th>
+                  <th className="px-5 py-3 font-medium">Plan</th>
+                  <th className="px-5 py-3 font-medium">Amount</th>
+                  <th className="px-5 py-3 font-medium">Method</th>
+                  <th className="px-5 py-3 font-medium">Status</th>
+                  <th className="px-5 py-3 font-medium">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredPayments.map((payment) => {
+                  const StatusIcon = statusConfig[payment.status].icon;
+                  const MethodIcon = paymentModeIcons[payment.payment_mode];
+                  return (
+                    <tr key={payment.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <MemberAvatar name={payment.member?.full_name || "Unknown"} size="sm" />
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{payment.member?.full_name}</p>
+                            <p className="text-xs text-muted-foreground">{payment.member?.member_id}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className="text-sm text-foreground">{payment.plan_name || "Custom"}</span>
+                      </td>
+                      <td className="px-5 py-4 text-sm font-semibold text-foreground">₹{Number(payment.amount).toLocaleString()}</td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground capitalize">
+                          <MethodIcon className="h-4 w-4" />
+                          {payment.payment_mode}
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs ${statusConfig[payment.status].className}`}>
+                          <StatusIcon className="h-3 w-3" />
+                          {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-sm text-muted-foreground">
+                        {format(new Date(payment.created_at), "MMM d, yyyy h:mm a")}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
+
+      {/* Add Payment Dialog */}
+      <Dialog open={isAddPaymentOpen} onOpenChange={setIsAddPaymentOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Record Payment</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAddPayment} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Member *</Label>
+              <Select value={newPayment.member_id} onValueChange={(v) => setNewPayment({ ...newPayment, member_id: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select member..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {members.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.full_name} ({member.member_id})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Plan (Optional)</Label>
+              <Select value={newPayment.plan_id} onValueChange={handlePlanSelect}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select plan or enter custom amount" />
+                </SelectTrigger>
+                <SelectContent>
+                  {plans.map((plan) => (
+                    <SelectItem key={plan.id} value={plan.id}>
+                      {plan.name} - ₹{plan.price} ({plan.duration_days} days)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Amount *</Label>
+                <Input
+                  type="number"
+                  value={newPayment.amount}
+                  onChange={(e) => setNewPayment({ ...newPayment, amount: e.target.value })}
+                  placeholder="₹0"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Extend Days</Label>
+                <Input
+                  type="number"
+                  value={newPayment.extend_days}
+                  onChange={(e) => setNewPayment({ ...newPayment, extend_days: e.target.value })}
+                  placeholder="30"
+                  disabled={!!newPayment.plan_id}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Payment Method *</Label>
+              <div className="flex gap-2">
+                {(["cash", "upi", "card"] as PaymentMode[]).map((mode) => {
+                  const Icon = paymentModeIcons[mode];
+                  return (
+                    <Button
+                      key={mode}
+                      type="button"
+                      variant={newPayment.payment_mode === mode ? "default" : "outline"}
+                      className="flex-1"
+                      onClick={() => setNewPayment({ ...newPayment, payment_mode: mode })}
+                    >
+                      <Icon className="mr-2 h-4 w-4" />
+                      {mode.toUpperCase()}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button type="button" variant="outline" onClick={() => setIsAddPaymentOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createPayment.isPending}>
+                {createPayment.isPending ? "Recording..." : "Record Payment"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
