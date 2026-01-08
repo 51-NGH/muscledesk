@@ -14,16 +14,553 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      attendance: {
+        Row: {
+          check_in_at: string
+          created_at: string
+          gym_id: string
+          id: string
+          member_id: string
+          notes: string | null
+          source: Database["public"]["Enums"]["attendance_source"]
+        }
+        Insert: {
+          check_in_at?: string
+          created_at?: string
+          gym_id: string
+          id?: string
+          member_id: string
+          notes?: string | null
+          source?: Database["public"]["Enums"]["attendance_source"]
+        }
+        Update: {
+          check_in_at?: string
+          created_at?: string
+          gym_id?: string
+          id?: string
+          member_id?: string
+          notes?: string | null
+          source?: Database["public"]["Enums"]["attendance_source"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          gym_id: string | null
+          id: string
+          ip_address: string | null
+          new_data: Json | null
+          old_data: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          gym_id?: string | null
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          gym_id?: string | null
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          amount: number
+          category: Database["public"]["Enums"]["expense_category"]
+          created_at: string
+          created_by: string | null
+          description: string | null
+          expense_date: string
+          gym_id: string
+          id: string
+          receipt_url: string | null
+        }
+        Insert: {
+          amount: number
+          category: Database["public"]["Enums"]["expense_category"]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expense_date?: string
+          gym_id: string
+          id?: string
+          receipt_url?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: Database["public"]["Enums"]["expense_category"]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expense_date?: string
+          gym_id?: string
+          id?: string
+          receipt_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gym_staff: {
+        Row: {
+          created_at: string
+          gym_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          gym_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          gym_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_staff_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gyms: {
+        Row: {
+          address: string | null
+          created_at: string
+          deleted_at: string | null
+          email: string | null
+          features_locked: Json | null
+          id: string
+          is_active: boolean
+          logo_url: string | null
+          member_limit: number
+          name: string
+          owner_id: string
+          phone: string | null
+          plan: Database["public"]["Enums"]["gym_plan"]
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          email?: string | null
+          features_locked?: Json | null
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          member_limit?: number
+          name: string
+          owner_id: string
+          phone?: string | null
+          plan?: Database["public"]["Enums"]["gym_plan"]
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          email?: string | null
+          features_locked?: Json | null
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          member_limit?: number
+          name?: string
+          owner_id?: string
+          phone?: string | null
+          plan?: Database["public"]["Enums"]["gym_plan"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      members: {
+        Row: {
+          avatar_url: string | null
+          block_reason: string | null
+          created_at: string
+          custom_price: number | null
+          deleted_at: string | null
+          email: string | null
+          expiry_date: string
+          full_name: string
+          gym_id: string
+          id: string
+          is_blocked: boolean
+          last_visit_at: string | null
+          member_id: string
+          notes: string | null
+          phone: string
+          plan_id: string | null
+          plan_name: string | null
+          qr_token: string
+          start_date: string
+          status: Database["public"]["Enums"]["member_status"]
+          total_visits: number
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          block_reason?: string | null
+          created_at?: string
+          custom_price?: number | null
+          deleted_at?: string | null
+          email?: string | null
+          expiry_date: string
+          full_name: string
+          gym_id: string
+          id?: string
+          is_blocked?: boolean
+          last_visit_at?: string | null
+          member_id: string
+          notes?: string | null
+          phone: string
+          plan_id?: string | null
+          plan_name?: string | null
+          qr_token: string
+          start_date?: string
+          status?: Database["public"]["Enums"]["member_status"]
+          total_visits?: number
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          block_reason?: string | null
+          created_at?: string
+          custom_price?: number | null
+          deleted_at?: string | null
+          email?: string | null
+          expiry_date?: string
+          full_name?: string
+          gym_id?: string
+          id?: string
+          is_blocked?: boolean
+          last_visit_at?: string | null
+          member_id?: string
+          notes?: string | null
+          phone?: string
+          plan_id?: string | null
+          plan_name?: string | null
+          qr_token?: string
+          start_date?: string
+          status?: Database["public"]["Enums"]["member_status"]
+          total_visits?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "members_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "membership_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      membership_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration_days: number
+          gym_id: string
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration_days?: number
+          gym_id: string
+          id?: string
+          is_active?: boolean
+          name: string
+          price: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration_days?: number
+          gym_id?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_plans_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          gym_id: string
+          id: string
+          member_id: string
+          new_expiry_date: string | null
+          new_start_date: string | null
+          notes: string | null
+          payment_mode: Database["public"]["Enums"]["payment_mode"]
+          plan_id: string | null
+          plan_name: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          transaction_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          gym_id: string
+          id?: string
+          member_id: string
+          new_expiry_date?: string | null
+          new_start_date?: string | null
+          notes?: string | null
+          payment_mode: Database["public"]["Enums"]["payment_mode"]
+          plan_id?: string | null
+          plan_name?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          transaction_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          gym_id?: string
+          id?: string
+          member_id?: string
+          new_expiry_date?: string | null
+          new_start_date?: string | null
+          notes?: string | null
+          payment_mode?: Database["public"]["Enums"]["payment_mode"]
+          plan_id?: string | null
+          plan_name?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "membership_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_limits: {
+        Row: {
+          has_advanced_analytics: boolean
+          has_automated_alerts: boolean
+          has_expense_tracking: boolean
+          has_multi_branch: boolean
+          has_staff_management: boolean
+          member_limit: number
+          plan: Database["public"]["Enums"]["gym_plan"]
+        }
+        Insert: {
+          has_advanced_analytics?: boolean
+          has_automated_alerts?: boolean
+          has_expense_tracking?: boolean
+          has_multi_branch?: boolean
+          has_staff_management?: boolean
+          member_limit: number
+          plan: Database["public"]["Enums"]["gym_plan"]
+        }
+        Update: {
+          has_advanced_analytics?: boolean
+          has_automated_alerts?: boolean
+          has_expense_tracking?: boolean
+          has_multi_branch?: boolean
+          has_staff_management?: boolean
+          member_limit?: number
+          plan?: Database["public"]["Enums"]["gym_plan"]
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_gym_member_limit: { Args: { _gym_id: string }; Returns: boolean }
+      generate_member_id: { Args: { _gym_id: string }; Returns: string }
+      generate_qr_token: { Args: never; Returns: string }
+      get_user_gym_id: { Args: { _user_id: string }; Returns: string }
+      has_gym_access: {
+        Args: { _gym_id: string; _user_id: string }
+        Returns: boolean
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_gym_staff: {
+        Args: { _gym_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      owns_gym: {
+        Args: { _gym_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "super_admin" | "gym_owner" | "staff"
+      attendance_source: "qr" | "manual"
+      expense_category:
+        | "rent"
+        | "salary"
+        | "electricity"
+        | "maintenance"
+        | "other"
+      gym_plan: "lite" | "standard" | "pro"
+      member_status: "active" | "expiring_soon" | "expired" | "blocked"
+      payment_mode: "cash" | "upi" | "card"
+      payment_status: "completed" | "pending" | "failed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +687,20 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["super_admin", "gym_owner", "staff"],
+      attendance_source: ["qr", "manual"],
+      expense_category: [
+        "rent",
+        "salary",
+        "electricity",
+        "maintenance",
+        "other",
+      ],
+      gym_plan: ["lite", "standard", "pro"],
+      member_status: ["active", "expiring_soon", "expired", "blocked"],
+      payment_mode: ["cash", "upi", "card"],
+      payment_status: ["completed", "pending", "failed"],
+    },
   },
 } as const
