@@ -27,21 +27,21 @@ export function StatCard({
   };
 
   return (
-    <div className={cn("rounded-xl border border-border bg-card p-5", className)}>
+    <div className={cn("rounded-xl border border-border bg-card p-4 sm:p-5", className)}>
       <div className="flex items-start justify-between">
-        <div className={cn("flex h-12 w-12 items-center justify-center rounded-xl", iconVariants[iconVariant])}>
-          <Icon className="h-6 w-6" />
+        <div className={cn("flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl", iconVariants[iconVariant])}>
+          <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
         </div>
         {change !== undefined && (
-          <div className={cn("flex items-center gap-1 text-sm", change >= 0 ? "change-positive" : "change-negative")}>
-            {change >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+          <div className={cn("flex items-center gap-1 text-xs sm:text-sm", change >= 0 ? "change-positive" : "change-negative")}>
+            {change >= 0 ? <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" /> : <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4" />}
             <span>{change >= 0 ? "+" : ""}{change}%</span>
           </div>
         )}
       </div>
-      <div className="mt-4">
-        <p className="text-2xl font-bold text-foreground">{value}</p>
-        <p className="text-sm text-muted-foreground">{title}</p>
+      <div className="mt-3 sm:mt-4">
+        <p className="text-lg sm:text-2xl font-bold text-foreground truncate">{value}</p>
+        <p className="text-xs sm:text-sm text-muted-foreground truncate">{title}</p>
       </div>
     </div>
   );

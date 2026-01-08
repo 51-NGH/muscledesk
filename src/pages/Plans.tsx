@@ -157,9 +157,9 @@ export default function Plans() {
 
       {/* Plans Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="rounded-xl border border-border bg-card p-6 animate-pulse">
+            <div key={i} className="rounded-xl border border-border bg-card p-5 sm:p-6 animate-pulse">
               <div className="h-6 w-32 bg-muted rounded mb-4" />
               <div className="h-10 w-24 bg-muted rounded mb-4" />
               <div className="h-4 w-full bg-muted rounded" />
@@ -167,21 +167,21 @@ export default function Plans() {
           ))}
         </div>
       ) : plans.length === 0 ? (
-        <div className="rounded-xl border border-border bg-card p-10 text-center">
-          <CreditCard className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">No Plans Created</h3>
-          <p className="text-muted-foreground mb-4">Create your first membership plan to get started</p>
+        <div className="rounded-xl border border-border bg-card p-8 sm:p-10 text-center">
+          <CreditCard className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">No Plans Created</h3>
+          <p className="text-sm text-muted-foreground mb-4">Create your first membership plan to get started</p>
           <Button onClick={() => setIsAddDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Create First Plan
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className="rounded-xl border border-border bg-card p-6 hover:border-primary/50 transition-colors group relative"
+              className="rounded-xl border border-border bg-card p-5 sm:p-6 hover:border-primary/50 transition-colors group relative"
             >
               {/* Action Buttons */}
               <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

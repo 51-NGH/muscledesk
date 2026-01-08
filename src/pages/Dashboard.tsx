@@ -96,18 +96,18 @@ export default function Dashboard() {
   return (
     <DashboardLayout>
       {/* Header with Search */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <PageHeader
           title="Dashboard"
           description="Welcome back, here's what's happening today"
           className="mb-0"
         />
-        <div className="flex items-center gap-4">
-          <div className="relative">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="relative flex-1 sm:flex-none">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search members..."
-              className="w-[280px] pl-10"
+              className="w-full sm:w-[280px] pl-10"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   navigate(`/members?search=${(e.target as HTMLInputElement).value}`);
@@ -118,7 +118,7 @@ export default function Dashboard() {
           <Button
             variant="ghost"
             size="icon"
-            className="relative"
+            className="relative shrink-0"
             onClick={() => navigate("/members?filter=Expiring")}
           >
             <Bell className="h-5 w-5" />
@@ -132,7 +132,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
         <StatCard
           title="Total Members"
           value={statsLoading ? "..." : stats?.totalMembers || 0}
@@ -160,20 +160,20 @@ export default function Dashboard() {
       </div>
 
       {/* Charts & Activity Row */}
-      <div className="grid grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
         {/* Revenue Chart */}
-        <div className="col-span-2 rounded-xl border border-border bg-card p-5">
+        <div className="lg:col-span-2 rounded-xl border border-border bg-card p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-lg font-semibold text-foreground">Revenue Overview</h3>
-              <p className="text-sm text-muted-foreground">Last 6 months revenue trend</p>
+              <h3 className="text-base sm:text-lg font-semibold text-foreground">Revenue Overview</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">Last 6 months revenue trend</p>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/payments")}>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/payments")} className="hidden sm:flex">
               View All
               <ArrowUpRight className="ml-1 h-4 w-4" />
             </Button>
           </div>
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={revenueChartData}>
               <defs>
                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -185,19 +185,21 @@ export default function Dashboard() {
                 dataKey="month"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
               />
               <YAxis
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
                 tickFormatter={(value) => `₹${value >= 1000 ? `${value / 1000}k` : value}`}
+                width={50}
               />
               <Tooltip
                 contentStyle={{
                   backgroundColor: "hsl(var(--card))",
                   border: "1px solid hsl(var(--border))",
                   borderRadius: "8px",
+                  fontSize: "12px",
                 }}
                 formatter={(value: number) => [`₹${value.toLocaleString()}`, "Revenue"]}
               />
@@ -213,19 +215,19 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Activity */}
-        <div className="rounded-xl border border-border bg-card p-5">
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-lg font-semibold text-foreground">Today's Activity</h3>
-              <p className="text-sm text-muted-foreground">Recent check-ins</p>
+              <h3 className="text-base sm:text-lg font-semibold text-foreground">Today's Activity</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">Recent check-ins</p>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/attendance")}>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/attendance")} className="hidden sm:flex">
               View All
               <ArrowUpRight className="ml-1 h-4 w-4" />
             </Button>
           </div>
           {recentActivity.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-6 text-muted-foreground">
               <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">No activity today</p>
               <Button variant="link" size="sm" onClick={() => navigate("/attendance")}>
@@ -233,17 +235,17 @@ export default function Dashboard() {
               </Button>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {recentActivity.map((activity) => (
                 <div key={activity.id} className="flex items-start gap-3">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${activityIconStyles[activity.type]}`}>
-                    <activity.icon className="h-5 w-5" />
+                  <div className={`flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg shrink-0 ${activityIconStyles[activity.type]}`}>
+                    <activity.icon className="h-4 w-4 sm:h-5 sm:w-5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">{activity.title}</p>
+                    <p className="text-xs sm:text-sm font-medium text-foreground">{activity.title}</p>
                     <p className="text-xs text-muted-foreground truncate">{activity.description}</p>
                   </div>
-                  <span className="text-xs text-muted-foreground">{activity.time}</span>
+                  <span className="text-xs text-muted-foreground shrink-0">{activity.time}</span>
                 </div>
               ))}
             </div>
@@ -252,21 +254,21 @@ export default function Dashboard() {
       </div>
 
       {/* Recent Members & Expiring Soon */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Recent Members */}
-        <div className="rounded-xl border border-border bg-card p-5">
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-lg font-semibold text-foreground">Recent Members</h3>
-              <p className="text-sm text-muted-foreground">Latest registrations</p>
+              <h3 className="text-base sm:text-lg font-semibold text-foreground">Recent Members</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">Latest registrations</p>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/members")}>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/members")} className="hidden sm:flex">
               View All
               <ArrowUpRight className="ml-1 h-4 w-4" />
             </Button>
           </div>
           {recentMembers.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-6 text-muted-foreground">
               <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">No members yet</p>
               <Button variant="link" size="sm" onClick={() => navigate("/members")}>
@@ -275,17 +277,17 @@ export default function Dashboard() {
               </Button>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {recentMembers.map((member) => (
                 <div key={member.id} className="flex items-center justify-between py-2">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <MemberAvatar name={member.full_name} size="sm" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{member.full_name}</p>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{member.full_name}</p>
                       <p className="text-xs text-muted-foreground">{member.phone}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     <StatusBadge status={member.status} />
                   </div>
                 </div>
@@ -295,34 +297,34 @@ export default function Dashboard() {
         </div>
 
         {/* Expiring Soon */}
-        <div className="rounded-xl border border-border bg-card p-5">
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-lg font-semibold text-foreground">Expiring Soon</h3>
-              <p className="text-sm text-muted-foreground">Renewals due in 7 days</p>
+              <h3 className="text-base sm:text-lg font-semibold text-foreground">Expiring Soon</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">Renewals due in 7 days</p>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/members?filter=Expiring")}>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/members?filter=Expiring")} className="hidden sm:flex">
               View All
               <ArrowUpRight className="ml-1 h-4 w-4" />
             </Button>
           </div>
           {expiringMembers.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-6 text-muted-foreground">
               <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">No memberships expiring soon</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {expiringMembers.slice(0, 5).map((member: any) => (
                 <div key={member.id} className="flex items-center justify-between py-2">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <MemberAvatar name={member.full_name} size="sm" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{member.full_name}</p>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{member.full_name}</p>
                       <p className="text-xs text-muted-foreground">{member.phone}</p>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right shrink-0">
                     <p className="text-sm font-medium text-md-orange">
                       {member.days_remaining === 0 ? "Today" : `${member.days_remaining} days`}
                     </p>
@@ -339,15 +341,15 @@ export default function Dashboard() {
           <div className="border-t border-border pt-4 mt-4">
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <p className="text-lg font-bold text-md-green">{stats?.activeMembers || 0}</p>
+                <p className="text-base sm:text-lg font-bold text-md-green">{stats?.activeMembers || 0}</p>
                 <p className="text-xs text-muted-foreground">Active</p>
               </div>
               <div>
-                <p className="text-lg font-bold text-md-orange">{stats?.expiringMembers || 0}</p>
+                <p className="text-base sm:text-lg font-bold text-md-orange">{stats?.expiringMembers || 0}</p>
                 <p className="text-xs text-muted-foreground">Expiring</p>
               </div>
               <div>
-                <p className="text-lg font-bold text-md-red">{stats?.expiredMembers || 0}</p>
+                <p className="text-base sm:text-lg font-bold text-md-red">{stats?.expiredMembers || 0}</p>
                 <p className="text-xs text-muted-foreground">Expired</p>
               </div>
             </div>

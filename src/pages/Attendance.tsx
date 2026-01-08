@@ -156,18 +156,20 @@ export default function Attendance() {
   return (
     <DashboardLayout>
       <PageHeader title="Attendance" description="Track member check-ins and attendance">
-        <Button variant="outline" onClick={() => setIsQRScannerOpen(true)}>
+        <Button variant="outline" size="sm" onClick={() => setIsQRScannerOpen(true)}>
           <Camera className="mr-2 h-4 w-4" />
-          Scan QR
+          <span className="hidden sm:inline">Scan QR</span>
+          <span className="sm:hidden">Scan</span>
         </Button>
-        <Button onClick={() => setIsManualCheckInOpen(true)}>
+        <Button size="sm" onClick={() => setIsManualCheckInOpen(true)}>
           <UserCheck className="mr-2 h-4 w-4" />
-          Manual Check-In
+          <span className="hidden sm:inline">Manual Check-In</span>
+          <span className="sm:hidden">Check-In</span>
         </Button>
       </PageHeader>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
         <StatCard
           title="Today's Check-ins"
           value={isToday ? (stats?.todayAttendance || 0) : filteredAttendance.length}
@@ -195,26 +197,26 @@ export default function Attendance() {
       </div>
 
       {/* Date Navigation & Search */}
-      <div className="flex items-center gap-4 mb-6">
-        <div className="flex items-center gap-2 rounded-lg border border-border p-1">
-          <Button variant="ghost" size="icon" onClick={goToPreviousDay}>
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
+        <div className="flex items-center gap-2 rounded-lg border border-border p-1 shrink-0">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goToPreviousDay}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <div className="flex items-center gap-2 px-3 py-1.5">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+          <div className="flex items-center gap-2 px-2 py-1">
+            <Calendar className="h-4 w-4 text-muted-foreground hidden sm:block" />
             <Input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="border-0 bg-transparent p-0 text-sm font-medium w-[130px]"
+              className="border-0 bg-transparent p-0 text-sm font-medium w-[120px] sm:w-[130px]"
             />
           </div>
-          <Button variant="ghost" size="icon" onClick={goToNextDay} disabled={isToday}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goToNextDay} disabled={isToday}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
 
-        <div className="relative flex-1 max-w-md">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search by name or ID..."
@@ -225,7 +227,7 @@ export default function Attendance() {
         </div>
 
         {isToday && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground shrink-0">
             <div className="h-2 w-2 rounded-full bg-md-green animate-pulse" />
             Live
           </div>

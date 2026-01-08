@@ -24,7 +24,11 @@ const navItems = [
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  onNavigate?: () => void;
+}
+
+export function AppSidebar({ onNavigate }: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut, role } = useAuth();
@@ -32,6 +36,10 @@ export function AppSidebar() {
   const handleSignOut = async () => {
     await signOut();
     navigate("/login");
+  };
+
+  const handleNavClick = () => {
+    onNavigate?.();
   };
 
   // Get initials from email or name
@@ -54,7 +62,7 @@ export function AppSidebar() {
   };
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-[220px] border-r border-border bg-card flex flex-col">
+    <aside className="lg:fixed lg:left-0 lg:top-0 lg:z-40 h-full lg:h-screen w-full lg:w-[220px] border-r border-border bg-card flex flex-col">
       {/* Logo/Brand Section */}
       <div className="flex items-center gap-3 px-5 py-6 border-b border-border">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
@@ -67,7 +75,7 @@ export function AppSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4">
+      <nav className="flex-1 px-3 py-4 overflow-y-auto">
         <ul className="space-y-1">
           {navItems.map((item) => {
             const isActive = location.pathname === item.url;
@@ -81,6 +89,7 @@ export function AppSidebar() {
               <li key={item.title}>
                 <NavLink
                   to={item.url}
+                  onClick={handleNavClick}
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                     isActive
