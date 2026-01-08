@@ -2,10 +2,10 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
+  CreditCard,
   Calendar,
   BarChart3,
   DollarSign,
-  Wrench,
   Settings,
   Dumbbell,
   LogOut,
@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Members", url: "/members", icon: Users },
+  { title: "Plans", url: "/plans", icon: CreditCard },
   { title: "Attendance", url: "/attendance", icon: Calendar },
   { title: "Payments", url: "/payments", icon: DollarSign },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
@@ -71,8 +72,8 @@ export function AppSidebar() {
           {navItems.map((item) => {
             const isActive = location.pathname === item.url;
             
-            // Staff can only see Dashboard, Members (readonly), and limited nav
-            if (role === "staff" && !["Dashboard", "Members"].includes(item.title)) {
+            // Staff can only see Dashboard, Members (readonly), and Attendance
+            if (role === "staff" && !["Dashboard", "Members", "Attendance"].includes(item.title)) {
               return null;
             }
             

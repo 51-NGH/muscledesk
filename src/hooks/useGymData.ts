@@ -139,6 +139,7 @@ export function useCreateMember() {
       email?: string;
       plan_id?: string;
       plan_name?: string;
+      start_date?: string;
       expiry_date: string;
       custom_price?: number;
       notes?: string;
@@ -152,6 +153,7 @@ export function useCreateMember() {
         email: member.email || null,
         plan_id: member.plan_id || null,
         plan_name: member.plan_name || null,
+        start_date: member.start_date || new Date().toISOString().split("T")[0],
         expiry_date: member.expiry_date,
         custom_price: member.custom_price || null,
         notes: member.notes || null,
@@ -498,6 +500,58 @@ export function useCreatePlan() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["membership_plans", gymId] });
       toast.success("Plan created successfully!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useUpdatePlan() {
+  const { gymId } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<MembershipPlan> & { id: string }) => {
+      const { data, error } = await supabase
+        .from("membership_plans")
+        .update(updates)
+        .eq("id", id)
+        .eq("gym_id", gymId!)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["membership_plans", gymId] });
+      toast.success("Plan updated successfully!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useDeletePlan() {
+  const { gymId } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (planId: string) => {
+      // Soft delete by setting is_active to false
+      const { error } = await supabase
+        .from("membership_plans")
+        .update({ is_active: false })
+        .eq("id", planId)
+        .eq("gym_id", gymId!);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["membership_plans", gymId] });
+      toast.success("Plan deleted successfully!");
     },
     onError: (error: Error) => {
       toast.error(error.message);
