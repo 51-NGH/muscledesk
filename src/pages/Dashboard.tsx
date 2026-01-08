@@ -270,11 +270,11 @@ export default function Dashboard() {
         </div>
 
         {/* Today's Check-ins */}
-        <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-base sm:text-lg font-semibold text-foreground">Today's Check-ins</h3>
-              <p className="text-xs sm:text-sm text-muted-foreground">{todayAttendance.length} members</p>
+              <p className="text-xs sm:text-sm text-md-green">{todayAttendance.length} members</p>
             </div>
             <Button variant="ghost" size="icon" onClick={() => navigate("/attendance")} className="h-8 w-8">
               <ArrowUpRight className="h-4 w-4" />
@@ -289,30 +289,40 @@ export default function Dashboard() {
               </Button>
             </div>
           ) : (
-            <div className="space-y-3 max-h-[180px] overflow-y-auto">
+            <div className="space-y-2">
               {todayAttendance.slice(0, 5).map((a, index) => (
                 <div 
                   key={a.id} 
-                  className="flex items-center gap-3 animate-fade-in cursor-pointer rounded-lg p-2 -mx-2 hover:bg-muted/50 transition-colors" 
+                  className="flex items-center gap-3 animate-fade-in cursor-pointer rounded-lg p-2 hover:bg-muted/50 transition-colors" 
                   style={{ animationDelay: `${index * 50}ms` }}
                   onClick={() => a.member_id && handleCheckInClick(a.member_id)}
                 >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-md-green/10 text-md-green shrink-0">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-md-green/10 text-md-green shrink-0">
                     <CheckCircle2 className="h-4 w-4" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{a.member?.full_name || "Unknown"}</p>
                     <p className="text-xs text-muted-foreground">{format(new Date(a.check_in_at), "h:mm a")}</p>
                   </div>
-                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 ${
                     a.source === 'qr' 
-                      ? 'bg-primary/10 text-primary' 
+                      ? 'bg-md-teal/10 text-md-teal' 
                       : 'bg-muted text-muted-foreground'
                   }`}>
                     {a.source === 'qr' ? 'QR' : 'Manual'}
                   </span>
                 </div>
               ))}
+              {todayAttendance.length > 5 && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="w-full text-xs text-muted-foreground hover:text-foreground mt-2"
+                  onClick={() => navigate("/attendance")}
+                >
+                  View {todayAttendance.length - 5} more check-ins
+                </Button>
+              )}
             </div>
           )}
         </div>
