@@ -67,6 +67,24 @@ export default function Attendance() {
   const [selectedMember, setSelectedMember] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Auto-update date at midnight
+  useEffect(() => {
+    const checkDateChange = () => {
+      const today = new Date().toISOString().split("T")[0];
+      if (selectedDate !== today && selectedDate === new Date(Date.now() - 1000).toISOString().split("T")[0]) {
+        setSelectedDate(today);
+      }
+    };
+
+    // Check every second near midnight, otherwise every minute
+    const now = new Date();
+    const minutesToMidnight = (24 * 60) - (now.getHours() * 60 + now.getMinutes());
+    const interval = minutesToMidnight <= 1 ? 1000 : 60000;
+    
+    const timer = setInterval(checkDateChange, interval);
+    return () => clearInterval(timer);
+  }, [selectedDate]);
+
   const { data: attendance = [], isLoading, refetch } = useAttendance(selectedDate);
   const { data: members = [] } = useMembers();
   const { data: stats } = useDashboardStats();
