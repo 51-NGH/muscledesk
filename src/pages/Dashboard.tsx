@@ -6,8 +6,9 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
+import { MemberProfile } from "@/components/MemberProfile";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDashboardStats, useMembers, useAttendance, useMonthlyRevenue, useExpiringMembers, useUserProfile, useDailyAttendance, usePayments } from "@/hooks/useGymData";
+import { useDashboardStats, useMembers, useAttendance, useMonthlyRevenue, useExpiringMembers, useUserProfile, useDailyAttendance, usePayments, Member } from "@/hooks/useGymData";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { useEffect, useState, useMemo } from "react";
@@ -60,6 +61,17 @@ export default function Dashboard() {
   
   const [greeting, setGreeting] = useState(getGreeting());
   const [animatedStats, setAnimatedStats] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  // Handle opening member profile from check-in
+  const handleCheckInClick = (memberId: string) => {
+    const member = members.find(m => m.id === memberId);
+    if (member) {
+      setSelectedMember(member);
+      setIsProfileOpen(true);
+    }
+  };
 
   // Update greeting on mount and every minute
   useEffect(() => {
@@ -279,7 +291,12 @@ export default function Dashboard() {
           ) : (
             <div className="space-y-3 max-h-[180px] overflow-y-auto">
               {todayAttendance.slice(0, 5).map((a, index) => (
-                <div key={a.id} className="flex items-center gap-3 animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
+                <div 
+                  key={a.id} 
+                  className="flex items-center gap-3 animate-fade-in cursor-pointer rounded-lg p-2 -mx-2 hover:bg-muted/50 transition-colors" 
+                  style={{ animationDelay: `${index * 50}ms` }}
+                  onClick={() => a.member_id && handleCheckInClick(a.member_id)}
+                >
                   <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-md-green/10 text-md-green shrink-0">
                     <CheckCircle2 className="h-4 w-4" />
                   </div>
@@ -404,6 +421,22 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Member Profile Modal */}
+      {selectedMember && (
+        <MemberProfile
+          member={selectedMember}
+          isOpen={isProfileOpen}
+          onClose={() => {
+            setIsProfileOpen(false);
+            setSelectedMember(null);
+          }}
+          onEdit={() => {
+            setIsProfileOpen(false);
+            navigate(`/members?edit=${selectedMember.id}`);
+          }}
+        />
+      )}
     </DashboardLayout>
   );
 }
