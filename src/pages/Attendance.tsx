@@ -60,29 +60,32 @@ function LiveClock() {
 
 export default function Attendance() {
   const { gymId } = useAuth();
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const getTodayDate = () => new Date().toISOString().split("T")[0];
+  const [selectedDate, setSelectedDate] = useState(getTodayDate);
+  const [wasViewingToday, setWasViewingToday] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isManualCheckInOpen, setIsManualCheckInOpen] = useState(false);
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Auto-update date at midnight
+  // Auto-update date at midnight if user was viewing today
   useEffect(() => {
     const checkDateChange = () => {
-      const today = new Date().toISOString().split("T")[0];
-      if (selectedDate !== today && selectedDate === new Date(Date.now() - 1000).toISOString().split("T")[0]) {
+      const today = getTodayDate();
+      if (wasViewingToday && selectedDate !== today) {
         setSelectedDate(today);
       }
     };
 
-    // Check every second near midnight, otherwise every minute
-    const now = new Date();
-    const minutesToMidnight = (24 * 60) - (now.getHours() * 60 + now.getMinutes());
-    const interval = minutesToMidnight <= 1 ? 1000 : 60000;
-    
-    const timer = setInterval(checkDateChange, interval);
+    // Check every 10 seconds for date change
+    const timer = setInterval(checkDateChange, 10000);
     return () => clearInterval(timer);
+  }, [selectedDate, wasViewingToday]);
+
+  // Track if user is viewing today
+  useEffect(() => {
+    setWasViewingToday(selectedDate === getTodayDate());
   }, [selectedDate]);
 
   const { data: attendance = [], isLoading, refetch } = useAttendance(selectedDate);
