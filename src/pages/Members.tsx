@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMembers, useCreateMember, useUpdateMember, useDeleteMember, useMembershipPlans, MemberStatus, Member } from "@/hooks/useGymData";
+import { MemberProfile } from "@/components/MemberProfile";
 import { format } from "date-fns";
 import { 
   Users, 
@@ -22,13 +23,10 @@ import {
   Phone,
   Mail,
   Calendar,
-  QrCode,
   Ban,
   Edit,
   Trash2,
   Eye,
-  X,
-  CheckCircle,
 } from "lucide-react";
 import {
   Dialog,
@@ -524,76 +522,21 @@ export default function Members() {
         </DialogContent>
       </Dialog>
 
-      {/* View Member Dialog */}
-      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Member Details</DialogTitle>
-          </DialogHeader>
-          {selectedMember && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <MemberAvatar name={selectedMember.full_name} size="lg" />
-                <div>
-                  <h3 className="font-semibold text-lg">{selectedMember.full_name}</h3>
-                  <p className="text-sm text-muted-foreground font-mono">{selectedMember.member_id}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span>{selectedMember.phone}</span>
-                </div>
-                {selectedMember.email && (
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span>{selectedMember.email}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span>Expires: {format(new Date(selectedMember.expiry_date), "MMM d, yyyy")}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                  <span>{selectedMember.total_visits} visits</span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
-                <span className="text-sm font-medium">Status</span>
-                <StatusBadge status={selectedMember.is_blocked ? "blocked" : selectedMember.status} />
-              </div>
-
-              <div className="p-3 rounded-lg bg-muted">
-                <div className="flex items-center gap-2 mb-2">
-                  <QrCode className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">QR Token</span>
-                </div>
-                <p className="text-xs font-mono text-muted-foreground break-all">{selectedMember.qr_token}</p>
-              </div>
-
-              {selectedMember.notes && (
-                <div className="p-3 rounded-lg bg-muted">
-                  <span className="text-sm font-medium">Notes</span>
-                  <p className="text-sm text-muted-foreground mt-1">{selectedMember.notes}</p>
-                </div>
-              )}
-
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => openEditDialog(selectedMember)}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </Button>
-                <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
-                  Close
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* View Member Profile */}
+      {selectedMember && (
+        <MemberProfile
+          member={selectedMember}
+          isOpen={isViewDialogOpen}
+          onClose={() => {
+            setIsViewDialogOpen(false);
+            setSelectedMember(null);
+          }}
+          onEdit={(member) => {
+            setIsViewDialogOpen(false);
+            openEditDialog(member);
+          }}
+        />
+      )}
 
       {/* Edit Member Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
