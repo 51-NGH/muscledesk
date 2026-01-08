@@ -1,132 +1,65 @@
-import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
+import { Building2, Shield, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
-import { Building2, Save, Shield } from "lucide-react";
 
 export default function Settings() {
   const { user, gymId, role, isSuperAdmin } = useAuth();
-  const queryClient = useQueryClient();
-  const [isCreating, setIsCreating] = useState(false);
-  const [gymData, setGymData] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    address: "",
-  });
 
-  const handleCreateGym = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!gymData.name) {
-      toast.error("Gym name is required");
-      return;
-    }
-
-    setIsCreating(true);
-
-    try {
+  // Fetch gym details if gymId exists
+  const { data: gym } = useQuery({
+    queryKey: ["gym", gymId],
+    queryFn: async () => {
+      if (!gymId) return null;
       const { data, error } = await supabase
         .from("gyms")
-        .insert([{
-          name: gymData.name,
-          phone: gymData.phone || null,
-          email: gymData.email || null,
-          address: gymData.address || null,
-          owner_id: user?.id,
-        }])
-        .select()
+        .select("*")
+        .eq("id", gymId)
         .single();
-
       if (error) throw error;
-
-      toast.success("Gym created successfully!");
-      queryClient.invalidateQueries({ queryKey: ["gyms"] });
-      
-      // Refresh the page to update gym context
-      window.location.reload();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to create gym");
-    } finally {
-      setIsCreating(false);
-    }
-  };
+      return data;
+    },
+    enabled: !!gymId,
+  });
 
   return (
     <DashboardLayout>
       <PageHeader title="Settings" description="Manage your gym settings" />
 
-      <div className="max-w-2xl">
+      <div className="max-w-2xl space-y-6">
         {!gymId ? (
-          // Create Gym Form
-          <div className="rounded-xl border border-border bg-card p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                <Building2 className="h-6 w-6 text-primary" />
+          // No Gym Assigned - Contact SuperAdmin
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/20">
+                <AlertTriangle className="h-6 w-6 text-amber-500" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-foreground">Create Your Gym</h2>
-                <p className="text-sm text-muted-foreground">Set up your gym to start managing members</p>
+                <h2 className="text-lg font-semibold text-foreground">No Gym Assigned</h2>
+                <p className="text-sm text-muted-foreground">Your account is not linked to any gym</p>
               </div>
             </div>
-
-            <form onSubmit={handleCreateGym} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Gym Name *</Label>
-                <Input
-                  id="name"
-                  value={gymData.name}
-                  onChange={(e) => setGymData({ ...gymData, name: e.target.value })}
-                  placeholder="FitZone Gym"
-                  required
-                />
+            <div className="space-y-3 text-sm text-muted-foreground">
+              <p>
+                Gym creation is managed by the MuscleDesk SuperAdmin for security and billing purposes.
+              </p>
+              <p>
+                <strong>To get started:</strong> Contact the MuscleDesk support team with your registered email 
+                (<span className="font-mono text-foreground">{user?.email}</span>) to have your gym created and assigned.
+              </p>
+              <div className="mt-4 p-3 rounded-lg bg-muted/50">
+                <p className="text-xs">
+                  📧 Once your gym is created, refresh this page to access all features.
+                </p>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input
-                  id="phone"
-                  value={gymData.phone}
-                  onChange={(e) => setGymData({ ...gymData, phone: e.target.value })}
-                  placeholder="+91 9876543210"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={gymData.email}
-                  onChange={(e) => setGymData({ ...gymData, email: e.target.value })}
-                  placeholder="contact@fitzonegym.com"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
-                <Input
-                  id="address"
-                  value={gymData.address}
-                  onChange={(e) => setGymData({ ...gymData, address: e.target.value })}
-                  placeholder="123 Main Street, City"
-                />
-              </div>
-
-              <Button type="submit" disabled={isCreating} className="w-full">
-                {isCreating ? "Creating..." : "Create Gym"}
-              </Button>
-            </form>
+            </div>
           </div>
         ) : (
           // Gym Settings
-          <div className="space-y-6">
+          <>
+            {/* Gym Info Card */}
             <div className="rounded-xl border border-border bg-card p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
@@ -134,7 +67,7 @@ export default function Settings() {
                 </div>
                 <div>
                   <h2 className="font-semibold text-foreground">Gym Information</h2>
-                  <p className="text-sm text-muted-foreground">Your gym details</p>
+                  <p className="text-sm text-muted-foreground">{gym?.name || "Your gym"}</p>
                 </div>
               </div>
               
@@ -148,28 +81,59 @@ export default function Settings() {
                   <p className="font-medium text-foreground capitalize">{role?.replace("_", " ")}</p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Gym ID</span>
-                  <p className="font-medium text-foreground font-mono text-xs">{gymId}</p>
+                  <span className="text-muted-foreground">Plan</span>
+                  <p className="font-medium text-foreground capitalize">{gym?.plan || "lite"}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Member Limit</span>
+                  <p className="font-medium text-foreground">{gym?.member_limit || 100}</p>
+                </div>
+                {gym?.phone && (
+                  <div>
+                    <span className="text-muted-foreground">Phone</span>
+                    <p className="font-medium text-foreground">{gym.phone}</p>
+                  </div>
+                )}
+                {gym?.address && (
+                  <div>
+                    <span className="text-muted-foreground">Address</span>
+                    <p className="font-medium text-foreground">{gym.address}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-border">
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <span className="text-muted-foreground">Gym is active and operational</span>
                 </div>
               </div>
             </div>
+          </>
+        )}
 
-            {isSuperAdmin && (
-              <div className="rounded-xl border border-border bg-card p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-md-orange/20">
-                    <Shield className="h-5 w-5 text-md-orange" />
-                  </div>
-                  <div>
-                    <h2 className="font-semibold text-foreground">Super Admin Panel</h2>
-                    <p className="text-sm text-muted-foreground">Manage all gyms and plans</p>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Super admin features coming soon: View all gyms, assign plans, lock/unlock features.
-                </p>
+        {/* SuperAdmin Panel */}
+        {isSuperAdmin && (
+          <div className="rounded-xl border border-border bg-card p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-md-orange/20">
+                <Shield className="h-5 w-5 text-md-orange" />
               </div>
-            )}
+              <div>
+                <h2 className="font-semibold text-foreground">Super Admin Panel</h2>
+                <p className="text-sm text-muted-foreground">Platform management tools</p>
+              </div>
+            </div>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>Use the following SQL RPC functions to manage the platform:</p>
+              <ul className="list-disc list-inside space-y-1 mt-2 font-mono text-xs">
+                <li><code>admin_create_gym(name, owner_email, plan, city, phone, address)</code></li>
+                <li><code>admin_assign_role(user_id, role)</code></li>
+              </ul>
+              <p className="mt-3">
+                Gym owners must sign up first, then you assign them a gym using their email.
+              </p>
+            </div>
           </div>
         )}
       </div>

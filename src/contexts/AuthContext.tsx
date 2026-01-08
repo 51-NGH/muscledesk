@@ -75,18 +75,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (roleData) {
         setRole(roleData.role as AppRole);
-      }
+        
+        // Only fetch gym if user has a role
+        if (roleData.role === "gym_owner") {
+          const { data: gymData } = await supabase
+            .from("gyms")
+            .select("id")
+            .eq("owner_id", userId)
+            .is("deleted_at", null)
+            .maybeSingle();
 
-      // Fetch gym if gym_owner
-      const { data: gymData } = await supabase
-        .from("gyms")
-        .select("id")
-        .eq("owner_id", userId)
-        .is("deleted_at", null)
-        .maybeSingle();
+          if (gymData) {
+            setGymId(gymData.id);
+          }
+        } else if (roleData.role === "staff") {
+          // Staff: get gym from gym_staff table
+          const { data: staffData } = await supabase
+            .from("gym_staff")
+            .select("gym_id")
+            .eq("user_id", userId)
+            .maybeSingle();
 
-      if (gymData) {
-        setGymId(gymData.id);
+          if (staffData) {
+            setGymId(staffData.gym_id);
+          }
+        } else if (roleData.role === "super_admin") {
+          // Super admin can access all - set gymId to first gym or null
+          const { data: gymData } = await supabase
+            .from("gyms")
+            .select("id")
+            .is("deleted_at", null)
+            .limit(1)
+            .maybeSingle();
+
+          if (gymData) {
+            setGymId(gymData.id);
+          }
+        }
+      } else {
+        // No role assigned yet - user needs to wait for SuperAdmin
+        setRole(null);
+        setGymId(null);
       }
     } catch (error) {
       console.error("Error fetching user role/gym:", error);
