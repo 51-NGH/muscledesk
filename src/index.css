@@ -2,95 +2,113 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* MuscleDesk Design System - Clean, Professional Gym Management UI */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 0 0% 98%;
+    --foreground: 220 9% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 220 9% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 220 9% 12%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 220 9% 12%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 9% 12%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 220 9% 12%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 220 9% 12%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* MuscleDesk Custom Colors */
+    --md-teal: 174 72% 40%;
+    --md-teal-light: 174 72% 94%;
+    --md-green: 142 71% 45%;
+    --md-green-light: 142 71% 94%;
+    --md-orange: 25 95% 53%;
+    --md-orange-light: 25 95% 94%;
+    --md-red: 0 84% 60%;
+    --md-red-light: 0 84% 94%;
+    --md-blue: 217 91% 60%;
+    --md-blue-light: 217 91% 94%;
+    --md-purple: 270 60% 60%;
+    --md-purple-light: 270 60% 94%;
+    --md-pink: 330 80% 60%;
+    --md-pink-light: 330 80% 94%;
+    --md-yellow: 45 93% 47%;
+    --md-yellow-light: 45 93% 94%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
+    /* Sidebar */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 9% 46%;
+    --sidebar-primary: 220 9% 12%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 9% 12%;
+    --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 220 9% 12%;
 
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Chart Colors */
+    --chart-1: 174 72% 40%;
+    --chart-2: 142 71% 45%;
+    --chart-3: 25 95% 53%;
+    --chart-4: 270 60% 60%;
+    --chart-5: 330 80% 60%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 220 9% 6%;
+    --foreground: 0 0% 98%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 9% 10%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 9% 10%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 220 9% 12%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 220 9% 18%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 220 9% 18%;
+    --muted-foreground: 220 9% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 220 9% 18%;
+    --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 220 9% 18%;
+    --input: 220 9% 18%;
+    --ring: 220 9% 83%;
+
+    --sidebar-background: 220 9% 8%;
+    --sidebar-foreground: 220 9% 65%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 220 9% 12%;
+    --sidebar-accent: 220 9% 18%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 220 9% 18%;
+    --sidebar-ring: 220 9% 83%;
   }
 }
 
@@ -100,6 +118,107 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  /* Stat Card Icon Variants */
+  .stat-icon-teal {
+    @apply bg-[hsl(var(--md-teal))] text-white;
+  }
+  
+  .stat-icon-green {
+    @apply bg-[hsl(var(--md-green))] text-white;
+  }
+  
+  .stat-icon-orange {
+    @apply bg-[hsl(var(--md-orange))] text-white;
+  }
+  
+  .stat-icon-red {
+    @apply bg-[hsl(var(--md-red))] text-white;
+  }
+  
+  .stat-icon-blue {
+    @apply bg-[hsl(var(--md-blue))] text-white;
+  }
+
+  /* Status Badges */
+  .status-active {
+    @apply bg-[hsl(var(--md-green-light))] text-[hsl(var(--md-green))] font-medium;
+  }
+  
+  .status-expiring {
+    @apply bg-[hsl(var(--md-orange-light))] text-[hsl(var(--md-orange))] font-medium;
+  }
+  
+  .status-expired {
+    @apply bg-[hsl(var(--md-red-light))] text-[hsl(var(--md-red))] font-medium;
+  }
+  
+  .status-inactive {
+    @apply bg-muted text-muted-foreground font-medium;
+  }
+
+  .status-pending {
+    @apply bg-[hsl(var(--md-orange-light))] text-[hsl(var(--md-orange))] font-medium;
+  }
+
+  .status-completed {
+    @apply bg-[hsl(var(--md-green-light))] text-[hsl(var(--md-green))] font-medium;
+  }
+
+  .status-failed {
+    @apply bg-[hsl(var(--md-red-light))] text-[hsl(var(--md-red))] font-medium;
+  }
+
+  /* Plan Badges */
+  .plan-premium {
+    @apply bg-[hsl(var(--md-teal-light))] text-[hsl(var(--md-teal))] font-medium;
+  }
+  
+  .plan-standard {
+    @apply bg-[hsl(var(--md-purple-light))] text-[hsl(var(--md-purple))] font-medium;
+  }
+  
+  .plan-basic {
+    @apply bg-muted text-muted-foreground font-medium;
+  }
+
+  .plan-trial {
+    @apply bg-[hsl(var(--md-yellow-light))] text-[hsl(var(--md-yellow))] font-medium;
+  }
+
+  /* Percentage Change Indicators */
+  .change-positive {
+    @apply text-[hsl(var(--md-green))] font-medium;
+  }
+  
+  .change-negative {
+    @apply text-[hsl(var(--md-red))] font-medium;
+  }
+
+  /* Activity Icons */
+  .activity-icon-member {
+    @apply bg-[hsl(var(--md-green))] text-white;
+  }
+  
+  .activity-icon-class {
+    @apply bg-[hsl(var(--md-teal))] text-white;
+  }
+  
+  .activity-icon-payment {
+    @apply bg-[hsl(var(--md-orange))] text-white;
+  }
+  
+  .activity-icon-attendance {
+    @apply bg-[hsl(var(--md-pink))] text-white;
+  }
+
+  /* Member Avatar */
+  .member-avatar {
+    @apply bg-primary text-primary-foreground font-semibold flex items-center justify-center rounded-full;
   }
 }

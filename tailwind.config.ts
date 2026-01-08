@@ -57,6 +57,25 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // MuscleDesk custom colors
+        md: {
+          teal: "hsl(var(--md-teal))",
+          "teal-light": "hsl(var(--md-teal-light))",
+          green: "hsl(var(--md-green))",
+          "green-light": "hsl(var(--md-green-light))",
+          orange: "hsl(var(--md-orange))",
+          "orange-light": "hsl(var(--md-orange-light))",
+          red: "hsl(var(--md-red))",
+          "red-light": "hsl(var(--md-red-light))",
+          blue: "hsl(var(--md-blue))",
+          "blue-light": "hsl(var(--md-blue-light))",
+          purple: "hsl(var(--md-purple))",
+          "purple-light": "hsl(var(--md-purple-light))",
+          pink: "hsl(var(--md-pink))",
+          "pink-light": "hsl(var(--md-pink-light))",
+          yellow: "hsl(var(--md-yellow))",
+          "yellow-light": "hsl(var(--md-yellow-light))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -65,20 +84,12 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
       },
       animation: {
