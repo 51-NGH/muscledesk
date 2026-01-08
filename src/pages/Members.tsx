@@ -83,6 +83,7 @@ export default function Members() {
     full_name: "",
     phone: "",
     email: "",
+    start_date: new Date().toISOString().split("T")[0],
     expiry_date: "",
     plan_id: "",
     notes: "",
@@ -128,6 +129,7 @@ export default function Members() {
         full_name: newMember.full_name,
         phone: newMember.phone,
         email: newMember.email || undefined,
+        start_date: newMember.start_date,
         expiry_date: newMember.expiry_date,
         plan_id: newMember.plan_id || undefined,
         plan_name: plan?.name,
@@ -200,6 +202,7 @@ export default function Members() {
       full_name: member.full_name,
       phone: member.phone,
       email: member.email || "",
+      start_date: member.start_date,
       expiry_date: member.expiry_date,
       plan_id: member.plan_id || "",
       notes: member.notes || "",
@@ -213,7 +216,7 @@ export default function Members() {
   };
 
   const resetNewMember = () => {
-    setNewMember({ full_name: "", phone: "", email: "", expiry_date: "", plan_id: "", notes: "" });
+    setNewMember({ full_name: "", phone: "", email: "", start_date: new Date().toISOString().split("T")[0], expiry_date: "", plan_id: "", notes: "" });
   };
 
   const handleExport = () => {
@@ -243,7 +246,8 @@ export default function Members() {
   const handlePlanSelect = (planId: string) => {
     const plan = plans.find((p) => p.id === planId);
     if (plan) {
-      const expiryDate = new Date();
+      const startDate = newMember.start_date ? new Date(newMember.start_date) : new Date();
+      const expiryDate = new Date(startDate);
       expiryDate.setDate(expiryDate.getDate() + plan.duration_days);
       setNewMember({
         ...newMember,
@@ -251,6 +255,24 @@ export default function Members() {
         expiry_date: expiryDate.toISOString().split("T")[0],
       });
     }
+  };
+
+  const handleStartDateChange = (dateStr: string) => {
+    const plan = plans.find((p) => p.id === newMember.plan_id);
+    let expiryDate = newMember.expiry_date;
+    
+    if (plan && dateStr) {
+      const startDate = new Date(dateStr);
+      const expiry = new Date(startDate);
+      expiry.setDate(expiry.getDate() + plan.duration_days);
+      expiryDate = expiry.toISOString().split("T")[0];
+    }
+    
+    setNewMember({
+      ...newMember,
+      start_date: dateStr,
+      expiry_date: expiryDate,
+    });
   };
 
   if (!gymId) {
@@ -461,14 +483,25 @@ export default function Members() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Membership Expiry Date *</Label>
-              <Input
-                type="date"
-                value={newMember.expiry_date}
-                onChange={(e) => setNewMember({ ...newMember, expiry_date: e.target.value })}
-                required
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Joining Date *</Label>
+                <Input
+                  type="date"
+                  value={newMember.start_date}
+                  onChange={(e) => handleStartDateChange(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Expiry Date *</Label>
+                <Input
+                  type="date"
+                  value={newMember.expiry_date}
+                  onChange={(e) => setNewMember({ ...newMember, expiry_date: e.target.value })}
+                  required
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Notes</Label>
