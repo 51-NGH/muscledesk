@@ -146,6 +146,10 @@ export default function Plans() {
     );
   }
 
+  const totalPlans = plans.length;
+  const avgPrice = totalPlans > 0 ? Math.round(plans.reduce((sum, p) => sum + p.price, 0) / totalPlans) : 0;
+  const longestPlan = totalPlans > 0 ? Math.max(...plans.map(p => p.duration_days)) : 0;
+
   return (
     <DashboardLayout>
       <PageHeader title="Membership Plans" description="Create and manage membership plans for your gym">
@@ -154,6 +158,37 @@ export default function Plans() {
           Add Plan
         </Button>
       </PageHeader>
+
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="rounded-xl border border-border bg-card p-4 flex items-center gap-4">
+          <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+            <CreditCard className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Total Plans</p>
+            <p className="text-2xl font-bold text-foreground">{totalPlans}</p>
+          </div>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4 flex items-center gap-4">
+          <div className="h-12 w-12 rounded-lg bg-md-green/10 flex items-center justify-center">
+            <IndianRupee className="h-6 w-6 text-md-green" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Average Price</p>
+            <p className="text-2xl font-bold text-foreground">₹{avgPrice.toLocaleString()}</p>
+          </div>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4 flex items-center gap-4">
+          <div className="h-12 w-12 rounded-lg bg-md-blue/10 flex items-center justify-center">
+            <Clock className="h-6 w-6 text-md-blue" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Longest Plan</p>
+            <p className="text-2xl font-bold text-foreground">{getDurationLabel(longestPlan)}</p>
+          </div>
+        </div>
+      </div>
 
       {/* Plans Grid */}
       {isLoading ? (
@@ -177,52 +212,110 @@ export default function Plans() {
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {plans.map((plan) => (
-            <div
-              key={plan.id}
-              className="rounded-xl border border-border bg-card p-5 sm:p-6 hover:border-primary/50 transition-colors group relative"
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
+            {plans.map((plan, index) => {
+              const isPopular = plans.length > 1 && plan.price === Math.max(...plans.map(p => p.price));
+              return (
+                <div
+                  key={plan.id}
+                  className={`rounded-xl border bg-card p-5 sm:p-6 hover:shadow-lg transition-all group relative ${
+                    isPopular ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  {/* Popular Badge */}
+                  {isPopular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <span className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full">
+                        Most Popular
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => openEditDialog(plan)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={() => openDeleteDialog(plan)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <h3 className="text-lg font-semibold text-foreground mb-1 mt-2">{plan.name}</h3>
+                  
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm mb-4">
+                    <Clock className="h-4 w-4" />
+                    <span>{getDurationLabel(plan.duration_days)}</span>
+                  </div>
+                  
+                  <div className="flex items-baseline gap-1 mb-4">
+                    <span className="text-4xl font-bold text-foreground">₹{plan.price.toLocaleString()}</span>
+                    <span className="text-muted-foreground text-sm">/{plan.duration_days} days</span>
+                  </div>
+
+                  {/* Price per day calculation */}
+                  <div className="mb-4 p-3 rounded-lg bg-muted/50">
+                    <p className="text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">₹{Math.round(plan.price / plan.duration_days)}</span> per day
+                    </p>
+                  </div>
+
+                  {plan.description && (
+                    <p className="text-sm text-muted-foreground border-t border-border pt-4">
+                      {plan.description}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Add New Plan Card */}
+            <button
+              onClick={() => setIsAddDialogOpen(true)}
+              className="rounded-xl border-2 border-dashed border-border bg-card/50 p-5 sm:p-6 hover:border-primary/50 hover:bg-card transition-all flex flex-col items-center justify-center min-h-[200px] text-muted-foreground hover:text-primary"
             >
-              {/* Action Buttons */}
-              <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => openEditDialog(plan)}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-destructive hover:text-destructive"
-                  onClick={() => openDeleteDialog(plan)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+              <Plus className="h-10 w-10 mb-3" />
+              <span className="font-medium">Add New Plan</span>
+            </button>
+          </div>
 
-              <h3 className="text-lg font-semibold text-foreground mb-2">{plan.name}</h3>
-              
-              <div className="flex items-baseline gap-1 mb-4">
-                <IndianRupee className="h-6 w-6 text-primary" />
-                <span className="text-3xl font-bold text-foreground">{plan.price}</span>
-              </div>
-
-              <div className="flex items-center gap-2 text-muted-foreground mb-4">
-                <Clock className="h-4 w-4" />
-                <span>{getDurationLabel(plan.duration_days)}</span>
-              </div>
-
-              {plan.description && (
-                <p className="text-sm text-muted-foreground border-t border-border pt-4">
-                  {plan.description}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
+          {/* Tips Section */}
+          <div className="rounded-xl border border-border bg-muted/30 p-6">
+            <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+              <span className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm">💡</span>
+              Pro Tips for Membership Plans
+            </h4>
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
+              <li className="flex items-start gap-2">
+                <span className="text-primary mt-0.5">•</span>
+                Offer multiple durations (monthly, quarterly, yearly) to give flexibility
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary mt-0.5">•</span>
+                Longer plans with better per-day rates encourage commitment
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary mt-0.5">•</span>
+                Add clear descriptions to highlight plan benefits
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary mt-0.5">•</span>
+                Consider seasonal promotions with special pricing
+              </li>
+            </ul>
+          </div>
+        </>
       )}
 
       {/* Add Plan Dialog */}
