@@ -221,4 +221,86 @@
   .member-avatar {
     @apply bg-primary text-primary-foreground font-semibold flex items-center justify-center rounded-full;
   }
+
+  /* Premium Card Styles */
+  .card-premium {
+    @apply rounded-xl border border-border bg-card p-5 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20;
+  }
+
+  .card-premium-interactive {
+    @apply card-premium cursor-pointer hover:scale-[1.02] active:scale-[0.98];
+  }
+
+  /* Stat Card Glow Effects */
+  .stat-glow-teal {
+    box-shadow: 0 10px 40px -10px hsl(var(--md-teal) / 0.25);
+  }
+
+  .stat-glow-green {
+    box-shadow: 0 10px 40px -10px hsl(var(--md-green) / 0.25);
+  }
+
+  .stat-glow-orange {
+    box-shadow: 0 10px 40px -10px hsl(var(--md-orange) / 0.25);
+  }
+
+  .stat-glow-red {
+    box-shadow: 0 10px 40px -10px hsl(var(--md-red) / 0.25);
+  }
+
+  /* Gradient Text */
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent;
+  }
+
+  /* Hover Scale */
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
+  }
+
+  /* Premium Button */
+  .btn-premium {
+    @apply relative overflow-hidden transition-all duration-300;
+  }
+
+  .btn-premium::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full;
+    animation: shimmer 2s infinite;
+  }
+
+  /* Animated underline for links */
+  .link-animated {
+    @apply relative inline-block;
+  }
+
+  .link-animated::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-full h-0.5 bg-primary scale-x-0 origin-right transition-transform duration-300;
+  }
+
+  .link-animated:hover::after {
+    @apply scale-x-100 origin-left;
+  }
+
+  /* Category icon backgrounds */
+  .category-icon-rent {
+    @apply bg-[hsl(var(--md-purple-light))] text-[hsl(var(--md-purple))];
+  }
+
+  .category-icon-salary {
+    @apply bg-[hsl(var(--md-teal-light))] text-[hsl(var(--md-teal))];
+  }
+
+  .category-icon-electricity {
+    @apply bg-[hsl(var(--md-yellow-light))] text-[hsl(var(--md-yellow))];
+  }
+
+  .category-icon-maintenance {
+    @apply bg-[hsl(var(--md-blue-light))] text-[hsl(var(--md-blue))];
+  }
+
+  .category-icon-other {
+    @apply bg-muted text-muted-foreground;
+  }
 }
