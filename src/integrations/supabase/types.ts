@@ -51,10 +51,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "attendance_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "v_gym_dashboard_stats"
+            referencedColumns: ["gym_id"]
+          },
+          {
             foreignKeyName: "attendance_member_id_fkey"
             columns: ["member_id"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "v_members_expiring_soon"
             referencedColumns: ["id"]
           },
         ]
@@ -104,6 +118,13 @@ export type Database = {
             referencedRelation: "gyms"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "audit_logs_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "v_gym_dashboard_stats"
+            referencedColumns: ["gym_id"]
+          },
         ]
       }
       expenses: {
@@ -148,6 +169,13 @@ export type Database = {
             referencedRelation: "gyms"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "expenses_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "v_gym_dashboard_stats"
+            referencedColumns: ["gym_id"]
+          },
         ]
       }
       gym_staff: {
@@ -177,11 +205,19 @@ export type Database = {
             referencedRelation: "gyms"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "gym_staff_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "v_gym_dashboard_stats"
+            referencedColumns: ["gym_id"]
+          },
         ]
       }
       gyms: {
         Row: {
           address: string | null
+          city: string | null
           created_at: string
           deleted_at: string | null
           email: string | null
@@ -198,6 +234,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          city?: string | null
           created_at?: string
           deleted_at?: string | null
           email?: string | null
@@ -214,6 +251,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          city?: string | null
           created_at?: string
           deleted_at?: string | null
           email?: string | null
@@ -312,6 +350,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "members_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "v_gym_dashboard_stats"
+            referencedColumns: ["gym_id"]
+          },
+          {
             foreignKeyName: "members_plan_id_fkey"
             columns: ["plan_id"]
             isOneToOne: false
@@ -361,6 +406,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "gyms"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_plans_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "v_gym_dashboard_stats"
+            referencedColumns: ["gym_id"]
           },
         ]
       }
@@ -422,10 +474,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "payments_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "v_gym_dashboard_stats"
+            referencedColumns: ["gym_id"]
+          },
+          {
             foreignKeyName: "payments_member_id_fkey"
             columns: ["member_id"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "v_members_expiring_soon"
             referencedColumns: ["id"]
           },
           {
@@ -520,9 +586,162 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_daily_attendance: {
+        Row: {
+          check_ins: number | null
+          date: string | null
+          gym_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "v_gym_dashboard_stats"
+            referencedColumns: ["gym_id"]
+          },
+        ]
+      }
+      v_gym_dashboard_stats: {
+        Row: {
+          active_members: number | null
+          expired_members: number | null
+          expiring_soon_members: number | null
+          gym_id: string | null
+          monthly_expenses: number | null
+          monthly_revenue: number | null
+          today_attendance: number | null
+          total_members: number | null
+        }
+        Relationships: []
+      }
+      v_members_expiring_soon: {
+        Row: {
+          days_remaining: number | null
+          email: string | null
+          expiry_date: string | null
+          full_name: string | null
+          gym_id: string | null
+          id: string | null
+          member_id: string | null
+          phone: string | null
+          plan_name: string | null
+        }
+        Insert: {
+          days_remaining?: never
+          email?: string | null
+          expiry_date?: string | null
+          full_name?: string | null
+          gym_id?: string | null
+          id?: string | null
+          member_id?: string | null
+          phone?: string | null
+          plan_name?: string | null
+        }
+        Update: {
+          days_remaining?: never
+          email?: string | null
+          expiry_date?: string | null
+          full_name?: string | null
+          gym_id?: string | null
+          id?: string | null
+          member_id?: string | null
+          phone?: string | null
+          plan_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "members_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "v_gym_dashboard_stats"
+            referencedColumns: ["gym_id"]
+          },
+        ]
+      }
+      v_monthly_expenses: {
+        Row: {
+          category: Database["public"]["Enums"]["expense_category"] | null
+          expense_count: number | null
+          gym_id: string | null
+          month: string | null
+          total_amount: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "v_gym_dashboard_stats"
+            referencedColumns: ["gym_id"]
+          },
+        ]
+      }
+      v_monthly_revenue: {
+        Row: {
+          gym_id: string | null
+          month: string | null
+          payment_count: number | null
+          total_revenue: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "v_gym_dashboard_stats"
+            referencedColumns: ["gym_id"]
+          },
+        ]
+      }
     }
     Functions: {
+      admin_assign_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _target_user_id: string
+        }
+        Returns: undefined
+      }
+      admin_create_gym: {
+        Args: {
+          _address?: string
+          _city?: string
+          _name: string
+          _owner_email: string
+          _phone?: string
+          _plan?: Database["public"]["Enums"]["gym_plan"]
+        }
+        Returns: string
+      }
       check_gym_member_limit: { Args: { _gym_id: string }; Returns: boolean }
       generate_member_id: { Args: { _gym_id: string }; Returns: string }
       generate_qr_token: { Args: never; Returns: string }
@@ -538,6 +757,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      ingest_attendance: {
+        Args: { _gym_id?: string; _qr_token: string }
+        Returns: Json
+      }
       is_gym_staff: {
         Args: { _gym_id: string; _user_id: string }
         Returns: boolean
@@ -546,6 +769,17 @@ export type Database = {
       owns_gym: {
         Args: { _gym_id: string; _user_id: string }
         Returns: boolean
+      }
+      renew_membership: {
+        Args: {
+          _amount?: number
+          _duration_days?: number
+          _member_id: string
+          _notes?: string
+          _payment_mode?: Database["public"]["Enums"]["payment_mode"]
+          _plan_id?: string
+        }
+        Returns: Json
       }
     }
     Enums: {
