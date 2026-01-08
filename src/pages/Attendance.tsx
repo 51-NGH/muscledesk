@@ -216,7 +216,7 @@ export default function Attendance() {
       </div>
 
       {/* Date Navigation & Search */}
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
+      <div className="flex items-center gap-3 mb-6">
         <div className="flex items-center gap-2 rounded-lg border border-border p-1 shrink-0">
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goToPreviousDay}>
             <ChevronLeft className="h-4 w-4" />
@@ -235,7 +235,7 @@ export default function Attendance() {
           </Button>
         </div>
 
-        <div className="relative flex-1">
+        <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search by name or ID..."
