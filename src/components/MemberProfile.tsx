@@ -74,7 +74,7 @@ export function MemberProfile({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="w-screen h-screen max-w-none max-h-none rounded-none p-0 overflow-y-auto">
         {/* Header */}
         <div className="flex items-center gap-3 sm:gap-4 p-4 sm:p-6 border-b border-border">
           <Button variant="ghost" size="icon" onClick={onClose}>
