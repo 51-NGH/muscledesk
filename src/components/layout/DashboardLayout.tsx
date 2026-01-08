@@ -3,6 +3,7 @@ import { AppSidebar } from "./AppSidebar";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
+import muscleDeskLogo from "@/assets/muscledesk-logo.png";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -12,14 +13,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background transition-colors duration-300">
       {/* Desktop Sidebar */}
       <div className="hidden lg:block">
         <AppSidebar />
       </div>
 
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-14 px-4 border-b border-border bg-card">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-14 px-4 border-b border-border bg-card transition-colors duration-300">
         <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon">
@@ -30,12 +31,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <AppSidebar onNavigate={() => setIsMobileMenuOpen(false)} />
           </SheetContent>
         </Sheet>
-        <span className="font-semibold text-foreground">MuscleDesk</span>
+        <div className="flex items-center gap-2">
+          <img 
+            src={muscleDeskLogo} 
+            alt="MuscleDesk" 
+            className="h-8 w-8 object-contain"
+          />
+          <span className="font-bold text-foreground tracking-tight">MuscleDesk</span>
+        </div>
         <div className="w-10" /> {/* Spacer for centering */}
       </div>
 
       {/* Main Content */}
-      <main className="lg:ml-[220px] min-h-screen p-4 pt-[72px] lg:pt-6 lg:p-6">
+      <main className="lg:ml-[220px] min-h-screen p-4 pt-[72px] lg:pt-6 lg:p-6 transition-colors duration-300">
         {children}
       </main>
     </div>
