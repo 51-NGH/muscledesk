@@ -1,15 +1,22 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { Button } from "@/components/ui/button";
+import {
+  useDashboardStats,
+  useMonthlyRevenue,
+  useMonthlyExpenses,
+  useDailyAttendance,
+  useMembers,
+} from "@/hooks/useGymData";
+import { format, subMonths } from "date-fns";
 import {
   DollarSign,
   Users,
   TrendingUp,
   Calendar,
   Download,
-  Filter,
 } from "lucide-react";
 import {
   Area,
@@ -26,83 +33,169 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend,
   LineChart,
 } from "recharts";
 
-const revenueData = [
-  { month: "Jan", revenue: 42000, expenses: 28000, profit: 14000 },
-  { month: "Feb", revenue: 48000, expenses: 30000, profit: 18000 },
-  { month: "Mar", revenue: 45000, expenses: 29000, profit: 16000 },
-  { month: "Apr", revenue: 52000, expenses: 31000, profit: 21000 },
-  { month: "May", revenue: 58000, expenses: 33000, profit: 25000 },
-  { month: "Jun", revenue: 65000, expenses: 35000, profit: 30000 },
-  { month: "Jul", revenue: 72000, expenses: 38000, profit: 34000 },
-];
-
-const membershipData = [
-  { name: "Premium", value: 450, color: "hsl(var(--md-teal))" },
-  { name: "Standard", value: 680, color: "hsl(var(--md-purple))" },
-  { name: "Basic", value: 320, color: "hsl(var(--md-pink))" },
-  { name: "Trial", value: 150, color: "hsl(var(--md-yellow))" },
-];
-
-const classPerformanceData = [
-  { name: "Mon", classes: 145, attendance: 132 },
-  { name: "Tue", classes: 178, attendance: 165 },
-  { name: "Wed", classes: 156, attendance: 148 },
-  { name: "Thu", classes: 168, attendance: 155 },
-  { name: "Fri", classes: 142, attendance: 130 },
-  { name: "Sat", classes: 189, attendance: 175 },
-  { name: "Sun", classes: 120, attendance: 108 },
-];
-
-const peakHoursData = [
-  { hour: "6am", visitors: 45 },
-  { hour: "8am", visitors: 120 },
-  { hour: "10am", visitors: 180 },
-  { hour: "12pm", visitors: 150 },
-  { hour: "2pm", visitors: 90 },
-  { hour: "4pm", visitors: 130 },
-  { hour: "6pm", visitors: 210 },
-  { hour: "8pm", visitors: 175 },
-  { hour: "10pm", visitors: 60 },
-];
-
-const timeRanges = ["7 Days", "30 Days", "90 Days", "1 Year"] as const;
+const timeRanges = ["7 Days", "30 Days", "90 Days", "6 Months"] as const;
 
 export default function Analytics() {
-  const [activeRange, setActiveRange] = useState<string>("7 Days");
+  const [activeRange, setActiveRange] = useState<string>("30 Days");
+  
+  const { data: stats, isLoading: statsLoading } = useDashboardStats();
+  const { data: monthlyRevenue = [] } = useMonthlyRevenue(6);
+  const { data: monthlyExpenses = [] } = useMonthlyExpenses(6);
+  const { data: members = [] } = useMembers();
+  
+  // Get days based on selected range
+  const daysBack = useMemo(() => {
+    switch (activeRange) {
+      case "7 Days": return 7;
+      case "30 Days": return 30;
+      case "90 Days": return 90;
+      case "6 Months": return 180;
+      default: return 30;
+    }
+  }, [activeRange]);
+  
+  const { data: dailyAttendance = [] } = useDailyAttendance(daysBack);
+
+  // Process revenue data for chart
+  const revenueChartData = useMemo(() => {
+    const revenueByMonth: Record<string, { revenue: number; expenses: number; profit: number }> = {};
+    
+    // Initialize with last 6 months
+    for (let i = 5; i >= 0; i--) {
+      const monthDate = subMonths(new Date(), i);
+      const monthKey = format(monthDate, "yyyy-MM");
+      revenueByMonth[monthKey] = { revenue: 0, expenses: 0, profit: 0 };
+    }
+    
+    // Add revenue data
+    monthlyRevenue.forEach((r: any) => {
+      const monthKey = format(new Date(r.month), "yyyy-MM");
+      if (revenueByMonth[monthKey]) {
+        revenueByMonth[monthKey].revenue = Number(r.total_revenue || 0);
+      }
+    });
+    
+    // Add expense data
+    monthlyExpenses.forEach((e: any) => {
+      const monthKey = format(new Date(e.month), "yyyy-MM");
+      if (revenueByMonth[monthKey]) {
+        revenueByMonth[monthKey].expenses += Number(e.total_amount || 0);
+      }
+    });
+    
+    // Calculate profit
+    Object.keys(revenueByMonth).forEach((key) => {
+      revenueByMonth[key].profit = revenueByMonth[key].revenue - revenueByMonth[key].expenses;
+    });
+    
+    return Object.entries(revenueByMonth)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, data]) => ({
+        month: format(new Date(month + "-01"), "MMM"),
+        ...data,
+      }));
+  }, [monthlyRevenue, monthlyExpenses]);
+
+  // Membership distribution data
+  const membershipData = useMemo(() => {
+    const planCounts: Record<string, number> = {};
+    
+    members.forEach((member) => {
+      const planName = member.plan_name || "No Plan";
+      planCounts[planName] = (planCounts[planName] || 0) + 1;
+    });
+    
+    const colors = [
+      "hsl(var(--md-teal))",
+      "hsl(var(--md-purple))",
+      "hsl(var(--md-pink))",
+      "hsl(var(--md-yellow))",
+      "hsl(var(--md-blue))",
+      "hsl(var(--md-orange))",
+    ];
+    
+    return Object.entries(planCounts).map(([name, value], index) => ({
+      name,
+      value,
+      color: colors[index % colors.length],
+    }));
+  }, [members]);
+
+  // Attendance trend data
+  const attendanceChartData = useMemo(() => {
+    if (dailyAttendance.length === 0) return [];
+    
+    return [...dailyAttendance]
+      .reverse()
+      .slice(-14) // Last 14 days for better visualization
+      .map((d: any) => ({
+        day: format(new Date(d.date), "MMM d"),
+        checkIns: Number(d.check_ins || 0),
+      }));
+  }, [dailyAttendance]);
+
+  // Peak hours data (simulated based on attendance - in real app would need hourly data)
+  const peakHoursData = useMemo(() => {
+    // This would need a dedicated RPC function for hourly data
+    // For now, create a reasonable distribution based on total attendance
+    const totalAttendance = dailyAttendance.reduce((sum: number, d: any) => sum + Number(d.check_ins || 0), 0);
+    const avgPerDay = dailyAttendance.length > 0 ? totalAttendance / dailyAttendance.length : 0;
+    
+    return [
+      { hour: "6am", visitors: Math.round(avgPerDay * 0.08) },
+      { hour: "8am", visitors: Math.round(avgPerDay * 0.15) },
+      { hour: "10am", visitors: Math.round(avgPerDay * 0.12) },
+      { hour: "12pm", visitors: Math.round(avgPerDay * 0.08) },
+      { hour: "2pm", visitors: Math.round(avgPerDay * 0.05) },
+      { hour: "4pm", visitors: Math.round(avgPerDay * 0.10) },
+      { hour: "6pm", visitors: Math.round(avgPerDay * 0.20) },
+      { hour: "8pm", visitors: Math.round(avgPerDay * 0.15) },
+      { hour: "10pm", visitors: Math.round(avgPerDay * 0.07) },
+    ];
+  }, [dailyAttendance]);
+
+  // Calculate attendance rate
+  const attendanceRate = useMemo(() => {
+    if (!stats?.activeMembers || stats.activeMembers === 0) return 0;
+    const avgDailyAttendance = dailyAttendance.length > 0 
+      ? dailyAttendance.reduce((sum: number, d: any) => sum + Number(d.check_ins || 0), 0) / dailyAttendance.length 
+      : 0;
+    return Math.min(100, Math.round((avgDailyAttendance / stats.activeMembers) * 100));
+  }, [dailyAttendance, stats]);
+
+  // Calculate total revenue
+  const totalRevenue = useMemo(() => {
+    return monthlyRevenue.reduce((sum: number, r: any) => sum + Number(r.total_revenue || 0), 0);
+  }, [monthlyRevenue]);
 
   return (
     <DashboardLayout>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <PageHeader
           title="Analytics"
           description="Comprehensive insights and performance metrics"
           className="mb-0"
         />
-        <div className="flex items-center gap-3">
-          <div className="flex items-center rounded-lg border border-border p-1">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center rounded-lg border border-border p-1 bg-card overflow-x-auto">
             {timeRanges.map((range) => (
               <button
                 key={range}
                 onClick={() => setActiveRange(range)}
-                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 whitespace-nowrap ${
                   activeRange === range
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
                 {range}
               </button>
             ))}
           </div>
-          <Button variant="outline">
-            <Filter className="mr-2 h-4 w-4" />
-            Filters
-          </Button>
-          <Button>
+          <Button variant="outline" size="sm" className="hidden sm:flex">
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
@@ -110,47 +203,47 @@ export default function Analytics() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
         <StatCard
           title="Total Revenue"
-          value="$72,450"
+          value={statsLoading ? "..." : `₹${totalRevenue.toLocaleString()}`}
+          subtitle="Last 6 months"
           icon={DollarSign}
           iconVariant="teal"
-          change={18.2}
         />
         <StatCard
           title="Active Members"
-          value="2,847"
+          value={statsLoading ? "..." : stats?.activeMembers || 0}
+          subtitle={`${stats?.totalMembers || 0} total`}
           icon={Users}
           iconVariant="green"
-          change={12.5}
         />
         <StatCard
-          title="Avg Attendance"
-          value="94.2%"
+          title="Attendance Rate"
+          value={statsLoading ? "..." : `${attendanceRate}%`}
+          subtitle="Avg daily"
           icon={TrendingUp}
           iconVariant="orange"
-          change={3.1}
         />
         <StatCard
-          title="Classes/Week"
-          value="156"
+          title="Net Profit"
+          value={statsLoading ? "..." : `₹${(stats?.profit || 0).toLocaleString()}`}
+          subtitle="This month"
           icon={Calendar}
-          iconVariant="red"
-          change={-2.4}
+          iconVariant="blue"
         />
       </div>
 
       {/* Revenue Analysis & Membership Plans */}
-      <div className="grid grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
         {/* Revenue Analysis */}
-        <div className="col-span-2 rounded-xl border border-border bg-card p-5">
+        <div className="lg:col-span-2 rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-foreground">Revenue Analysis</h3>
             <p className="text-sm text-muted-foreground">Revenue, expenses, and profit trends</p>
           </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <ComposedChart data={revenueData}>
+          <ResponsiveContainer width="100%" height={280}>
+            <ComposedChart data={revenueChartData}>
               <defs>
                 <linearGradient id="colorRevenueArea" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="hsl(var(--md-teal))" stopOpacity={0.3} />
@@ -162,20 +255,23 @@ export default function Analytics() {
                 dataKey="month"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
               />
               <YAxis
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
-                tickFormatter={(value) => `$${value / 1000}k`}
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                tickFormatter={(value) => value >= 1000 ? `₹${value / 1000}k` : `₹${value}`}
+                width={55}
               />
               <Tooltip
                 contentStyle={{
                   backgroundColor: "hsl(var(--card))",
                   border: "1px solid hsl(var(--border))",
                   borderRadius: "8px",
+                  fontSize: "12px",
                 }}
+                formatter={(value: number, name: string) => [`₹${value.toLocaleString()}`, name.charAt(0).toUpperCase() + name.slice(1)]}
               />
               <Area
                 type="monotone"
@@ -206,94 +302,127 @@ export default function Analytics() {
           <div className="flex items-center justify-center gap-6 mt-4">
             <div className="flex items-center gap-2">
               <div className="h-3 w-3 rounded-full bg-md-teal" />
-              <span className="text-sm text-muted-foreground">revenue</span>
+              <span className="text-xs sm:text-sm text-muted-foreground">Revenue</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="h-3 w-3 rounded-full bg-md-red" />
-              <span className="text-sm text-muted-foreground">expenses</span>
+              <span className="text-xs sm:text-sm text-muted-foreground">Expenses</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="h-3 w-3 rounded-full bg-md-green" />
-              <span className="text-sm text-muted-foreground">profit</span>
+              <span className="text-xs sm:text-sm text-muted-foreground">Profit</span>
             </div>
           </div>
         </div>
 
         {/* Membership Plans */}
-        <div className="rounded-xl border border-border bg-card p-5">
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-foreground">Membership Plans</h3>
+            <p className="text-sm text-muted-foreground">Distribution by plan</p>
           </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie
-                data={membershipData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={3}
-                dataKey="value"
-              >
-                {membershipData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
+          {membershipData.length === 0 ? (
+            <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+              <p className="text-sm">No members yet</p>
+            </div>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={180}>
+                <PieChart>
+                  <Pie
+                    data={membershipData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={70}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {membershipData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                    formatter={(value: number, name: string) => [value, name]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="grid grid-cols-2 gap-2 mt-4">
+                {membershipData.slice(0, 4).map((item) => (
+                  <div key={item.name} className="flex items-center gap-2">
+                    <div
+                      className="h-3 w-3 rounded-full shrink-0"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="text-xs text-muted-foreground truncate">{item.name}</span>
+                    <span className="text-xs font-medium text-foreground ml-auto">{item.value}</span>
+                  </div>
                 ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="grid grid-cols-2 gap-3 mt-4">
-            {membershipData.map((item) => (
-              <div key={item.name} className="flex items-center gap-2">
-                <div
-                  className="h-3 w-3 rounded-full"
-                  style={{ backgroundColor: item.color }}
-                />
-                <span className="text-sm text-muted-foreground">{item.name}</span>
-                <span className="text-sm font-medium text-foreground ml-auto">{item.value}</span>
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Class Performance & Peak Hours */}
-      <div className="grid grid-cols-2 gap-6">
-        {/* Class Performance */}
-        <div className="rounded-xl border border-border bg-card p-5">
+      {/* Attendance Trend & Peak Hours */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Attendance Trend */}
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold text-foreground">Class Performance</h3>
+            <h3 className="text-lg font-semibold text-foreground">Attendance Trend</h3>
+            <p className="text-sm text-muted-foreground">Daily check-ins over time</p>
           </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={classPerformanceData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis
-                dataKey="name"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
-              />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                }}
-              />
-              <Bar dataKey="classes" fill="hsl(var(--md-blue))" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="attendance" fill="hsl(var(--md-purple))" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {attendanceChartData.length === 0 ? (
+            <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+              <p className="text-sm">No attendance data</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={attendanceChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis
+                  dataKey="day"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+                  interval="preserveStartEnd"
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                  width={30}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                    fontSize: "12px",
+                  }}
+                  formatter={(value: number) => [value, "Check-ins"]}
+                />
+                <Bar 
+                  dataKey="checkIns" 
+                  fill="hsl(var(--primary))" 
+                  radius={[4, 4, 0, 0]} 
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         {/* Peak Hours */}
-        <div className="rounded-xl border border-border bg-card p-5">
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-foreground">Peak Hours</h3>
+            <p className="text-sm text-muted-foreground">Estimated visitor distribution</p>
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={peakHoursData}>
@@ -302,19 +431,22 @@ export default function Analytics() {
                 dataKey="hour"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
               />
               <YAxis
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                width={30}
               />
               <Tooltip
                 contentStyle={{
                   backgroundColor: "hsl(var(--card))",
                   border: "1px solid hsl(var(--border))",
                   borderRadius: "8px",
+                  fontSize: "12px",
                 }}
+                formatter={(value: number) => [value, "Visitors"]}
               />
               <Line
                 type="monotone"
