@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
@@ -38,6 +38,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { format, subDays, addDays } from "date-fns";
+
+// Live Clock Component
+function LiveClock() {
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border">
+      <Clock className="h-4 w-4 text-md-teal" />
+      <span className="text-sm font-mono font-medium text-foreground tabular-nums">
+        {format(time, "h:mm:ss a")}
+      </span>
+    </div>
+  );
+}
 
 export default function Attendance() {
   const { gymId } = useAuth();
@@ -227,9 +246,12 @@ export default function Attendance() {
         </div>
 
         {isToday && (
-          <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground shrink-0">
-            <div className="h-2 w-2 rounded-full bg-md-green animate-pulse" />
-            Live
+          <div className="hidden sm:flex items-center gap-3 shrink-0">
+            <LiveClock />
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="h-2 w-2 rounded-full bg-md-green animate-pulse" />
+              Live
+            </div>
           </div>
         )}
       </div>
