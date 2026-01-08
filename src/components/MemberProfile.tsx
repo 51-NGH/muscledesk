@@ -76,20 +76,20 @@ export function MemberProfile({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
         {/* Header */}
-        <div className="flex items-center gap-4 p-6 border-b border-border">
+        <div className="flex items-center gap-3 sm:gap-4 p-4 sm:p-6 border-b border-border">
           <Button variant="ghost" size="icon" onClick={onClose}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Member Profile</h2>
-            <p className="text-sm text-muted-foreground">View and manage member details</p>
+            <h2 className="text-lg sm:text-xl font-semibold text-foreground">Member Profile</h2>
+            <p className="text-xs sm:text-sm text-muted-foreground">View and manage member details</p>
           </div>
         </div>
 
-        <div className="p-6">
-          <div className="grid grid-cols-2 gap-6">
+        <div className="p-4 sm:p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Left Column - Profile Card */}
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Profile Info Card */}
               <div className="rounded-xl border border-border bg-card p-6">
                 <div className="flex flex-col items-center text-center mb-6">

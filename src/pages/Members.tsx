@@ -289,18 +289,19 @@ export default function Members() {
   return (
     <DashboardLayout>
       <PageHeader title="Members" description="Manage your gym members and memberships">
-        <Button variant="outline" onClick={handleExport}>
+        <Button variant="outline" size="sm" onClick={handleExport} className="hidden sm:flex">
           <Download className="mr-2 h-4 w-4" />
           Export
         </Button>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
+        <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
           <UserPlus className="mr-2 h-4 w-4" />
-          Add Member
+          <span className="hidden sm:inline">Add Member</span>
+          <span className="sm:hidden">Add</span>
         </Button>
       </PageHeader>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
         <StatCard title="Total Members" value={stats.total} icon={Users} iconVariant="teal" />
         <StatCard title="Active Members" value={stats.active} icon={Users} iconVariant="green" />
         <StatCard title="Expiring Soon" value={stats.expiring} icon={TrendingUp} iconVariant="orange" />
@@ -308,8 +309,8 @@ export default function Members() {
       </div>
 
       {/* Search & Filters */}
-      <div className="flex items-center gap-4 mb-6">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search by name, phone, or ID..."
@@ -318,12 +319,12 @@ export default function Members() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="flex items-center rounded-lg border border-border p-1">
+        <div className="flex items-center rounded-lg border border-border p-1 overflow-x-auto">
           {filterTabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveFilter(tab)}
-              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+              className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
                 activeFilter === tab
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground"
@@ -337,11 +338,11 @@ export default function Members() {
 
       {/* Member Cards Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="rounded-xl border border-border bg-card p-5 animate-pulse">
+            <div key={i} className="rounded-xl border border-border bg-card p-4 sm:p-5 animate-pulse">
               <div className="flex flex-col items-center">
-                <div className="h-16 w-16 rounded-full bg-muted" />
+                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-muted" />
                 <div className="h-4 w-24 bg-muted rounded mt-3" />
                 <div className="h-3 w-32 bg-muted rounded mt-2" />
               </div>
@@ -349,10 +350,10 @@ export default function Members() {
           ))}
         </div>
       ) : filteredMembers.length === 0 ? (
-        <div className="rounded-xl border border-border bg-card p-10 text-center">
-          <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">No Members Found</h3>
-          <p className="text-muted-foreground mb-4">
+        <div className="rounded-xl border border-border bg-card p-8 sm:p-10 text-center">
+          <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">No Members Found</h3>
+          <p className="text-sm text-muted-foreground mb-4">
             {searchQuery ? "Try adjusting your search" : "Add your first member to get started"}
           </p>
           {!searchQuery && (
@@ -363,14 +364,14 @@ export default function Members() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
           {filteredMembers.map((member) => (
             <div
               key={member.id}
-              className="rounded-xl border border-border bg-card p-5 hover:border-primary/50 transition-colors group relative"
+              className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:border-primary/50 transition-colors group relative"
             >
               {/* Action Menu */}
-              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute top-2 right-2 sm:top-3 sm:right-3 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -400,15 +401,15 @@ export default function Members() {
               </div>
 
               <div
-                className="flex flex-col items-center text-center mb-4 cursor-pointer"
+                className="flex flex-col items-center text-center mb-3 sm:mb-4 cursor-pointer"
                 onClick={() => openViewDialog(member)}
               >
                 <MemberAvatar name={member.full_name} size="lg" />
-                <h3 className="mt-3 font-semibold text-foreground">{member.full_name}</h3>
+                <h3 className="mt-2 sm:mt-3 font-semibold text-sm sm:text-base text-foreground">{member.full_name}</h3>
                 <p className="text-xs text-muted-foreground font-mono">{member.member_id}</p>
               </div>
 
-              <div className="space-y-2 text-sm">
+              <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Status</span>
                   <StatusBadge status={member.is_blocked ? "blocked" : member.status} />
@@ -423,9 +424,9 @@ export default function Members() {
                 </div>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-border text-center">
+              <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t border-border text-center">
                 <span className="text-xs text-muted-foreground">Expires</span>
-                <p className="text-sm font-medium text-foreground">{format(new Date(member.expiry_date), "MMM d, yyyy")}</p>
+                <p className="text-xs sm:text-sm font-medium text-foreground">{format(new Date(member.expiry_date), "MMM d, yyyy")}</p>
               </div>
             </div>
           ))}
