@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAttendance, useMembers, useDashboardStats } from "@/hooks/useGymData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { QRScanner } from "@/components/QRScanner";
 import {
   Calendar,
   Clock,
@@ -21,6 +22,7 @@ import {
   TrendingUp,
   ChevronLeft,
   ChevronRight,
+  Camera,
 } from "lucide-react";
 import {
   Dialog,
@@ -42,6 +44,7 @@ export default function Attendance() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isManualCheckInOpen, setIsManualCheckInOpen] = useState(false);
+  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -91,6 +94,38 @@ export default function Attendance() {
     }
   };
 
+  const handleQRScan = async (qrToken: string) => {
+    if (!gymId) {
+      return { success: false, error: "No gym selected" };
+    }
+
+    try {
+      const { data, error } = await supabase.rpc("ingest_attendance", {
+        _qr_token: qrToken,
+        _gym_id: gymId,
+      });
+
+      if (error) throw error;
+
+      const result = data as {
+        success: boolean;
+        message?: string;
+        error?: string;
+        member_name?: string;
+        member_id?: string;
+      };
+
+      if (result.success) {
+        refetch();
+        toast.success(`${result.member_name} checked in!`);
+      }
+
+      return result;
+    } catch (error: any) {
+      return { success: false, error: error.message || "Scan failed" };
+    }
+  };
+
   const goToPreviousDay = () => {
     const prev = subDays(new Date(selectedDate), 1);
     setSelectedDate(prev.toISOString().split("T")[0]);
@@ -121,6 +156,10 @@ export default function Attendance() {
   return (
     <DashboardLayout>
       <PageHeader title="Attendance" description="Track member check-ins and attendance">
+        <Button variant="outline" onClick={() => setIsQRScannerOpen(true)}>
+          <Camera className="mr-2 h-4 w-4" />
+          Scan QR
+        </Button>
         <Button onClick={() => setIsManualCheckInOpen(true)}>
           <UserCheck className="mr-2 h-4 w-4" />
           Manual Check-In
@@ -287,6 +326,13 @@ export default function Attendance() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* QR Scanner */}
+      <QRScanner
+        isOpen={isQRScannerOpen}
+        onClose={() => setIsQRScannerOpen(false)}
+        onScan={handleQRScan}
+      />
     </DashboardLayout>
   );
 }
