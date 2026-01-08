@@ -7,7 +7,6 @@ import {
   BarChart3,
   DollarSign,
   Settings,
-  Dumbbell,
   LogOut,
   Receipt,
 } from "lucide-react";
@@ -15,6 +14,8 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserProfile } from "@/hooks/useGymData";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import muscleDeskLogo from "@/assets/muscledesk-logo.png";
 
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -77,14 +78,16 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
   };
 
   return (
-    <aside className="lg:fixed lg:left-0 lg:top-0 lg:z-40 h-full lg:h-screen w-full lg:w-[220px] border-r border-border bg-card flex flex-col">
+    <aside className="lg:fixed lg:left-0 lg:top-0 lg:z-40 h-full lg:h-screen w-full lg:w-[220px] border-r border-border bg-card flex flex-col transition-colors duration-300">
       {/* Logo/Brand Section */}
-      <div className="flex items-center gap-3 px-5 py-6 border-b border-border">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <Dumbbell className="h-5 w-5" />
-        </div>
+      <div className="flex items-center gap-3 px-5 py-5 border-b border-border">
+        <img 
+          src={muscleDeskLogo} 
+          alt="MuscleDesk" 
+          className="h-10 w-10 object-contain transition-transform duration-300 hover:scale-110"
+        />
         <div className="flex flex-col">
-          <span className="font-semibold text-foreground">MuscleDesk</span>
+          <span className="font-bold text-foreground tracking-tight">MuscleDesk</span>
           <span className="text-xs text-muted-foreground">{getRoleLabel()}</span>
         </div>
       </div>
@@ -121,10 +124,19 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
         </ul>
       </nav>
 
+      {/* Theme Toggle */}
+      <div className="border-t border-border px-4 py-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">Theme</span>
+          <ThemeToggle />
+        </div>
+      </div>
+
+      {/* User Profile */}
       <div className="border-t border-border p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="member-avatar h-9 w-9 text-sm">{getInitials()}</div>
+            <div className="member-avatar h-9 w-9 text-sm transition-transform duration-300 hover:scale-105">{getInitials()}</div>
             <div className="flex flex-col min-w-0">
               <span className="text-sm font-medium text-foreground truncate max-w-[100px]">
                 {getDisplayName()}
@@ -136,7 +148,7 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
             variant="ghost"
             size="icon"
             onClick={handleSignOut}
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground hover:text-destructive transition-colors"
             title="Sign out"
           >
             <LogOut className="h-4 w-4" />

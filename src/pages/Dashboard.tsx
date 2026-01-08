@@ -5,6 +5,7 @@ import { MemberAvatar } from "@/components/ui/member-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDashboardStats, useMembers, useAttendance, useMonthlyRevenue, useExpiringMembers, useUserProfile, useDailyAttendance, usePayments } from "@/hooks/useGymData";
 import { useNavigate } from "react-router-dom";
@@ -16,7 +17,6 @@ import {
   Calendar,
   TrendingUp,
   Search,
-  Bell,
   UserPlus,
   Activity,
   ArrowUpRight,
@@ -159,19 +159,7 @@ export default function Dashboard() {
               }}
             />
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative shrink-0 hover:scale-110 transition-transform"
-            onClick={() => navigate("/members?filter=Expiring")}
-          >
-            <Bell className="h-5 w-5" />
-            {(stats?.expiringMembers || 0) > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground animate-pulse-subtle">
-                {stats?.expiringMembers}
-              </span>
-            )}
-          </Button>
+          <NotificationCenter />
         </div>
       </div>
 
