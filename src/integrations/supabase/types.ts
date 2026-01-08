@@ -268,12 +268,12 @@ export type Database = {
           id?: string
           is_blocked?: boolean
           last_visit_at?: string | null
-          member_id: string
+          member_id?: string
           notes?: string | null
           phone: string
           plan_id?: string | null
           plan_name?: string | null
-          qr_token: string
+          qr_token?: string
           start_date?: string
           status?: Database["public"]["Enums"]["member_status"]
           total_visits?: number
