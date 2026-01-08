@@ -287,6 +287,13 @@ export default function Dashboard() {
                     <p className="text-sm font-medium text-foreground truncate">{a.member?.full_name || "Unknown"}</p>
                     <p className="text-xs text-muted-foreground">{format(new Date(a.check_in_at), "h:mm a")}</p>
                   </div>
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                    a.source === 'qr' 
+                      ? 'bg-primary/10 text-primary' 
+                      : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {a.source === 'qr' ? 'QR' : 'Manual'}
+                  </span>
                 </div>
               ))}
             </div>
