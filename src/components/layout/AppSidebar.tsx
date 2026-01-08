@@ -9,17 +9,20 @@ import {
   Settings,
   Dumbbell,
   LogOut,
+  Receipt,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserProfile } from "@/hooks/useGymData";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Members", url: "/members", icon: Users },
-  { title: "Plans", url: "/plans", icon: CreditCard },
   { title: "Attendance", url: "/attendance", icon: Calendar },
+  { title: "Plans", url: "/plans", icon: CreditCard },
   { title: "Payments", url: "/payments", icon: DollarSign },
+  { title: "Expenses", url: "/expenses", icon: Receipt },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
@@ -32,6 +35,7 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut, role } = useAuth();
+  const { data: profile } = useUserProfile();
 
   const handleSignOut = async () => {
     await signOut();
@@ -42,10 +46,21 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
     onNavigate?.();
   };
 
-  // Get initials from email or name
+  // Get initials from name or email
   const getInitials = () => {
+    if (profile?.full_name) {
+      return profile.full_name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+    }
     if (!user?.email) return "U";
     return user.email.substring(0, 2).toUpperCase();
+  };
+
+  // Get display name
+  const getDisplayName = () => {
+    if (profile?.full_name) {
+      return profile.full_name.split(" ")[0];
+    }
+    return user?.email?.split("@")[0] || "User";
   };
 
   const getRoleLabel = () => {
@@ -53,7 +68,7 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
       case "super_admin":
         return "Super Admin";
       case "gym_owner":
-        return "Owner";
+        return "Gym Owner";
       case "staff":
         return "Staff";
       default:
@@ -106,14 +121,13 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
         </ul>
       </nav>
 
-      {/* User Section */}
       <div className="border-t border-border p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="member-avatar h-9 w-9 text-sm">{getInitials()}</div>
             <div className="flex flex-col min-w-0">
               <span className="text-sm font-medium text-foreground truncate max-w-[100px]">
-                {user?.email?.split("@")[0] || "User"}
+                {getDisplayName()}
               </span>
               <span className="text-xs text-muted-foreground">{getRoleLabel()}</span>
             </div>

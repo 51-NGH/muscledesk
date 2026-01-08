@@ -9,6 +9,28 @@ export type PaymentMode = "cash" | "upi" | "card";
 export type PaymentStatus = "completed" | "pending" | "failed";
 export type ExpenseCategory = "rent" | "salary" | "electricity" | "maintenance" | "other";
 
+// ============= USER PROFILE =============
+export function useUserProfile() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["user_profile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name, email, avatar_url")
+        .eq("id", user.id)
+        .single();
+
+      if (error) return null;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+}
+
 export interface Member {
   id: string;
   gym_id: string;
@@ -678,6 +700,48 @@ export function useMonthlyRevenue(monthsBack: number = 6) {
       const { data, error } = await supabase.rpc("get_monthly_revenue", {
         _gym_id: gymId,
         _months_back: monthsBack,
+      });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!gymId,
+  });
+}
+
+// ============= MONTHLY EXPENSES =============
+export function useMonthlyExpenses(monthsBack: number = 6) {
+  const { gymId } = useAuth();
+
+  return useQuery({
+    queryKey: ["monthly_expenses", gymId, monthsBack],
+    queryFn: async () => {
+      if (!gymId) return [];
+
+      const { data, error } = await supabase.rpc("get_monthly_expenses", {
+        _gym_id: gymId,
+        _months_back: monthsBack,
+      });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!gymId,
+  });
+}
+
+// ============= DAILY ATTENDANCE =============
+export function useDailyAttendance(daysBack: number = 7) {
+  const { gymId } = useAuth();
+
+  return useQuery({
+    queryKey: ["daily_attendance", gymId, daysBack],
+    queryFn: async () => {
+      if (!gymId) return [];
+
+      const { data, error } = await supabase.rpc("get_daily_attendance", {
+        _gym_id: gymId,
+        _days_back: daysBack,
       });
 
       if (error) throw error;
