@@ -1,0 +1,360 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+
+// Types
+export type MemberStatus = "active" | "expiring_soon" | "expired" | "blocked";
+export type PaymentMode = "cash" | "upi" | "card";
+export type PaymentStatus = "completed" | "pending" | "failed";
+export type ExpenseCategory = "rent" | "salary" | "electricity" | "maintenance" | "other";
+
+export interface Member {
+  id: string;
+  gym_id: string;
+  member_id: string;
+  qr_token: string;
+  full_name: string;
+  phone: string;
+  email: string | null;
+  plan_id: string | null;
+  plan_name: string | null;
+  start_date: string;
+  expiry_date: string;
+  custom_price: number | null;
+  status: MemberStatus;
+  is_blocked: boolean;
+  total_visits: number;
+  last_visit_at: string | null;
+  created_at: string;
+}
+
+export interface Payment {
+  id: string;
+  gym_id: string;
+  member_id: string;
+  amount: number;
+  payment_mode: PaymentMode;
+  status: PaymentStatus;
+  transaction_id: string | null;
+  plan_name: string | null;
+  created_at: string;
+}
+
+export interface PaymentWithMember extends Payment {
+  member: { full_name: string; member_id: string } | null;
+}
+
+export interface Expense {
+  id: string;
+  gym_id: string;
+  category: ExpenseCategory;
+  amount: number;
+  description: string | null;
+  expense_date: string;
+  created_at: string;
+}
+
+export interface Attendance {
+  id: string;
+  gym_id: string;
+  member_id: string;
+  check_in_at: string;
+  source: "qr" | "manual";
+}
+
+export interface AttendanceWithMember extends Attendance {
+  member: { full_name: string; member_id: string; status: MemberStatus } | null;
+}
+
+export interface MembershipPlan {
+  id: string;
+  gym_id: string;
+  name: string;
+  duration_days: number;
+  price: number;
+  is_active: boolean;
+}
+
+// Hooks
+export function useMembers() {
+  const { gymId } = useAuth();
+
+  return useQuery({
+    queryKey: ["members", gymId],
+    queryFn: async () => {
+      if (!gymId) return [];
+      
+      const { data, error } = await supabase
+        .from("members")
+        .select("*")
+        .eq("gym_id", gymId)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return (data || []) as Member[];
+    },
+    enabled: !!gymId,
+  });
+}
+
+export function useCreateMember() {
+  const { gymId } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (member: {
+      full_name: string;
+      phone: string;
+      email?: string;
+      plan_id?: string;
+      plan_name?: string;
+      expiry_date: string;
+      custom_price?: number;
+    }) => {
+      if (!gymId) throw new Error("No gym selected");
+
+      const { data, error } = await supabase
+        .from("members")
+        .insert([{
+          gym_id: gymId,
+          full_name: member.full_name,
+          phone: member.phone,
+          email: member.email || null,
+          plan_id: member.plan_id || null,
+          plan_name: member.plan_name || null,
+          expiry_date: member.expiry_date,
+          custom_price: member.custom_price || null,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["members", gymId] });
+      toast.success("Member added successfully!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function usePayments() {
+  const { gymId } = useAuth();
+
+  return useQuery({
+    queryKey: ["payments", gymId],
+    queryFn: async () => {
+      if (!gymId) return [];
+
+      const { data, error } = await supabase
+        .from("payments")
+        .select("*, member:members(full_name, member_id)")
+        .eq("gym_id", gymId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return (data || []) as unknown as PaymentWithMember[];
+    },
+    enabled: !!gymId,
+  });
+}
+
+export function useCreatePayment() {
+  const { gymId, user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payment: {
+      member_id: string;
+      amount: number;
+      payment_mode: PaymentMode;
+      plan_id?: string;
+      plan_name?: string;
+      new_start_date?: string;
+      new_expiry_date?: string;
+    }) => {
+      if (!gymId) throw new Error("No gym selected");
+
+      const { data, error } = await supabase
+        .from("payments")
+        .insert([{
+          gym_id: gymId,
+          created_by: user?.id || null,
+          member_id: payment.member_id,
+          amount: payment.amount,
+          payment_mode: payment.payment_mode,
+          plan_id: payment.plan_id || null,
+          plan_name: payment.plan_name || null,
+          new_start_date: payment.new_start_date || null,
+          new_expiry_date: payment.new_expiry_date || null,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Update member expiry if renewal
+      if (payment.new_expiry_date) {
+        await supabase
+          .from("members")
+          .update({
+            expiry_date: payment.new_expiry_date,
+            start_date: payment.new_start_date,
+          })
+          .eq("id", payment.member_id);
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["payments", gymId] });
+      queryClient.invalidateQueries({ queryKey: ["members", gymId] });
+      toast.success("Payment recorded successfully!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useExpenses() {
+  const { gymId } = useAuth();
+
+  return useQuery({
+    queryKey: ["expenses", gymId],
+    queryFn: async () => {
+      if (!gymId) return [];
+
+      const { data, error } = await supabase
+        .from("expenses")
+        .select("*")
+        .eq("gym_id", gymId)
+        .order("expense_date", { ascending: false });
+
+      if (error) throw error;
+      return (data || []) as Expense[];
+    },
+    enabled: !!gymId,
+  });
+}
+
+export function useAttendance(date?: string) {
+  const { gymId } = useAuth();
+
+  return useQuery({
+    queryKey: ["attendance", gymId, date],
+    queryFn: async () => {
+      if (!gymId) return [];
+
+      let query = supabase
+        .from("attendance")
+        .select("*, member:members(full_name, member_id, status)")
+        .eq("gym_id", gymId)
+        .order("check_in_at", { ascending: false });
+
+      if (date) {
+        query = query.gte("check_in_at", `${date}T00:00:00`).lt("check_in_at", `${date}T23:59:59`);
+      }
+
+      const { data, error } = await query.limit(100);
+
+      if (error) throw error;
+      return (data || []) as unknown as AttendanceWithMember[];
+    },
+    enabled: !!gymId,
+  });
+}
+
+export function useMembershipPlans() {
+  const { gymId } = useAuth();
+
+  return useQuery({
+    queryKey: ["membership_plans", gymId],
+    queryFn: async () => {
+      if (!gymId) return [];
+
+      const { data, error } = await supabase
+        .from("membership_plans")
+        .select("*")
+        .eq("gym_id", gymId)
+        .eq("is_active", true)
+        .order("price", { ascending: true });
+
+      if (error) throw error;
+      return (data || []) as MembershipPlan[];
+    },
+    enabled: !!gymId,
+  });
+}
+
+export function useDashboardStats() {
+  const { gymId } = useAuth();
+
+  return useQuery({
+    queryKey: ["dashboard_stats", gymId],
+    queryFn: async () => {
+      if (!gymId) return null;
+
+      // Get member counts
+      const { data: members } = await supabase
+        .from("members")
+        .select("id, status")
+        .eq("gym_id", gymId)
+        .is("deleted_at", null);
+
+      const totalMembers = members?.length || 0;
+      const activeMembers = members?.filter((m) => m.status === "active").length || 0;
+      const expiringMembers = members?.filter((m) => m.status === "expiring_soon").length || 0;
+      const expiredMembers = members?.filter((m) => m.status === "expired").length || 0;
+
+      // Get today's attendance
+      const today = new Date().toISOString().split("T")[0];
+      const { data: todayAttendance } = await supabase
+        .from("attendance")
+        .select("id")
+        .eq("gym_id", gymId)
+        .gte("check_in_at", `${today}T00:00:00`)
+        .lt("check_in_at", `${today}T23:59:59`);
+
+      // Get this month's revenue
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const { data: monthPayments } = await supabase
+        .from("payments")
+        .select("amount")
+        .eq("gym_id", gymId)
+        .eq("status", "completed")
+        .gte("created_at", startOfMonth.toISOString());
+
+      const monthlyRevenue = monthPayments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+
+      // Get this month's expenses
+      const { data: monthExpenses } = await supabase
+        .from("expenses")
+        .select("amount")
+        .eq("gym_id", gymId)
+        .gte("expense_date", startOfMonth.toISOString().split("T")[0]);
+
+      const monthlyExpenses = monthExpenses?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+
+      return {
+        totalMembers,
+        activeMembers,
+        expiringMembers,
+        expiredMembers,
+        todayAttendance: todayAttendance?.length || 0,
+        monthlyRevenue,
+        monthlyExpenses,
+        profit: monthlyRevenue - monthlyExpenses,
+      };
+    },
+    enabled: !!gymId,
+  });
+}
