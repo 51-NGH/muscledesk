@@ -39,7 +39,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Member Portal Routes */}
+            {/* Member Portal Routes - uses MemberAuthProvider */}
             <Route path="/member/login" element={
               <MemberAuthProvider>
                 <MemberLogin />
@@ -66,54 +66,24 @@ const App = () => (
               </MemberAuthProvider>
             } />
 
-            {/* Admin Routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={
+            {/* Admin Routes - wrapped in AuthProvider */}
+            <Route path="/*" element={
               <AuthProvider>
-                <ProtectedRoute><Dashboard /></ProtectedRoute>
+                <Routes>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                  <Route path="/members" element={<ProtectedRoute><Members /></ProtectedRoute>} />
+                  <Route path="/plans" element={<ProtectedRoute><Plans /></ProtectedRoute>} />
+                  <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
+                  <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+                  <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
+                  <Route path="/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
+                  <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                  <Route path="/super-admin" element={<ProtectedRoute requireRole="super_admin"><SuperAdmin /></ProtectedRoute>} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
               </AuthProvider>
             } />
-            <Route path="/members" element={
-              <AuthProvider>
-                <ProtectedRoute><Members /></ProtectedRoute>
-              </AuthProvider>
-            } />
-            <Route path="/plans" element={
-              <AuthProvider>
-                <ProtectedRoute><Plans /></ProtectedRoute>
-              </AuthProvider>
-            } />
-            <Route path="/attendance" element={
-              <AuthProvider>
-                <ProtectedRoute><Attendance /></ProtectedRoute>
-              </AuthProvider>
-            } />
-            <Route path="/analytics" element={
-              <AuthProvider>
-                <ProtectedRoute><Analytics /></ProtectedRoute>
-              </AuthProvider>
-            } />
-            <Route path="/payments" element={
-              <AuthProvider>
-                <ProtectedRoute><Payments /></ProtectedRoute>
-              </AuthProvider>
-            } />
-            <Route path="/expenses" element={
-              <AuthProvider>
-                <ProtectedRoute><Expenses /></ProtectedRoute>
-              </AuthProvider>
-            } />
-            <Route path="/settings" element={
-              <AuthProvider>
-                <ProtectedRoute><Settings /></ProtectedRoute>
-              </AuthProvider>
-            } />
-            <Route path="/super-admin" element={
-              <AuthProvider>
-                <ProtectedRoute requireRole="super_admin"><SuperAdmin /></ProtectedRoute>
-              </AuthProvider>
-            } />
-            <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
