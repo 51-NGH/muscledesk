@@ -9,6 +9,7 @@ import {
   Settings,
   LogOut,
   Receipt,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,6 +28,8 @@ const navItems = [
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
+
+const superAdminNavItem = { title: "Super Admin", url: "/super-admin", icon: Shield };
 
 interface AppSidebarProps {
   onNavigate?: () => void;
@@ -95,6 +98,24 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 overflow-y-auto">
         <ul className="space-y-1">
+          {/* Super Admin link - only for super_admin */}
+          {role === "super_admin" && (
+            <li>
+              <NavLink
+                to={superAdminNavItem.url}
+                onClick={handleNavClick}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors mb-2",
+                  location.pathname === superAdminNavItem.url
+                    ? "bg-destructive text-destructive-foreground"
+                    : "text-destructive hover:bg-destructive/10"
+                )}
+              >
+                <superAdminNavItem.icon className="h-5 w-5" />
+                <span>{superAdminNavItem.title}</span>
+              </NavLink>
+            </li>
+          )}
           {navItems.map((item) => {
             const isActive = location.pathname === item.url;
             
