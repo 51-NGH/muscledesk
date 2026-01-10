@@ -6,7 +6,7 @@ interface MemberProtectedRouteProps {
 }
 
 export function MemberProtectedRoute({ children }: MemberProtectedRouteProps) {
-  const { user, loading, member } = useMemberAuth();
+  const { session, loading, member } = useMemberAuth();
   const location = useLocation();
 
   if (loading) {
@@ -15,7 +15,6 @@ export function MemberProtectedRoute({ children }: MemberProtectedRouteProps) {
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
             <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
-            <div className="absolute inset-0 h-12 w-12 animate-ping rounded-full border-4 border-primary/10" />
           </div>
           <p className="text-muted-foreground animate-pulse">Loading your profile...</p>
         </div>
@@ -23,7 +22,7 @@ export function MemberProtectedRoute({ children }: MemberProtectedRouteProps) {
     );
   }
 
-  if (!user) {
+  if (!session) {
     return <Navigate to="/member/login" state={{ from: location }} replace />;
   }
 

@@ -251,8 +251,11 @@ export type Database = {
           member_id: string
           notes: string | null
           phone: string
+          pin_hash: string | null
           plan_id: string | null
           plan_name: string | null
+          portal_token: string | null
+          portal_token_expires_at: string | null
           qr_token: string
           start_date: string
           status: Database["public"]["Enums"]["member_status"]
@@ -276,8 +279,11 @@ export type Database = {
           member_id?: string
           notes?: string | null
           phone: string
+          pin_hash?: string | null
           plan_id?: string | null
           plan_name?: string | null
+          portal_token?: string | null
+          portal_token_expires_at?: string | null
           qr_token?: string
           start_date?: string
           status?: Database["public"]["Enums"]["member_status"]
@@ -301,8 +307,11 @@ export type Database = {
           member_id?: string
           notes?: string | null
           phone?: string
+          pin_hash?: string | null
           plan_id?: string | null
           plan_name?: string | null
+          portal_token?: string | null
+          portal_token_expires_at?: string | null
           qr_token?: string
           start_date?: string
           status?: Database["public"]["Enums"]["member_status"]
@@ -549,6 +558,7 @@ export type Database = {
       }
       check_gym_member_limit: { Args: { _gym_id: string }; Returns: boolean }
       generate_member_id: { Args: { _gym_id: string }; Returns: string }
+      generate_portal_token: { Args: never; Returns: string }
       generate_qr_token: { Args: never; Returns: string }
       get_daily_attendance: {
         Args: { _days_back?: number; _gym_id: string }
@@ -602,8 +612,11 @@ export type Database = {
           member_id: string
           notes: string | null
           phone: string
+          pin_hash: string | null
           plan_id: string | null
           plan_name: string | null
+          portal_token: string | null
+          portal_token_expires_at: string | null
           qr_token: string
           start_date: string
           status: Database["public"]["Enums"]["member_status"]
@@ -668,6 +681,12 @@ export type Database = {
           _payment_mode?: Database["public"]["Enums"]["payment_mode"]
           _plan_id?: string
         }
+        Returns: Json
+      }
+      set_member_pin: { Args: { _pin: string; _token: string }; Returns: Json }
+      validate_portal_token: { Args: { _token: string }; Returns: Json }
+      verify_member_pin: {
+        Args: { _email: string; _pin: string }
         Returns: Json
       }
     }

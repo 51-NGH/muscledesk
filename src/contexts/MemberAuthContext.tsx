@@ -1,7 +1,14 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { User, Session } from "@supabase/supabase-js";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+
+interface MemberSession {
+  token: string;
+  member_id: string;
+  gym_id: string;
+  full_name: string;
+  email: string;
+  expires_at: string;
+}
 
 interface MemberData {
   id: string;
@@ -22,40 +29,38 @@ interface MemberData {
 }
 
 interface MemberAuthContextType {
-  user: User | null;
-  session: Session | null;
+  session: MemberSession | null;
   loading: boolean;
   member: MemberData | null;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signOut: () => Promise<void>;
+  signIn: (email: string, pin: string) => Promise<{ error: Error | null }>;
+  signOut: () => void;
   refreshMember: () => Promise<void>;
 }
 
 const MemberAuthContext = createContext<MemberAuthContextType | undefined>(undefined);
 
+const STORAGE_KEY = "muscledesk_member_session";
+
 export function MemberAuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<MemberSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [member, setMember] = useState<MemberData | null>(null);
 
-  const fetchMemberData = async (userId: string) => {
+  const fetchMemberData = async (memberId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("members")
-        .select("*")
-        .eq("auth_user_id", userId)
-        .is("deleted_at", null)
-        .maybeSingle();
+      // Use service role via edge function to fetch member data
+      const { data, error } = await supabase.functions.invoke("member-auth", {
+        body: { action: "get-member", member_id: memberId }
+      });
 
       if (error) {
         console.error("Error fetching member:", error);
         return null;
       }
 
-      if (data) {
-        setMember(data as MemberData);
-        return data;
+      if (data?.member) {
+        setMember(data.member as MemberData);
+        return data.member;
       }
       return null;
     } catch (error) {
@@ -65,73 +70,68 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    // Check for existing session on mount
+    const storedSession = localStorage.getItem(STORAGE_KEY);
+    if (storedSession) {
+      try {
+        const parsed = JSON.parse(storedSession) as MemberSession;
+        const expiresAt = new Date(parsed.expires_at);
         
-        if (session?.user) {
-          setTimeout(async () => {
-            await fetchMemberData(session.user.id);
-          }, 0);
+        if (expiresAt > new Date()) {
+          setSession(parsed);
+          fetchMemberData(parsed.member_id);
         } else {
-          setMember(null);
+          // Session expired
+          localStorage.removeItem(STORAGE_KEY);
         }
-        
-        setLoading(false);
-      }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchMemberData(session.user.id);
-      }
-      
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const signIn = async (email: string, password: string) => {
-    const { error, data } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    if (!error && data.user) {
-      const memberData = await fetchMemberData(data.user.id);
-      if (!memberData) {
-        await supabase.auth.signOut();
-        return { error: new Error("No member account found. Please contact your gym administrator.") };
-      }
-      if (memberData.is_blocked) {
-        await supabase.auth.signOut();
-        return { error: new Error("Your account has been blocked. Please contact your gym.") };
+      } catch {
+        localStorage.removeItem(STORAGE_KEY);
       }
     }
-    
-    return { error: error as Error | null };
+    setLoading(false);
+  }, []);
+
+  const signIn = async (email: string, pin: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("member-auth", {
+        body: { action: "login", email, pin }
+      });
+
+      if (error) {
+        return { error: new Error("Authentication failed. Please try again.") };
+      }
+
+      if (!data.success) {
+        return { error: new Error(data.error || "Invalid email or PIN") };
+      }
+
+      const memberSession: MemberSession = data.session;
+      setSession(memberSession);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(memberSession));
+      
+      // Fetch full member data
+      await fetchMemberData(memberSession.member_id);
+
+      return { error: null };
+    } catch (error) {
+      console.error("Sign in error:", error);
+      return { error: new Error("Authentication failed. Please try again.") };
+    }
   };
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
+  const signOut = () => {
     setSession(null);
     setMember(null);
+    localStorage.removeItem(STORAGE_KEY);
   };
 
   const refreshMember = async () => {
-    if (user) {
-      await fetchMemberData(user.id);
+    if (session) {
+      await fetchMemberData(session.member_id);
     }
   };
 
   const value = {
-    user,
     session,
     loading,
     member,
