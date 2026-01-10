@@ -235,6 +235,7 @@ export type Database = {
       }
       members: {
         Row: {
+          auth_user_id: string | null
           avatar_url: string | null
           block_reason: string | null
           created_at: string
@@ -259,6 +260,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auth_user_id?: string | null
           avatar_url?: string | null
           block_reason?: string | null
           created_at?: string
@@ -283,6 +285,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auth_user_id?: string | null
           avatar_url?: string | null
           block_reason?: string | null
           created_at?: string
@@ -579,6 +582,40 @@ export type Database = {
           today_attendance: number
           total_members: number
         }[]
+      }
+      get_member_by_auth_user: {
+        Args: { _user_id: string }
+        Returns: {
+          auth_user_id: string | null
+          avatar_url: string | null
+          block_reason: string | null
+          created_at: string
+          custom_price: number | null
+          deleted_at: string | null
+          email: string | null
+          expiry_date: string
+          full_name: string
+          gym_id: string
+          id: string
+          is_blocked: boolean
+          last_visit_at: string | null
+          member_id: string
+          notes: string | null
+          phone: string
+          plan_id: string | null
+          plan_name: string | null
+          qr_token: string
+          start_date: string
+          status: Database["public"]["Enums"]["member_status"]
+          total_visits: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "members"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       get_monthly_expenses: {
         Args: { _gym_id: string; _months_back?: number }
