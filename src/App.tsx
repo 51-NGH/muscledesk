@@ -4,8 +4,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { MemberAuthProvider } from "@/contexts/MemberAuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { MemberProtectedRoute } from "@/components/member-portal/MemberProtectedRoute";
+
+// Admin pages
 import Dashboard from "./pages/Dashboard";
 import Members from "./pages/Members";
 import Plans from "./pages/Plans";
@@ -18,6 +22,13 @@ import SuperAdmin from "./pages/SuperAdmin";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
+// Member portal pages
+import MemberLogin from "./pages/member/MemberLogin";
+import MemberDashboard from "./pages/member/MemberDashboard";
+import MemberQRCode from "./pages/member/MemberQRCode";
+import MemberAttendance from "./pages/member/MemberAttendance";
+import MemberPayments from "./pages/member/MemberPayments";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -27,21 +38,83 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AuthProvider>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/members" element={<ProtectedRoute><Members /></ProtectedRoute>} />
-              <Route path="/plans" element={<ProtectedRoute><Plans /></ProtectedRoute>} />
-              <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
-              <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-              <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
-              <Route path="/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
-              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-              <Route path="/super-admin" element={<ProtectedRoute requireRole="super_admin"><SuperAdmin /></ProtectedRoute>} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthProvider>
+          <Routes>
+            {/* Member Portal Routes */}
+            <Route path="/member/login" element={
+              <MemberAuthProvider>
+                <MemberLogin />
+              </MemberAuthProvider>
+            } />
+            <Route path="/member" element={
+              <MemberAuthProvider>
+                <MemberProtectedRoute><MemberDashboard /></MemberProtectedRoute>
+              </MemberAuthProvider>
+            } />
+            <Route path="/member/qr" element={
+              <MemberAuthProvider>
+                <MemberProtectedRoute><MemberQRCode /></MemberProtectedRoute>
+              </MemberAuthProvider>
+            } />
+            <Route path="/member/attendance" element={
+              <MemberAuthProvider>
+                <MemberProtectedRoute><MemberAttendance /></MemberProtectedRoute>
+              </MemberAuthProvider>
+            } />
+            <Route path="/member/payments" element={
+              <MemberAuthProvider>
+                <MemberProtectedRoute><MemberPayments /></MemberProtectedRoute>
+              </MemberAuthProvider>
+            } />
+
+            {/* Admin Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={
+              <AuthProvider>
+                <ProtectedRoute><Dashboard /></ProtectedRoute>
+              </AuthProvider>
+            } />
+            <Route path="/members" element={
+              <AuthProvider>
+                <ProtectedRoute><Members /></ProtectedRoute>
+              </AuthProvider>
+            } />
+            <Route path="/plans" element={
+              <AuthProvider>
+                <ProtectedRoute><Plans /></ProtectedRoute>
+              </AuthProvider>
+            } />
+            <Route path="/attendance" element={
+              <AuthProvider>
+                <ProtectedRoute><Attendance /></ProtectedRoute>
+              </AuthProvider>
+            } />
+            <Route path="/analytics" element={
+              <AuthProvider>
+                <ProtectedRoute><Analytics /></ProtectedRoute>
+              </AuthProvider>
+            } />
+            <Route path="/payments" element={
+              <AuthProvider>
+                <ProtectedRoute><Payments /></ProtectedRoute>
+              </AuthProvider>
+            } />
+            <Route path="/expenses" element={
+              <AuthProvider>
+                <ProtectedRoute><Expenses /></ProtectedRoute>
+              </AuthProvider>
+            } />
+            <Route path="/settings" element={
+              <AuthProvider>
+                <ProtectedRoute><Settings /></ProtectedRoute>
+              </AuthProvider>
+            } />
+            <Route path="/super-admin" element={
+              <AuthProvider>
+                <ProtectedRoute requireRole="super_admin"><SuperAdmin /></ProtectedRoute>
+              </AuthProvider>
+            } />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
