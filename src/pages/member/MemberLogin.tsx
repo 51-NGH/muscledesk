@@ -4,14 +4,13 @@ import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Dumbbell, Lock, Mail } from "lucide-react";
+import { toast } from "sonner";
+import { Dumbbell, Lock, Mail, Loader2 } from "lucide-react";
 import muscledeskLogo from "@/assets/muscledesk-logo.png";
 
 export default function MemberLogin() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [pin, setPin] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { signIn } = useMemberAuth();
   const navigate = useNavigate();
@@ -21,24 +20,23 @@ export default function MemberLogin() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (pin.length !== 4) {
+      toast.error("PIN must be 4 digits");
+      return;
+    }
+    
     setIsLoading(true);
 
-    const { error } = await signIn(email, password);
+    const { error } = await signIn(email, pin);
 
     if (error) {
-      toast({
-        title: "Login Failed",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message);
       setIsLoading(false);
       return;
     }
 
-    toast({
-      title: "Welcome back!",
-      description: "You've successfully logged in.",
-    });
+    toast.success("Welcome back!");
     navigate(from, { replace: true });
   };
 
@@ -62,7 +60,7 @@ export default function MemberLogin() {
             </div>
             <h1 className="text-2xl font-bold mb-2">Member Portal</h1>
             <p className="text-muted-foreground">
-              Sign in to access your membership details
+              Sign in with your email and 4-digit PIN
             </p>
           </div>
 
@@ -88,40 +86,36 @@ export default function MemberLogin() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium">
-                  Password
+                <Label htmlFor="pin" className="text-sm font-medium">
+                  4-Digit PIN
                 </Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10 h-12 rounded-xl bg-background"
+                    id="pin"
+                    type="password"
+                    inputMode="numeric"
+                    pattern="\d{4}"
+                    maxLength={4}
+                    placeholder="••••"
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                    className="pl-10 h-12 rounded-xl bg-background text-center text-xl tracking-[0.5em] font-mono"
                     required
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
                 </div>
               </div>
 
               <Button
                 type="submit"
                 className="w-full h-12 rounded-xl text-base font-semibold"
-                disabled={isLoading}
+                disabled={isLoading || pin.length !== 4}
               >
                 {isLoading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Signing in...
-                  </div>
+                  </>
                 ) : (
                   "Sign In"
                 )}
@@ -132,9 +126,9 @@ export default function MemberLogin() {
           {/* Info Note */}
           <div className="mt-6 p-4 rounded-xl bg-muted/50 border border-border">
             <p className="text-sm text-muted-foreground text-center">
-              <span className="font-medium text-foreground">Need access?</span>
+              <span className="font-medium text-foreground">First time?</span>
               <br />
-              Contact your gym administrator to get your login credentials.
+              Check your email for the PIN setup link from your gym.
             </p>
           </div>
         </div>

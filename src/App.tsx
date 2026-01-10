@@ -24,6 +24,7 @@ import NotFound from "./pages/NotFound";
 
 // Member portal pages
 import MemberLogin from "./pages/member/MemberLogin";
+import MemberSetupPin from "./pages/member/MemberSetupPin";
 import MemberDashboard from "./pages/member/MemberDashboard";
 import MemberQRCode from "./pages/member/MemberQRCode";
 import MemberAttendance from "./pages/member/MemberAttendance";
@@ -44,6 +45,9 @@ const App = () => (
               <MemberAuthProvider>
                 <MemberLogin />
               </MemberAuthProvider>
+            } />
+            <Route path="/member/setup-pin" element={
+              <MemberSetupPin />
             } />
             <Route path="/member" element={
               <MemberAuthProvider>
