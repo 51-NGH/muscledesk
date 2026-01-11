@@ -190,12 +190,34 @@ export function useCreateMember() {
         .single();
 
       if (error) throw error;
+
+      // Send welcome email if member has email
+      if (data && member.email) {
+        try {
+          const { error: emailError } = await supabase.functions.invoke('send-member-welcome', {
+            body: { member_id: data.id }
+          });
+          
+          if (emailError) {
+            console.error('Failed to send welcome email:', emailError);
+            // Don't throw - member was created successfully, email is optional
+          }
+        } catch (emailErr) {
+          console.error('Failed to send welcome email:', emailErr);
+          // Don't throw - member was created successfully, email is optional
+        }
+      }
+
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["members", gymId] });
       queryClient.invalidateQueries({ queryKey: ["dashboard_stats", gymId] });
-      toast.success("Member added successfully!");
+      if (variables.email) {
+        toast.success("Member added! Welcome email sent.");
+      } else {
+        toast.success("Member added successfully!");
+      }
     },
     onError: (error: Error) => {
       if (error.message.includes("members_gym_phone_unique")) {
