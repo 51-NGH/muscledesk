@@ -211,7 +211,7 @@ serve(async (req) => {
         "Authorization": `Bearer ${resendApiKey}`,
       },
       body: JSON.stringify({
-        from: "MuscleDesk <onboarding@resend.dev>",
+        from: "MuscleDesk <noreply@muscledesk.in>",
         to: [member.email],
         subject: `Welcome to ${gym.name} - Set Up Your Member Portal`,
         html: emailHtml,
