@@ -93,9 +93,9 @@ serve(async (req) => {
       });
     }
 
-    // Get the app URL from the request origin or use a default
-    const origin = req.headers.get("origin") || "https://muscledesk.lovable.app";
-    const setupLink = `${origin}/member/setup-pin?token=${portalToken}`;
+    // Use the production domain
+    const appUrl = "https://muscledesk.in";
+    const setupLink = `${appUrl}/member/setup-pin?token=${portalToken}`;
     
     // gyms is an array from the join, take the first element
     const gymData = member.gyms as unknown as { name: string; logo_url: string | null; phone: string | null; address: string | null };
