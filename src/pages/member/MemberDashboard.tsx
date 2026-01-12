@@ -1,6 +1,7 @@
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { MemberLayout } from "@/components/member-portal/MemberLayout";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { PushNotificationSettings } from "@/components/member-portal/PushNotificationSettings";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { 
   User, 
@@ -175,6 +176,11 @@ export default function MemberDashboard() {
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </button>
           </div>
+        </div>
+
+        {/* Push Notification Settings */}
+        <div className="animate-slide-up stagger-6">
+          <PushNotificationSettings />
         </div>
       </div>
     </MemberLayout>

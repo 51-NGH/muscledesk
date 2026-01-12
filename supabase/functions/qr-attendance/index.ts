@@ -123,6 +123,26 @@ serve(async (req: Request) => {
       );
     }
 
+    // Send push notification for check-in confirmation
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+        },
+        body: JSON.stringify({
+          member_id: member.id,
+          notification_type: 'check_in',
+          title: '✅ Check-in Confirmed!',
+          body: `Welcome back, ${member.full_name}! Visit #${member.total_visits + 1}`,
+          data: { url: '/member/attendance' }
+        }),
+      });
+    } catch (pushError) {
+      console.error('Push notification failed:', pushError);
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
