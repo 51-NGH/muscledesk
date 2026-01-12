@@ -15,70 +15,21 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "apple-touch-icon.png", "pwa-192x192.png", "pwa-512x512.png"],
-      manifest: {
-        name: "MuscleDesk - Gym Management",
-        short_name: "MuscleDesk",
-        description: "Complete gym management solution for modern fitness centers",
-        theme_color: "#1c1c1e",
-        background_color: "#fafafa",
-        display: "standalone",
-        orientation: "portrait",
-        scope: "/",
-        start_url: "/",
-        categories: ["fitness", "health", "business"],
-        icons: [
-          {
-            src: "pwa-192x192.png",
-            sizes: "192x192",
-            type: "image/png",
-            purpose: "any"
-          },
-          {
-            src: "pwa-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "any"
-          },
-          {
-            src: "pwa-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "maskable"
-          },
-          {
-            src: "apple-touch-icon.png",
-            sizes: "180x180",
-            type: "image/png",
-            purpose: "apple touch icon"
-          }
-        ],
-        shortcuts: [
-          {
-            name: "Dashboard",
-            short_name: "Dashboard",
-            description: "View gym dashboard",
-            url: "/",
-            icons: [{ src: "pwa-192x192.png", sizes: "192x192" }]
-          },
-          {
-            name: "Members",
-            short_name: "Members",
-            description: "Manage members",
-            url: "/members",
-            icons: [{ src: "pwa-192x192.png", sizes: "192x192" }]
-          },
-          {
-            name: "Member Portal",
-            short_name: "Portal",
-            description: "Member self-service",
-            url: "/member",
-            icons: [{ src: "pwa-192x192.png", sizes: "192x192" }]
-          }
-        ]
-      },
+      includeAssets: [
+        "favicon.ico", 
+        "apple-touch-icon.png", 
+        "pwa-192x192.png", 
+        "pwa-512x512.png",
+        "member-icon-192.png",
+        "member-icon-512.png",
+        "member-apple-touch-icon.png",
+        "manifest-admin.json",
+        "manifest-member.json"
+      ],
+      // Use external manifests instead of auto-generated
+      manifest: false,
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,json}"],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -114,8 +65,23 @@ export default defineConfig(({ mode }) => ({
             options: {
               cacheName: "images-cache",
               expiration: {
-                maxEntries: 50,
+                maxEntries: 100,
                 maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+              }
+            }
+          },
+          {
+            // Cache Supabase API responses with stale-while-revalidate
+            urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/.*/i,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "supabase-api-cache",
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 5 // 5 minutes
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
               }
             }
           }

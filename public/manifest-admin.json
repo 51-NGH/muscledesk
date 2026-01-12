@@ -1,0 +1,61 @@
+{
+  "name": "MuscleDesk Admin",
+  "short_name": "MuscleDesk",
+  "description": "Gym management dashboard for owners and staff",
+  "theme_color": "#1c1c1e",
+  "background_color": "#fafafa",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "id": "muscledesk-admin",
+  "categories": ["fitness", "health", "business"],
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View gym dashboard",
+      "url": "/",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Members",
+      "short_name": "Members",
+      "description": "Manage members",
+      "url": "/members",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Attendance",
+      "short_name": "Attendance",
+      "description": "Track attendance",
+      "url": "/attendance",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}

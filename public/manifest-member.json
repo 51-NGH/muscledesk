@@ -1,0 +1,54 @@
+{
+  "name": "MuscleDesk Member",
+  "short_name": "My Gym",
+  "description": "Your personal gym companion - check-in, track progress, and stay fit",
+  "theme_color": "#10b981",
+  "background_color": "#0a0a0a",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/member",
+  "start_url": "/member/dashboard",
+  "id": "muscledesk-member",
+  "categories": ["fitness", "health", "lifestyle"],
+  "icons": [
+    {
+      "src": "/member-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/member-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/member-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/member-apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "My QR Code",
+      "short_name": "QR Code",
+      "description": "Show your QR code for check-in",
+      "url": "/member/qr",
+      "icons": [{ "src": "/member-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Attendance History",
+      "short_name": "Attendance",
+      "description": "View your gym visits",
+      "url": "/member/attendance",
+      "icons": [{ "src": "/member-icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
