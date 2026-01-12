@@ -12,7 +12,7 @@ interface AttendanceRecord {
 }
 
 export default function MemberAttendance() {
-  const { member } = useMemberAuth();
+  const { member, loading, memberLoading } = useMemberAuth();
 
   const { data: attendance, isLoading } = useQuery({
     queryKey: ["member-attendance", member?.id],
@@ -49,6 +49,20 @@ export default function MemberAttendance() {
     return groups;
   }, {} as Record<string, AttendanceRecord[]>);
 
+  // Show loading state
+  if (loading || memberLoading || !member) {
+    return (
+      <MemberLayout title="Attendance">
+        <div className="flex items-center justify-center py-20">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+            <p className="text-muted-foreground">Loading attendance...</p>
+          </div>
+        </div>
+      </MemberLayout>
+    );
+  }
+
   return (
     <MemberLayout title="Attendance">
       <div className="space-y-5 animate-fade-in">
@@ -57,13 +71,13 @@ export default function MemberAttendance() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-primary-foreground/70 text-sm">Total Visits</p>
-              <p className="text-3xl sm:text-4xl font-bold mt-1">{member?.total_visits || 0}</p>
+              <p className="text-3xl sm:text-4xl font-bold mt-1">{member.total_visits}</p>
             </div>
             <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-primary-foreground/10 flex items-center justify-center">
               <CheckCircle className="h-6 w-6 sm:h-7 sm:w-7" />
             </div>
           </div>
-          {member?.last_visit_at && (
+          {member.last_visit_at && (
             <p className="text-primary-foreground/70 text-xs sm:text-sm mt-3">
               Last visit: {format(parseISO(member.last_visit_at), "MMMM d, yyyy 'at' h:mm a")}
             </p>

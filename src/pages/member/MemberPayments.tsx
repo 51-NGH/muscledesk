@@ -26,7 +26,7 @@ const paymentModeLabels: Record<string, string> = {
 };
 
 export default function MemberPayments() {
-  const { member } = useMemberAuth();
+  const { member, loading, memberLoading } = useMemberAuth();
 
   const { data: payments, isLoading } = useQuery({
     queryKey: ["member-payments", member?.id],
@@ -47,6 +47,20 @@ export default function MemberPayments() {
   });
 
   const totalPaid = payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+
+  // Show loading state
+  if (loading || memberLoading || !member) {
+    return (
+      <MemberLayout title="Payments">
+        <div className="flex items-center justify-center py-20">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+            <p className="text-muted-foreground">Loading payments...</p>
+          </div>
+        </div>
+      </MemberLayout>
+    );
+  }
 
   return (
     <MemberLayout title="Payments">
