@@ -379,6 +379,54 @@ export type Database = {
           },
         ]
       }
+      notification_logs: {
+        Row: {
+          body: string
+          gym_id: string
+          id: string
+          member_id: string
+          notification_type: string
+          sent_at: string
+          status: string
+          title: string
+        }
+        Insert: {
+          body: string
+          gym_id: string
+          id?: string
+          member_id: string
+          notification_type: string
+          sent_at?: string
+          status?: string
+          title: string
+        }
+        Update: {
+          body?: string
+          gym_id?: string
+          id?: string
+          member_id?: string
+          notification_type?: string
+          sent_at?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_logs_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_logs_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -511,6 +559,57 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          gym_id: string
+          id: string
+          is_active: boolean
+          member_id: string
+          p256dh: string
+          updated_at: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          gym_id: string
+          id?: string
+          is_active?: boolean
+          member_id: string
+          p256dh: string
+          updated_at?: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          gym_id?: string
+          id?: string
+          is_active?: boolean
+          member_id?: string
+          p256dh?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "push_subscriptions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
