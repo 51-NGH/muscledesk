@@ -51,20 +51,20 @@ export default function MemberAttendance() {
 
   return (
     <MemberLayout title="Attendance">
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-5 animate-fade-in">
         {/* Stats Header */}
-        <div className="bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-5 text-primary-foreground">
+        <div className="bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-5 text-primary-foreground shadow-lg shadow-primary/20">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-primary-foreground/70 text-sm">Total Visits</p>
-              <p className="text-4xl font-bold mt-1">{member?.total_visits || 0}</p>
+              <p className="text-3xl sm:text-4xl font-bold mt-1">{member?.total_visits || 0}</p>
             </div>
-            <div className="h-14 w-14 rounded-xl bg-primary-foreground/10 flex items-center justify-center">
-              <CheckCircle className="h-7 w-7" />
+            <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-primary-foreground/10 flex items-center justify-center">
+              <CheckCircle className="h-6 w-6 sm:h-7 sm:w-7" />
             </div>
           </div>
           {member?.last_visit_at && (
-            <p className="text-primary-foreground/70 text-sm mt-3">
+            <p className="text-primary-foreground/70 text-xs sm:text-sm mt-3">
               Last visit: {format(parseISO(member.last_visit_at), "MMMM d, yyyy 'at' h:mm a")}
             </p>
           )}
@@ -72,7 +72,7 @@ export default function MemberAttendance() {
 
         {/* Attendance History */}
         <div>
-          <h2 className="font-semibold mb-4 flex items-center gap-2">
+          <h2 className="font-semibold mb-3 flex items-center gap-2 text-sm sm:text-base">
             <Calendar className="h-4 w-4 text-primary" />
             Recent Check-ins
           </h2>
@@ -82,39 +82,39 @@ export default function MemberAttendance() {
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : !attendance || attendance.length === 0 ? (
-            <div className="bg-card rounded-xl border border-border p-8 text-center">
+            <div className="bg-card rounded-xl border border-border p-6 sm:p-8 text-center">
               <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
                 <Clock className="h-6 w-6 text-muted-foreground" />
               </div>
-              <p className="font-medium">No check-ins yet</p>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="font-medium text-sm sm:text-base">No check-ins yet</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                 Your attendance history will appear here
               </p>
             </div>
           ) : (
             <div className="space-y-4">
-              {Object.entries(groupedAttendance || {}).map(([dateLabel, records]) => (
-                <div key={dateLabel}>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">{dateLabel}</p>
-                  <div className="bg-card rounded-xl border border-border divide-y divide-border">
+              {Object.entries(groupedAttendance || {}).map(([dateLabel, records], groupIndex) => (
+                <div key={dateLabel} className="animate-slide-up" style={{ animationDelay: `${groupIndex * 50}ms` }}>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-2 px-1">{dateLabel}</p>
+                  <div className="bg-card rounded-xl border border-border divide-y divide-border overflow-hidden">
                     {records.map((record) => (
-                      <div key={record.id} className="p-4 flex items-center justify-between">
+                      <div key={record.id} className="p-3 sm:p-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-lg bg-md-green/10 flex items-center justify-center">
-                            <CheckCircle className="h-5 w-5 text-md-green" />
+                          <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-[hsl(var(--md-green))]/10 flex items-center justify-center">
+                            <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-[hsl(var(--md-green))]" />
                           </div>
                           <div>
-                            <p className="font-medium">Check-in</p>
-                            <p className="text-xs text-muted-foreground capitalize">
+                            <p className="font-medium text-sm">Check-in</p>
+                            <p className="text-[11px] sm:text-xs text-muted-foreground capitalize">
                               Via {record.source === "qr" ? "QR Scan" : record.source}
                             </p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-mono text-sm">
+                          <p className="font-mono text-xs sm:text-sm">
                             {format(parseISO(record.check_in_at), "h:mm a")}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-[11px] sm:text-xs text-muted-foreground">
                             {format(parseISO(record.check_in_at), "MMM d")}
                           </p>
                         </div>

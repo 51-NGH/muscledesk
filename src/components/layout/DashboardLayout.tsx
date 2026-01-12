@@ -13,17 +13,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background transition-colors duration-300">
+    <div className="min-h-screen min-h-[100dvh] bg-background transition-colors duration-300">
       {/* Desktop Sidebar */}
       <div className="hidden lg:block">
         <AppSidebar />
       </div>
 
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-14 px-4 border-b border-border bg-card transition-colors duration-300">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-14 px-4 border-b border-border bg-card/95 backdrop-blur-xl supports-[backdrop-filter]:bg-card/80 transition-colors duration-300 safe-area-pt">
         <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="h-10 w-10 touch-target">
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
@@ -43,7 +43,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {/* Main Content */}
-      <main className="lg:ml-[220px] min-h-screen p-4 pt-[72px] lg:pt-6 lg:p-6 transition-colors duration-300">
+      <main className="lg:ml-[220px] min-h-screen min-h-[100dvh] px-4 pt-[70px] pb-6 lg:pt-6 lg:px-6 lg:pb-6 transition-colors duration-300">
         {children}
       </main>
     </div>
