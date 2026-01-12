@@ -17,17 +17,20 @@ export const SubdomainRouter = ({ children }: SubdomainRouterProps) => {
   const path = location.pathname;
 
   useEffect(() => {
+    // Check if path is a member portal route (not /members which is admin)
+    const isMemberPortalRoute = path === '/member' || path.startsWith('/member/');
+    
     // On member domain, redirect non-member routes to member login
     if (subdomainType === 'member') {
-      if (!path.startsWith('/member')) {
+      if (!isMemberPortalRoute) {
         navigate('/member/login', { replace: true });
         return;
       }
     }
 
-    // On admin domain, redirect member routes to admin login
+    // On admin domain, redirect member portal routes to admin login
     if (subdomainType === 'admin') {
-      if (path.startsWith('/member')) {
+      if (isMemberPortalRoute) {
         navigate('/login', { replace: true });
         return;
       }
@@ -36,8 +39,10 @@ export const SubdomainRouter = ({ children }: SubdomainRouterProps) => {
     setIsReady(true);
   }, [subdomainType, path, navigate]);
 
+  const isMemberPortalRoute = path === '/member' || path.startsWith('/member/');
+
   // Show loading while redirecting
-  if (!isReady && subdomainType === 'member' && !path.startsWith('/member')) {
+  if (!isReady && subdomainType === 'member' && !isMemberPortalRoute) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -48,7 +53,7 @@ export const SubdomainRouter = ({ children }: SubdomainRouterProps) => {
     );
   }
 
-  if (!isReady && subdomainType === 'admin' && path.startsWith('/member')) {
+  if (!isReady && subdomainType === 'admin' && isMemberPortalRoute) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
