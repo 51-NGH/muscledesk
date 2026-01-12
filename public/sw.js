@@ -1,13 +1,43 @@
-// MuscleDesk Service Worker for Push Notifications
+// MuscleDesk Service Worker for Push Notifications and Offline Support
+
+const CACHE_NAME = 'muscledesk-v1';
+const OFFLINE_URLS = [
+  '/member/qr',
+  '/member/dashboard',
+  '/member',
+];
 
 self.addEventListener('install', (event) => {
   console.log('Service Worker installed');
+  
+  // Pre-cache essential pages for offline use
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('Caching offline pages');
+      // We don't cache actual URLs here since Vite handles this via workbox
+      // This is just for the service worker to be ready
+    })
+  );
+  
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   console.log('Service Worker activated');
-  event.waitUntil(self.clients.claim());
+  
+  // Clean up old caches
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener('push', (event) => {

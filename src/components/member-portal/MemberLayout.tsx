@@ -1,12 +1,14 @@
 import { ReactNode } from "react";
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
+import { OfflineIndicator } from "@/components/offline/OfflineIndicator";
 import { 
   Home, 
   QrCode, 
   Clock, 
   CreditCard, 
-  LogOut
+  LogOut,
+  WifiOff
 } from "lucide-react";
 import muscledeskLogo from "@/assets/muscledesk-logo.png";
 
@@ -24,7 +26,7 @@ const navItems = [
 ];
 
 export function MemberLayout({ children, title, showBack }: MemberLayoutProps) {
-  const { signOut } = useMemberAuth();
+  const { signOut, isOffline } = useMemberAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -35,12 +37,21 @@ export function MemberLayout({ children, title, showBack }: MemberLayoutProps) {
 
   return (
     <div className="min-h-screen min-h-[100dvh] bg-gradient-to-br from-background via-background to-muted flex flex-col">
+      {/* Offline Indicator */}
+      <OfflineIndicator />
+      
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border safe-area-pt">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={muscledeskLogo} alt="MuscleDesk" className="h-8 w-8" />
             <h1 className="font-semibold text-lg">{title}</h1>
+            {isOffline && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 text-xs font-medium">
+                <WifiOff className="h-3 w-3" />
+                Offline
+              </span>
+            )}
           </div>
           <button 
             onClick={handleSignOut}

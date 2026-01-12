@@ -1,22 +1,37 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Dumbbell, Lock, Mail, Loader2, Activity, Calendar, QrCode, Trophy } from "lucide-react";
+import { Dumbbell, Lock, Mail, Loader2, Activity, Calendar, QrCode, Trophy, WifiOff } from "lucide-react";
 import muscledeskLogo from "@/assets/muscledesk-logo.png";
 
 export default function MemberLogin() {
   const [email, setEmail] = useState("");
   const [pin, setPin] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const { signIn } = useMemberAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const from = location.state?.from?.pathname || "/member";
+
+  // Listen for online/offline status
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +84,19 @@ export default function MemberLogin() {
               </p>
             </div>
 
+            {/* Offline Warning */}
+            {isOffline && (
+              <div className="mb-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-3">
+                <WifiOff className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-amber-700 dark:text-amber-500 text-sm">You're Offline</p>
+                  <p className="text-xs text-amber-600/80 mt-1">
+                    Please connect to the internet to sign in.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Login Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
@@ -113,7 +141,7 @@ export default function MemberLogin() {
               <Button
                 type="submit"
                 className="w-full h-12 rounded-xl text-base font-semibold shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300"
-                disabled={isLoading || pin.length !== 4}
+                disabled={isLoading || pin.length !== 4 || isOffline}
               >
                 {isLoading ? (
                   <>
