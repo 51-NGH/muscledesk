@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Dumbbell, Lock, Mail, Loader2 } from "lucide-react";
+import { Dumbbell, Lock, Mail, Loader2, Activity, Calendar, QrCode, Trophy } from "lucide-react";
 import muscledeskLogo from "@/assets/muscledesk-logo.png";
 
 export default function MemberLogin() {
@@ -41,45 +41,49 @@ export default function MemberLogin() {
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] flex flex-col bg-gradient-to-br from-background via-background to-muted safe-area-pt">
-      {/* Header */}
-      <div className="p-4 sm:p-6">
-        <div className="flex items-center gap-2">
-          <img src={muscledeskLogo} alt="MuscleDesk" className="h-8 w-8" />
-          <span className="font-bold text-lg">MuscleDesk</span>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex items-center justify-center px-4 py-6 sm:px-6">
-        <div className="w-full max-w-[400px] animate-slide-up">
-          {/* Hero Section */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-primary/10 mb-4">
-              <Dumbbell className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Member Portal</h1>
-            <p className="text-muted-foreground text-sm sm:text-base">
-              Sign in with your email and 4-digit PIN
-            </p>
+    <div className="min-h-screen min-h-[100dvh] flex flex-col lg:flex-row">
+      {/* Left Side - Form */}
+      <div className="flex-1 flex flex-col bg-background safe-area-pt">
+        {/* Header */}
+        <div className="p-6 lg:p-8">
+          <div className="flex items-center gap-2.5">
+            <img src={muscledeskLogo} alt="MuscleDesk" className="h-9 w-9" />
+            <span className="font-bold text-xl tracking-tight">MuscleDesk</span>
           </div>
+        </div>
 
-          {/* Login Form */}
-          <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 shadow-lg shadow-primary/5">
+        {/* Form Container */}
+        <div className="flex-1 flex items-center justify-center px-6 py-8 lg:px-12 xl:px-20">
+          <div className="w-full max-w-[420px] animate-fade-in">
+            {/* Welcome Text */}
+            <div className="mb-8">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+                <Dumbbell className="w-4 h-4" />
+                Member Portal
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">
+                Welcome Back!
+              </h1>
+              <p className="text-muted-foreground text-base lg:text-lg">
+                Sign in with your email and 4-digit PIN to access your membership
+              </p>
+            </div>
+
+            {/* Login Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">
                   Email Address
                 </Label>
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Mail className="absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="email"
                     type="email"
                     placeholder="your@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="h-12 sm:h-11 pl-10 rounded-xl bg-background text-base"
+                    className="h-12 pl-11 rounded-xl bg-muted/50 border-border/50 focus:bg-background transition-colors text-base"
                     required
                   />
                 </div>
@@ -90,7 +94,7 @@ export default function MemberLogin() {
                   4-Digit PIN
                 </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="pin"
                     type="password"
@@ -100,7 +104,7 @@ export default function MemberLogin() {
                     placeholder="••••"
                     value={pin}
                     onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                    className="h-12 sm:h-11 pl-10 rounded-xl bg-background text-center text-xl tracking-[0.5em] font-mono"
+                    className="h-12 pl-11 rounded-xl bg-muted/50 border-border/50 focus:bg-background transition-colors text-center text-xl tracking-[0.5em] font-mono"
                     required
                   />
                 </div>
@@ -108,7 +112,7 @@ export default function MemberLogin() {
 
               <Button
                 type="submit"
-                className="w-full h-12 sm:h-11 rounded-xl text-base font-semibold"
+                className="w-full h-12 rounded-xl text-base font-semibold shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300"
                 disabled={isLoading || pin.length !== 4}
               >
                 {isLoading ? (
@@ -121,24 +125,96 @@ export default function MemberLogin() {
                 )}
               </Button>
             </form>
-          </div>
 
-          {/* Info Note */}
-          <div className="mt-6 p-4 rounded-xl bg-muted/50 border border-border">
-            <p className="text-sm text-muted-foreground text-center">
-              <span className="font-medium text-foreground">First time?</span>
-              <br />
-              Check your email for the PIN setup link from your gym.
+            {/* Info Note */}
+            <div className="mt-8 p-4 rounded-xl bg-muted/50 border border-border/50">
+              <p className="text-sm text-muted-foreground text-center">
+                <span className="font-semibold text-foreground">First time?</span>
+                <br />
+                Check your email for the PIN setup link from your gym.
+              </p>
+            </div>
+
+            {/* Terms */}
+            <p className="text-center text-xs text-muted-foreground mt-8">
+              By signing in, you agree to our{" "}
+              <span className="text-foreground/70 hover:text-primary cursor-pointer transition-colors">Terms</span>
+              {" "}and{" "}
+              <span className="text-foreground/70 hover:text-primary cursor-pointer transition-colors">Privacy Policy</span>
             </p>
           </div>
         </div>
+
+        {/* Footer - Mobile Only */}
+        <div className="p-6 text-center safe-area-pb lg:hidden">
+          <p className="text-xs text-muted-foreground">
+            © 2025 MuscleDesk • Member Portal
+          </p>
+        </div>
       </div>
 
-      {/* Footer */}
-      <div className="p-4 text-center safe-area-pb">
-        <p className="text-xs text-muted-foreground">
-          Powered by MuscleDesk • Member Portal
-        </p>
+      {/* Right Side - Hero (Hidden on mobile) */}
+      <div className="hidden lg:flex flex-1 relative overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-500">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-white rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-white rounded-full blur-3xl opacity-50" />
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20 py-12">
+          <div className="max-w-lg">
+            {/* Hero Title */}
+            <h2 className="text-4xl xl:text-5xl font-bold text-white leading-tight mb-6">
+              Your fitness journey, all in one place.
+            </h2>
+            <p className="text-white/80 text-lg mb-12">
+              Track your attendance, view payment history, and stay connected with your gym.
+            </p>
+
+            {/* Feature Cards */}
+            <div className="grid grid-cols-2 gap-4 mb-12">
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20">
+                <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-4">
+                  <QrCode className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-white font-semibold mb-1">Quick Check-in</h3>
+                <p className="text-white/70 text-sm">Scan QR code for instant attendance</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20">
+                <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-4">
+                  <Activity className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-white font-semibold mb-1">Track Progress</h3>
+                <p className="text-white/70 text-sm">View your attendance history</p>
+              </div>
+            </div>
+
+            {/* Feature List */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 text-white/90">
+                <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                  <Calendar className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-sm font-medium">View membership status</span>
+              </div>
+              <div className="flex items-center gap-3 text-white/90">
+                <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                  <Trophy className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-sm font-medium">Track your fitness goals</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="absolute bottom-8 left-12 xl:left-20 right-12 xl:right-20">
+            <p className="text-white/50 text-xs">
+              © 2025 MuscleDesk • Your Fitness Partner
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
