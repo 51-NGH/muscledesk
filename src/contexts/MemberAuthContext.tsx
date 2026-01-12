@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface MemberSession {
@@ -32,6 +32,7 @@ interface MemberAuthContextType {
   session: MemberSession | null;
   loading: boolean;
   member: MemberData | null;
+  isOffline: boolean;
   signIn: (email: string, pin: string) => Promise<{ error: Error | null }>;
   signOut: () => void;
   refreshMember: () => Promise<void>;
@@ -40,13 +41,54 @@ interface MemberAuthContextType {
 const MemberAuthContext = createContext<MemberAuthContextType | undefined>(undefined);
 
 const STORAGE_KEY = "muscledesk_member_session";
+const OFFLINE_MEMBER_KEY = "muscledesk_offline_member";
 
 export function MemberAuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<MemberSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [member, setMember] = useState<MemberData | null>(null);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  // Cache member data for offline use
+  const cacheMemberData = useCallback((memberData: MemberData) => {
+    try {
+      localStorage.setItem(OFFLINE_MEMBER_KEY, JSON.stringify({
+        ...memberData,
+        cached_at: Date.now()
+      }));
+    } catch (e) {
+      console.error("Error caching member data:", e);
+    }
+  }, []);
+
+  // Load cached member data for offline use
+  const loadCachedMember = useCallback(() => {
+    try {
+      const cached = localStorage.getItem(OFFLINE_MEMBER_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        // Cache valid for 7 days
+        if (Date.now() - parsed.cached_at < 7 * 24 * 60 * 60 * 1000) {
+          return parsed as MemberData;
+        }
+      }
+    } catch (e) {
+      console.error("Error loading cached member:", e);
+    }
+    return null;
+  }, []);
 
   const fetchMemberData = async (memberId: string) => {
+    // If offline, try to use cached data
+    if (!navigator.onLine) {
+      const cached = loadCachedMember();
+      if (cached && cached.id === memberId) {
+        setMember(cached);
+        return cached;
+      }
+      return null;
+    }
+
     try {
       // Use service role via edge function to fetch member data
       const { data, error } = await supabase.functions.invoke("member-auth", {
@@ -55,19 +97,54 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error("Error fetching member:", error);
+        // Fallback to cached data on error
+        const cached = loadCachedMember();
+        if (cached && cached.id === memberId) {
+          setMember(cached);
+          return cached;
+        }
         return null;
       }
 
       if (data?.member) {
-        setMember(data.member as MemberData);
-        return data.member;
+        const memberData = data.member as MemberData;
+        setMember(memberData);
+        // Cache the data for offline use
+        cacheMemberData(memberData);
+        return memberData;
       }
       return null;
     } catch (error) {
       console.error("Error fetching member data:", error);
+      // Fallback to cached data on error
+      const cached = loadCachedMember();
+      if (cached && cached.id === memberId) {
+        setMember(cached);
+        return cached;
+      }
       return null;
     }
   };
+
+  // Listen for online/offline status changes
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOffline(false);
+      // Refresh data when coming back online
+      if (session) {
+        fetchMemberData(session.member_id);
+      }
+    };
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [session]);
 
   useEffect(() => {
     // Check for existing session on mount
@@ -79,7 +156,16 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
         
         if (expiresAt > new Date()) {
           setSession(parsed);
-          fetchMemberData(parsed.member_id);
+          
+          // If offline, load cached data immediately
+          if (!navigator.onLine) {
+            const cached = loadCachedMember();
+            if (cached) {
+              setMember(cached);
+            }
+          } else {
+            fetchMemberData(parsed.member_id);
+          }
         } else {
           // Session expired
           localStorage.removeItem(STORAGE_KEY);
@@ -92,6 +178,10 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, pin: string) => {
+    if (!navigator.onLine) {
+      return { error: new Error("You're offline. Please connect to the internet to sign in.") };
+    }
+
     try {
       const { data, error } = await supabase.functions.invoke("member-auth", {
         body: { action: "login", email, pin }
@@ -123,6 +213,7 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setMember(null);
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(OFFLINE_MEMBER_KEY);
   };
 
   const refreshMember = async () => {
@@ -135,6 +226,7 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
     session,
     loading,
     member,
+    isOffline,
     signIn,
     signOut,
     refreshMember,

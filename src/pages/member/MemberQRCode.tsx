@@ -3,12 +3,12 @@ import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { MemberLayout } from "@/components/member-portal/MemberLayout";
 import { QRCodeCanvas } from "qrcode.react";
 import { Button } from "@/components/ui/button";
-import { Download, Maximize2, X, AlertTriangle, Share2 } from "lucide-react";
+import { Download, Maximize2, X, AlertTriangle, Share2, WifiOff } from "lucide-react";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 
 export default function MemberQRCode() {
-  const { member } = useMemberAuth();
+  const { member, isOffline } = useMemberAuth();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
 
@@ -70,8 +70,21 @@ export default function MemberQRCode() {
   return (
     <MemberLayout title="QR Code">
       <div className="space-y-5 animate-fade-in">
+        {/* Offline notice */}
+        {isOffline && (
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-start gap-3 animate-slide-up">
+            <WifiOff className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-amber-700 dark:text-amber-500 text-sm">You're Offline</p>
+              <p className="text-xs text-amber-600/80 mt-1">
+                Your QR code is available from cache. Check-in may not work until you're back online.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Warning for invalid QR */}
-        {isInvalid && (
+        {isInvalid && !isOffline && (
           <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 flex items-start gap-3 animate-slide-up">
             <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
             <div>
