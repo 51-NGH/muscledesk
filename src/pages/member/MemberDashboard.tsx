@@ -1,6 +1,7 @@
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { MemberLayout } from "@/components/member-portal/MemberLayout";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { PushNotificationSettings } from "@/components/member-portal/PushNotificationSettings";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { 
@@ -16,7 +17,16 @@ import {
 } from "lucide-react";
 
 export default function MemberDashboard() {
-  const { member } = useMemberAuth();
+  const { member, loading } = useMemberAuth();
+
+  // Show skeleton while loading
+  if (loading) {
+    return (
+      <MemberLayout title="Dashboard">
+        <DashboardSkeleton type="member" />
+      </MemberLayout>
+    );
+  }
 
   if (!member) return null;
 

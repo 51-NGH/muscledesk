@@ -9,6 +9,8 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { MemberProtectedRoute } from "@/components/member-portal/MemberProtectedRoute";
 import { SubdomainRouter } from "@/components/SubdomainRouter";
+import { ManifestManager } from "@/components/ManifestManager";
+
 // Admin pages
 import Dashboard from "./pages/Dashboard";
 import Members from "./pages/Members";
@@ -31,7 +33,23 @@ import MemberQRCode from "./pages/member/MemberQRCode";
 import MemberAttendance from "./pages/member/MemberAttendance";
 import MemberPayments from "./pages/member/MemberPayments";
 
-const queryClient = new QueryClient();
+// Optimized QueryClient with stale-while-revalidate strategy
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Data is considered fresh for 30 seconds - won't refetch during this time
+      staleTime: 30 * 1000,
+      // Keep unused data in cache for 5 minutes
+      gcTime: 5 * 60 * 1000,
+      // Retry failed requests once
+      retry: 1,
+      // Refetch on window focus for fresh data
+      refetchOnWindowFocus: true,
+      // Don't refetch on mount if data is still fresh
+      refetchOnMount: "always",
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -40,6 +58,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ManifestManager />
           <SubdomainRouter>
             <Routes>
               {/* Member Portal Routes - uses MemberAuthProvider */}
@@ -52,6 +71,11 @@ const App = () => (
               <MemberSetupPin />
             } />
             <Route path="/member" element={
+              <MemberAuthProvider>
+                <MemberProtectedRoute><MemberDashboard /></MemberProtectedRoute>
+              </MemberAuthProvider>
+            } />
+            <Route path="/member/dashboard" element={
               <MemberAuthProvider>
                 <MemberProtectedRoute><MemberDashboard /></MemberProtectedRoute>
               </MemberAuthProvider>

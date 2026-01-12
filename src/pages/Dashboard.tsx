@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { MemberAvatar } from "@/components/ui/member-avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
@@ -50,12 +51,12 @@ function getFirstName(fullName: string | null | undefined): string {
 export default function Dashboard() {
   const { gymId } = useAuth();
   const navigate = useNavigate();
-  const { data: stats, isLoading: statsLoading } = useDashboardStats();
-  const { data: members = [] } = useMembers();
-  const { data: todayAttendance = [] } = useAttendance(new Date().toISOString().split("T")[0]);
+  const { data: stats, isLoading: statsLoading, isFetching: statsFetching } = useDashboardStats();
+  const { data: members = [], isLoading: membersLoading } = useMembers();
+  const { data: todayAttendance = [], isLoading: attendanceLoading } = useAttendance(new Date().toISOString().split("T")[0]);
   const { data: monthlyRevenue = [] } = useMonthlyRevenue(6);
   const { data: expiringMembers = [] } = useExpiringMembers(7);
-  const { data: profile } = useUserProfile();
+  const { data: profile, isLoading: profileLoading } = useUserProfile();
   const { data: dailyAttendance = [] } = useDailyAttendance(7);
   const { data: payments = [] } = usePayments();
   
@@ -63,6 +64,9 @@ export default function Dashboard() {
   const [animatedStats, setAnimatedStats] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  
+  // Show skeleton while initial data loads
+  const isInitialLoading = statsLoading || profileLoading;
 
   // Handle opening member profile from check-in
   const handleCheckInClick = (memberId: string) => {
@@ -136,6 +140,15 @@ export default function Dashboard() {
             <Button onClick={() => navigate("/settings")}>View Settings</Button>
           </div>
         </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Show skeleton for initial load
+  if (isInitialLoading) {
+    return (
+      <DashboardLayout>
+        <DashboardSkeleton type="admin" />
       </DashboardLayout>
     );
   }
