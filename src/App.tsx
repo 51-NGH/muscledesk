@@ -19,6 +19,7 @@ import Payments from "./pages/Payments";
 import Expenses from "./pages/Expenses";
 import Settings from "./pages/Settings";
 import SuperAdmin from "./pages/SuperAdmin";
+import Reminders from "./pages/Reminders";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -83,6 +84,7 @@ const App = () => (
                   <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
                   <Route path="/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
                   <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                  <Route path="/reminders" element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
                   <Route path="/super-admin" element={<ProtectedRoute requireRole="super_admin"><SuperAdmin /></ProtectedRoute>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
