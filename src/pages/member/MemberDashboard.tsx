@@ -17,18 +17,16 @@ import {
 } from "lucide-react";
 
 export default function MemberDashboard() {
-  const { member, loading } = useMemberAuth();
+  const { member, loading, memberLoading } = useMemberAuth();
 
-  // Show skeleton while loading
-  if (loading) {
+  // Show skeleton while loading session or member data
+  if (loading || memberLoading || !member) {
     return (
       <MemberLayout title="Dashboard">
         <DashboardSkeleton type="member" />
       </MemberLayout>
     );
   }
-
-  if (!member) return null;
 
   const expiryDate = parseISO(member.expiry_date);
   const daysRemaining = differenceInDays(expiryDate, new Date());

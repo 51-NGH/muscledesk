@@ -8,11 +8,23 @@ import { format, parseISO, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 
 export default function MemberQRCode() {
-  const { member, isOffline } = useMemberAuth();
+  const { member, isOffline, loading, memberLoading } = useMemberAuth();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
 
-  if (!member) return null;
+  // Show loading state
+  if (loading || memberLoading || !member) {
+    return (
+      <MemberLayout title="QR Code">
+        <div className="flex items-center justify-center py-20">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+            <p className="text-muted-foreground">Loading QR Code...</p>
+          </div>
+        </div>
+      </MemberLayout>
+    );
+  }
 
   const expiryDate = parseISO(member.expiry_date);
   const isExpired = differenceInDays(expiryDate, new Date()) < 0;

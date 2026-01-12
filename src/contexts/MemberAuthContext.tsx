@@ -31,6 +31,7 @@ interface MemberData {
 interface MemberAuthContextType {
   session: MemberSession | null;
   loading: boolean;
+  memberLoading: boolean;
   member: MemberData | null;
   isOffline: boolean;
   signIn: (email: string, pin: string) => Promise<{ error: Error | null }>;
@@ -46,6 +47,7 @@ const OFFLINE_MEMBER_KEY = "muscledesk_offline_member";
 export function MemberAuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<MemberSession | null>(null);
   const [loading, setLoading] = useState(true);
+  const [memberLoading, setMemberLoading] = useState(false);
   const [member, setMember] = useState<MemberData | null>(null);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
@@ -78,14 +80,18 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
     return null;
   }, []);
 
-  const fetchMemberData = async (memberId: string) => {
+  const fetchMemberData = useCallback(async (memberId: string) => {
+    setMemberLoading(true);
+    
     // If offline, try to use cached data
     if (!navigator.onLine) {
       const cached = loadCachedMember();
       if (cached && cached.id === memberId) {
         setMember(cached);
+        setMemberLoading(false);
         return cached;
       }
+      setMemberLoading(false);
       return null;
     }
 
@@ -101,8 +107,10 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
         const cached = loadCachedMember();
         if (cached && cached.id === memberId) {
           setMember(cached);
+          setMemberLoading(false);
           return cached;
         }
+        setMemberLoading(false);
         return null;
       }
 
@@ -111,8 +119,10 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
         setMember(memberData);
         // Cache the data for offline use
         cacheMemberData(memberData);
+        setMemberLoading(false);
         return memberData;
       }
+      setMemberLoading(false);
       return null;
     } catch (error) {
       console.error("Error fetching member data:", error);
@@ -120,11 +130,13 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
       const cached = loadCachedMember();
       if (cached && cached.id === memberId) {
         setMember(cached);
+        setMemberLoading(false);
         return cached;
       }
+      setMemberLoading(false);
       return null;
     }
-  };
+  }, [loadCachedMember, cacheMemberData]);
 
   // Listen for online/offline status changes
   useEffect(() => {
@@ -225,6 +237,7 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
   const value = {
     session,
     loading,
+    memberLoading,
     member,
     isOffline,
     signIn,
