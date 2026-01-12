@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, RefObject } from "react";
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { OfflineIndicator } from "@/components/offline/OfflineIndicator";
@@ -16,6 +16,7 @@ interface MemberLayoutProps {
   children: ReactNode;
   title: string;
   showBack?: boolean;
+  containerRef?: RefObject<HTMLDivElement>;
 }
 
 const navItems = [
@@ -25,7 +26,7 @@ const navItems = [
   { icon: CreditCard, label: "Payments", path: "/member/payments" },
 ];
 
-export function MemberLayout({ children, title, showBack }: MemberLayoutProps) {
+export function MemberLayout({ children, title, showBack, containerRef }: MemberLayoutProps) {
   const { signOut, isOffline } = useMemberAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -63,7 +64,10 @@ export function MemberLayout({ children, title, showBack }: MemberLayoutProps) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 px-4 py-5 pb-24 overflow-auto scrollbar-hide">
+      <main 
+        ref={containerRef}
+        className="flex-1 px-4 py-5 pb-24 overflow-auto scrollbar-hide relative"
+      >
         {children}
       </main>
 

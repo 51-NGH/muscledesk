@@ -1,8 +1,11 @@
+import { useCallback } from "react";
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { MemberLayout } from "@/components/member-portal/MemberLayout";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { PushNotificationSettings } from "@/components/member-portal/PushNotificationSettings";
+import { PullToRefreshIndicator } from "@/components/member-portal/PullToRefreshIndicator";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { 
   User, 
@@ -17,7 +20,19 @@ import {
 } from "lucide-react";
 
 export default function MemberDashboard() {
-  const { member, loading, memberLoading } = useMemberAuth();
+  const { member, loading, memberLoading, refreshMember } = useMemberAuth();
+
+  const handleRefresh = useCallback(async () => {
+    await refreshMember();
+  }, [refreshMember]);
+
+  const { 
+    containerRef, 
+    pullDistance, 
+    isRefreshing, 
+    shouldTrigger, 
+    progress 
+  } = usePullToRefresh({ onRefresh: handleRefresh });
 
   // Show skeleton while loading session or member data
   if (loading || memberLoading || !member) {
@@ -37,8 +52,22 @@ export default function MemberDashboard() {
   const streakLevel = currentStreak >= 20 ? "🔥 On Fire!" : currentStreak >= 10 ? "⚡ Great!" : currentStreak >= 5 ? "💪 Nice!" : "🌱 Getting Started";
 
   return (
-    <MemberLayout title="Dashboard">
-      <div className="space-y-5 animate-fade-in">
+    <MemberLayout title="Dashboard" containerRef={containerRef}>
+      {/* Pull to Refresh Indicator */}
+      <PullToRefreshIndicator 
+        pullDistance={pullDistance}
+        isRefreshing={isRefreshing}
+        progress={progress}
+        shouldTrigger={shouldTrigger}
+      />
+      
+      <div 
+        className="space-y-5 animate-fade-in"
+        style={{ 
+          transform: pullDistance > 0 || isRefreshing ? `translateY(${Math.max(pullDistance, isRefreshing ? 48 : 0)}px)` : undefined,
+          transition: pullDistance === 0 && !isRefreshing ? "transform 0.2s ease-out" : "none"
+        }}
+      >
         {/* Welcome Card */}
         <div className="bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-5 sm:p-6 text-primary-foreground shadow-lg shadow-primary/20">
           <div className="flex items-start justify-between gap-4">
