@@ -8,7 +8,7 @@ import { MemberAuthProvider } from "@/contexts/MemberAuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { MemberProtectedRoute } from "@/components/member-portal/MemberProtectedRoute";
-
+import { SubdomainRouter } from "@/components/SubdomainRouter";
 // Admin pages
 import Dashboard from "./pages/Dashboard";
 import Members from "./pages/Members";
@@ -40,8 +40,9 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            {/* Member Portal Routes - uses MemberAuthProvider */}
+          <SubdomainRouter>
+            <Routes>
+              {/* Member Portal Routes - uses MemberAuthProvider */}
             <Route path="/member/login" element={
               <MemberAuthProvider>
                 <MemberLogin />
@@ -90,7 +91,8 @@ const App = () => (
                 </Routes>
               </AuthProvider>
             } />
-          </Routes>
+            </Routes>
+          </SubdomainRouter>
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
