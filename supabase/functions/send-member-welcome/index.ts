@@ -93,9 +93,9 @@ serve(async (req) => {
       });
     }
 
-    // Use the production domain
-    const appUrl = "https://muscledesk.in";
-    const setupLink = `${appUrl}/member/setup-pin?token=${portalToken}`;
+    // Use the member portal domain
+    const memberPortalUrl = "https://members.muscledesk.online";
+    const setupLink = `${memberPortalUrl}/member/setup-pin?token=${portalToken}`;
     
     // gyms is an array from the join, take the first element
     const gymData = member.gyms as unknown as { name: string; logo_url: string | null; phone: string | null; address: string | null };
