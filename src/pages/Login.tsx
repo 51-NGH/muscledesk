@@ -224,25 +224,21 @@ export default function Login() {
               Access your dashboard to track attendance, manage memberships, and grow your fitness business.
             </p>
 
-            {/* Stats Preview Cards */}
+            {/* Feature Cards */}
             <div className="grid grid-cols-2 gap-4 mb-12">
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                    <Users className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="text-white/70 text-sm font-medium">Active Members</span>
+                <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-4">
+                  <Users className="w-6 h-6 text-white" />
                 </div>
-                <p className="text-3xl font-bold text-white">2,847</p>
+                <h3 className="text-white font-semibold mb-1">Member Management</h3>
+                <p className="text-white/70 text-sm">Track memberships effortlessly</p>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="text-white/70 text-sm font-medium">Revenue</span>
+                <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-4">
+                  <TrendingUp className="w-6 h-6 text-white" />
                 </div>
-                <p className="text-3xl font-bold text-white">₹4.2L</p>
+                <h3 className="text-white font-semibold mb-1">Revenue Tracking</h3>
+                <p className="text-white/70 text-sm">Monitor payments & growth</p>
               </div>
             </div>
 
@@ -264,7 +260,7 @@ export default function Login() {
                 <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
                   <Users className="w-3.5 h-3.5" />
                 </div>
-                <span className="text-sm font-medium">Multi-branch management</span>
+                <span className="text-sm font-medium">QR-based attendance tracking</span>
               </div>
             </div>
           </div>
@@ -272,7 +268,7 @@ export default function Login() {
           {/* Footer */}
           <div className="absolute bottom-8 left-12 xl:left-20 right-12 xl:right-20">
             <p className="text-white/50 text-xs">
-              © 2025 MuscleDesk • Trusted by 500+ gyms across India
+              © 2025 MuscleDesk • Modern Gym Management
             </p>
           </div>
         </div>

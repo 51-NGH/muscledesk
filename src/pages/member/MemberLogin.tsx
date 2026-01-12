@@ -211,7 +211,7 @@ export default function MemberLogin() {
           {/* Footer */}
           <div className="absolute bottom-8 left-12 xl:left-20 right-12 xl:right-20">
             <p className="text-white/50 text-xs">
-              © 2025 MuscleDesk • Your Fitness Partner
+              © 2025 MuscleDesk • Member Portal
             </p>
           </div>
         </div>
