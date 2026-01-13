@@ -3,7 +3,7 @@ import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { MemberLayout } from "@/components/member-portal/MemberLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
-import { CreditCard, Calendar, Loader2, Receipt, IndianRupee } from "lucide-react";
+import { CreditCard, Calendar, Loader2, Receipt, IndianRupee, AlertCircle } from "lucide-react";
 
 interface PaymentRecord {
   id: string;
@@ -28,22 +28,26 @@ const paymentModeLabels: Record<string, string> = {
 export default function MemberPayments() {
   const { member, loading, memberLoading } = useMemberAuth();
 
-  const { data: payments, isLoading } = useQuery({
+  const { data: payments, isLoading, error } = useQuery({
     queryKey: ["member-payments", member?.id],
     queryFn: async () => {
       if (!member) return [];
       
-      const { data, error } = await supabase
-        .from("payments")
-        .select("*")
-        .eq("member_id", member.id)
-        .order("created_at", { ascending: false })
-        .limit(20);
+      // Use edge function with service role to bypass RLS
+      const { data, error } = await supabase.functions.invoke("member-auth", {
+        body: { action: "get-payments", member_id: member.id, limit: 50 }
+      });
 
-      if (error) throw error;
-      return data as PaymentRecord[];
+      if (error) {
+        console.error("Error fetching payments:", error);
+        throw new Error("Failed to fetch payments");
+      }
+
+      return (data?.payments || []) as PaymentRecord[];
     },
     enabled: !!member,
+    retry: 2,
+    staleTime: 30000, // Consider data fresh for 30 seconds
   });
 
   const totalPaid = payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
@@ -94,6 +98,16 @@ export default function MemberPayments() {
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : error ? (
+            <div className="bg-card rounded-xl border border-destructive/20 p-6 sm:p-8 text-center">
+              <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-3">
+                <AlertCircle className="h-6 w-6 text-destructive" />
+              </div>
+              <p className="font-medium text-sm sm:text-base text-destructive">Failed to load payments</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                Please try again later or contact support
+              </p>
             </div>
           ) : !payments || payments.length === 0 ? (
             <div className="bg-card rounded-xl border border-border p-6 sm:p-8 text-center">

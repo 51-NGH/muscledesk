@@ -7,11 +7,12 @@ const corsHeaders = {
 };
 
 interface AuthRequest {
-  action: "login" | "validate-token" | "set-pin" | "get-member";
+  action: "login" | "validate-token" | "set-pin" | "get-member" | "get-payments" | "get-attendance";
   email?: string;
   pin?: string;
   token?: string;
   member_id?: string;
+  limit?: number;
 }
 
 serve(async (req) => {
@@ -27,7 +28,7 @@ serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
-    const { action, email, pin, token, member_id }: AuthRequest = await req.json();
+    const { action, email, pin, token, member_id, limit = 20 }: AuthRequest = await req.json();
 
     if (action === "login") {
       if (!email || !pin) {
@@ -145,6 +146,58 @@ serve(async (req) => {
       }
 
       return new Response(JSON.stringify({ member }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    if (action === "get-payments") {
+      if (!member_id) {
+        return new Response(JSON.stringify({ error: "member_id required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      const { data: payments, error } = await supabaseAdmin
+        .from("payments")
+        .select("id, amount, payment_mode, status, plan_name, new_start_date, new_expiry_date, created_at, notes")
+        .eq("member_id", member_id)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        console.error("Get payments error:", error);
+        return new Response(JSON.stringify({ error: "Failed to fetch payments", payments: [] }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      return new Response(JSON.stringify({ payments: payments || [] }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    if (action === "get-attendance") {
+      if (!member_id) {
+        return new Response(JSON.stringify({ error: "member_id required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      const { data: attendance, error } = await supabaseAdmin
+        .from("attendance")
+        .select("id, check_in_at, source")
+        .eq("member_id", member_id)
+        .order("check_in_at", { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        console.error("Get attendance error:", error);
+        return new Response(JSON.stringify({ error: "Failed to fetch attendance", attendance: [] }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      return new Response(JSON.stringify({ attendance: attendance || [] }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
