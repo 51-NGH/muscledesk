@@ -1,16 +1,15 @@
+import * as React from "react";
 import { cn } from "@/lib/utils";
 
 type StatusType = "active" | "expiring" | "expiring_soon" | "expired" | "inactive" | "blocked" | "pending" | "completed" | "failed";
 type PlanType = "premium" | "standard" | "basic" | "trial";
 
-interface StatusBadgeProps {
+interface StatusBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   status: StatusType;
-  className?: string;
 }
 
-interface PlanBadgeProps {
+interface PlanBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   plan: PlanType;
-  className?: string;
 }
 
 const statusLabels: Record<StatusType, string> = {
@@ -44,30 +43,44 @@ const planLabels: Record<PlanType, string> = {
   trial: "Trial",
 };
 
-export function StatusBadge({ status, className }: StatusBadgeProps) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs",
-        statusStyles[status],
-        className
-      )}
-    >
-      {statusLabels[status]}
-    </span>
-  );
-}
+const StatusBadge = React.forwardRef<HTMLSpanElement, StatusBadgeProps>(
+  ({ status, className, ...props }, ref) => {
+    return (
+      <span
+        ref={ref}
+        className={cn(
+          "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs",
+          statusStyles[status],
+          className
+        )}
+        {...props}
+      >
+        {statusLabels[status]}
+      </span>
+    );
+  }
+);
 
-export function PlanBadge({ plan, className }: PlanBadgeProps) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs",
-        `plan-${plan}`,
-        className
-      )}
-    >
-      {planLabels[plan]}
-    </span>
-  );
-}
+StatusBadge.displayName = "StatusBadge";
+
+const PlanBadge = React.forwardRef<HTMLSpanElement, PlanBadgeProps>(
+  ({ plan, className, ...props }, ref) => {
+    return (
+      <span
+        ref={ref}
+        className={cn(
+          "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs",
+          `plan-${plan}`,
+          className
+        )}
+        {...props}
+      >
+        {planLabels[plan]}
+      </span>
+    );
+  }
+);
+
+PlanBadge.displayName = "PlanBadge";
+
+export { StatusBadge, PlanBadge };
