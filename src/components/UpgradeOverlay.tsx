@@ -9,6 +9,7 @@ interface UpgradeOverlayProps {
   recommendedPlan?: "standard" | "pro";
   className?: string;
   children?: React.ReactNode;
+  minHeight?: string;
 }
 
 export function UpgradeOverlay({ 
@@ -16,12 +17,13 @@ export function UpgradeOverlay({
   description,
   recommendedPlan = "standard",
   className,
-  children 
+  children,
+  minHeight
 }: UpgradeOverlayProps) {
   const navigate = useNavigate();
 
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn("relative", className)} style={minHeight ? { minHeight } : undefined}>
       {/* Blurred content behind */}
       {children && (
         <div className="pointer-events-none select-none blur-sm opacity-40">
@@ -76,13 +78,33 @@ export function UpgradeOverlay({
   );
 }
 
+interface UpgradeRequiredPageProps {
+  feature: string;
+  description?: string;
+  recommendedPlan?: "standard" | "pro";
+  benefits?: string[];
+}
+
 // Full page upgrade overlay for completely restricted pages
 export function UpgradeRequiredPage({ 
   feature, 
   description,
-  recommendedPlan = "standard" 
-}: Omit<UpgradeOverlayProps, 'children' | 'className'>) {
+  recommendedPlan = "standard",
+  benefits
+}: UpgradeRequiredPageProps) {
   const navigate = useNavigate();
+
+  // Default benefits if none provided
+  const defaultBenefits = [
+    "Unlimited membership plans",
+    "QR code attendance scanning",
+    "Payment tracking & history",
+    "Advanced analytics & charts",
+    "Member portal with QR codes",
+    "Automated renewal reminders"
+  ];
+
+  const displayBenefits = benefits || defaultBenefits;
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4">
@@ -110,30 +132,12 @@ export function UpgradeRequiredPage({
             Upgrade to {recommendedPlan === "pro" ? "Pro" : "Standard"} for:
           </h4>
           <ul className="space-y-3 text-sm text-muted-foreground">
-            <li className="flex items-center gap-3">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              Unlimited membership plans
-            </li>
-            <li className="flex items-center gap-3">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              QR code attendance scanning
-            </li>
-            <li className="flex items-center gap-3">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              Payment tracking & history
-            </li>
-            <li className="flex items-center gap-3">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              Advanced analytics & charts
-            </li>
-            <li className="flex items-center gap-3">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              Member portal with QR codes
-            </li>
-            <li className="flex items-center gap-3">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              Automated renewal reminders
-            </li>
+            {displayBenefits.map((benefit, index) => (
+              <li key={index} className="flex items-center gap-3">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                {benefit}
+              </li>
+            ))}
           </ul>
         </div>
 

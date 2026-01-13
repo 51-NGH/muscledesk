@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useGymPlanFeatures } from "@/hooks/useGymPlanFeatures";
 import { useAttendance, useMembers, useDashboardStats } from "@/hooks/useGymData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -60,6 +61,7 @@ function LiveClock() {
 
 export default function Attendance() {
   const { gymId } = useAuth();
+  const { data: features } = useGymPlanFeatures();
   const getTodayDate = () => new Date().toISOString().split("T")[0];
   const [selectedDate, setSelectedDate] = useState(getTodayDate);
   const [wasViewingToday, setWasViewingToday] = useState(true);
@@ -68,6 +70,9 @@ export default function Attendance() {
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Check if QR attendance is available
+  const hasQRAttendance = features?.hasQRAttendance ?? true;
 
   // Auto-update date at midnight if user was viewing today
   useEffect(() => {
@@ -196,11 +201,25 @@ export default function Attendance() {
   return (
     <DashboardLayout>
       <PageHeader title="Attendance" description="Track member check-ins and attendance">
-        <Button variant="outline" size="sm" onClick={() => setIsQRScannerOpen(true)}>
-          <Camera className="mr-2 h-4 w-4" />
-          <span className="hidden sm:inline">Scan QR</span>
-          <span className="sm:hidden">Scan</span>
-        </Button>
+        {hasQRAttendance ? (
+          <Button variant="outline" size="sm" onClick={() => setIsQRScannerOpen(true)}>
+            <Camera className="mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">Scan QR</span>
+            <span className="sm:hidden">Scan</span>
+          </Button>
+        ) : (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            disabled 
+            className="opacity-50 cursor-not-allowed"
+            title="Upgrade to Standard or Pro for QR scanning"
+          >
+            <Camera className="mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">QR (Upgrade)</span>
+            <span className="sm:hidden">QR</span>
+          </Button>
+        )}
         <Button size="sm" onClick={() => setIsManualCheckInOpen(true)}>
           <UserCheck className="mr-2 h-4 w-4" />
           <span className="hidden sm:inline">Manual Check-In</span>
@@ -372,12 +391,14 @@ export default function Attendance() {
         </DialogContent>
       </Dialog>
 
-      {/* QR Scanner */}
-      <QRScanner
-        isOpen={isQRScannerOpen}
-        onClose={() => setIsQRScannerOpen(false)}
-        onScan={handleQRScan}
-      />
+      {/* QR Scanner - only show if feature is available */}
+      {hasQRAttendance && (
+        <QRScanner
+          isOpen={isQRScannerOpen}
+          onClose={() => setIsQRScannerOpen(false)}
+          onScan={handleQRScan}
+        />
+      )}
     </DashboardLayout>
   );
 }
