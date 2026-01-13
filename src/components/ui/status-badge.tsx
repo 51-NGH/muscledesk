@@ -43,7 +43,7 @@ const planLabels: Record<PlanType, string> = {
   trial: "Trial",
 };
 
-const StatusBadge = React.forwardRef<HTMLSpanElement, StatusBadgeProps>(
+export const StatusBadge = React.forwardRef<HTMLSpanElement, StatusBadgeProps>(
   ({ status, className, ...props }, ref) => {
     return (
       <span
@@ -63,7 +63,7 @@ const StatusBadge = React.forwardRef<HTMLSpanElement, StatusBadgeProps>(
 
 StatusBadge.displayName = "StatusBadge";
 
-const PlanBadge = React.forwardRef<HTMLSpanElement, PlanBadgeProps>(
+export const PlanBadge = React.forwardRef<HTMLSpanElement, PlanBadgeProps>(
   ({ plan, className, ...props }, ref) => {
     return (
       <span
@@ -82,5 +82,3 @@ const PlanBadge = React.forwardRef<HTMLSpanElement, PlanBadgeProps>(
 );
 
 PlanBadge.displayName = "PlanBadge";
-
-export { StatusBadge, PlanBadge };

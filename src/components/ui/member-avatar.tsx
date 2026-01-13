@@ -6,7 +6,7 @@ interface MemberAvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: "sm" | "md" | "lg" | "xl";
 }
 
-const MemberAvatar = React.forwardRef<HTMLDivElement, MemberAvatarProps>(
+export const MemberAvatar = React.forwardRef<HTMLDivElement, MemberAvatarProps>(
   ({ name, size = "md", className, ...props }, ref) => {
     const initials = name
       .split(" ")
@@ -35,5 +35,3 @@ const MemberAvatar = React.forwardRef<HTMLDivElement, MemberAvatarProps>(
 );
 
 MemberAvatar.displayName = "MemberAvatar";
-
-export { MemberAvatar };
