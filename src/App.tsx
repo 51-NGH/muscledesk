@@ -10,6 +10,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { MemberProtectedRoute } from "@/components/member-portal/MemberProtectedRoute";
 import { SubdomainRouter } from "@/components/SubdomainRouter";
 import { ManifestManager } from "@/components/ManifestManager";
+import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
 
 // Admin pages
 import Dashboard from "./pages/Dashboard";
@@ -59,6 +60,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <ManifestManager />
+          <PWAInstallPrompt />
           <SubdomainRouter>
             <Routes>
               {/* Member Portal Routes - uses MemberAuthProvider */}
