@@ -104,8 +104,11 @@ export default function Payments() {
     const member = members.find((m) => m.id === newPayment.member_id);
     const plan = plans.find((p) => p.id === newPayment.plan_id);
 
-    // Calculate new expiry date - extend from current expiry if active, or from today if expired
-    // IMPORTANT: start_date (joining date) should NEVER change after member creation
+    // Check if this is the member's first payment
+    const memberPayments = payments.filter((p) => p.member_id === newPayment.member_id);
+    const isFirstPayment = memberPayments.length === 0;
+
+    // Calculate dates for payment record
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
@@ -120,8 +123,7 @@ export default function Payments() {
     const newExpiry = new Date(extensionStartDate);
     newExpiry.setDate(newExpiry.getDate() + extendDays);
 
-    // For payment record: track the billing period (when this payment's validity starts and ends)
-    // This is NOT the member's joining date - it's just for this payment's reference
+    // For payment record: track the billing period
     const billingPeriodStart = extensionStartDate.toISOString().split("T")[0];
     const billingPeriodEnd = newExpiry.toISOString().split("T")[0];
 
@@ -132,9 +134,16 @@ export default function Payments() {
         payment_mode: newPayment.payment_mode,
         plan_id: newPayment.plan_id || undefined,
         plan_name: plan?.name,
-        new_start_date: billingPeriodStart, // This is for payment record only, NOT member's joining date
-        new_expiry_date: billingPeriodEnd,
+        new_start_date: billingPeriodStart,
+        // FIRST PAYMENT: Don't extend membership - it's payment for initial period
+        // SUBSEQUENT PAYMENTS: Extend membership to new expiry date
+        new_expiry_date: isFirstPayment ? undefined : billingPeriodEnd,
       });
+      
+      if (isFirstPayment) {
+        toast.info("First payment recorded (membership dates unchanged)");
+      }
+      
       setIsAddPaymentOpen(false);
       setNewPayment({ member_id: "", amount: "", payment_mode: "cash", plan_id: "", extend_days: "30" });
     } catch (error) {
