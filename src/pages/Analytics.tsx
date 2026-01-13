@@ -44,10 +44,34 @@ import {
 const timeRanges = ["7 Days", "30 Days", "90 Days", "6 Months"] as const;
 
 export default function Analytics() {
+  // ALL HOOKS MUST BE CALLED AT THE TOP - BEFORE ANY CONDITIONAL RETURNS
   const [activeRange, setActiveRange] = useState<string>("30 Days");
   const { data: features, isLoading: featuresLoading } = useGymPlanFeatures();
-  
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
+  const { data: members = [] } = useMembers();
+  const { data: allPayments = [] } = usePayments();
+  const { data: allExpenses = [] } = useExpenses();
+  
+  // Calculate days and months based on selected range
+  const { daysBack, monthsBack } = useMemo(() => {
+    switch (activeRange) {
+      case "7 Days": return { daysBack: 7, monthsBack: 1 };
+      case "30 Days": return { daysBack: 30, monthsBack: 1 };
+      case "90 Days": return { daysBack: 90, monthsBack: 3 };
+      case "6 Months": return { daysBack: 180, monthsBack: 6 };
+      default: return { daysBack: 30, monthsBack: 1 };
+    }
+  }, [activeRange]);
+
+  // Fetch data based on range
+  const { data: monthlyRevenue = [] } = useMonthlyRevenue(monthsBack);
+  const { data: monthlyExpenses = [] } = useMonthlyExpenses(monthsBack);
+  const { data: dailyAttendance = [] } = useDailyAttendance(daysBack);
+
+  // Calculate date range start
+  const rangeStartDate = useMemo(() => {
+    return startOfDay(subDays(new Date(), daysBack));
+  }, [daysBack]);
 
   // Show loading state while checking features
   if (featuresLoading) {
@@ -84,30 +108,6 @@ export default function Analytics() {
       </DashboardLayout>
     );
   }
-  const { data: members = [] } = useMembers();
-  const { data: allPayments = [] } = usePayments();
-  const { data: allExpenses = [] } = useExpenses();
-  
-  // Calculate days and months based on selected range
-  const { daysBack, monthsBack } = useMemo(() => {
-    switch (activeRange) {
-      case "7 Days": return { daysBack: 7, monthsBack: 1 };
-      case "30 Days": return { daysBack: 30, monthsBack: 1 };
-      case "90 Days": return { daysBack: 90, monthsBack: 3 };
-      case "6 Months": return { daysBack: 180, monthsBack: 6 };
-      default: return { daysBack: 30, monthsBack: 1 };
-    }
-  }, [activeRange]);
-
-  // Fetch data based on range
-  const { data: monthlyRevenue = [] } = useMonthlyRevenue(monthsBack);
-  const { data: monthlyExpenses = [] } = useMonthlyExpenses(monthsBack);
-  const { data: dailyAttendance = [] } = useDailyAttendance(daysBack);
-
-  // Calculate date range start
-  const rangeStartDate = useMemo(() => {
-    return startOfDay(subDays(new Date(), daysBack));
-  }, [daysBack]);
 
   // Filter payments by selected range
   const filteredPayments = useMemo(() => {
