@@ -3,7 +3,7 @@ import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { MemberLayout } from "@/components/member-portal/MemberLayout";
 import { QRCodeCanvas } from "qrcode.react";
 import { Button } from "@/components/ui/button";
-import { Download, Maximize2, X, AlertTriangle, Share2, WifiOff } from "lucide-react";
+import { Download, X, AlertTriangle, WifiOff } from "lucide-react";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 
@@ -40,24 +40,6 @@ export default function MemberQRCode() {
       link.href = url;
       link.click();
       toast.success("QR Code downloaded!");
-    }
-  };
-
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "My Gym QR Code",
-          text: `Member ID: ${member.member_id}`,
-          url: window.location.href,
-        });
-      } catch (err) {
-        // User cancelled or error
-      }
-    } else {
-      // Fallback - copy link
-      navigator.clipboard.writeText(window.location.href);
-      toast.success("Link copied to clipboard!");
     }
   };
 
@@ -110,45 +92,31 @@ export default function MemberQRCode() {
           </div>
         )}
 
-        {/* QR Code Card */}
+        {/* QR Code Card - Clickable for fullscreen */}
         <div className="bg-card rounded-2xl border border-border p-5 sm:p-6">
-          <div className="flex flex-col items-center" ref={qrRef}>
+          <div 
+            className="flex flex-col items-center cursor-pointer" 
+            ref={qrRef}
+            onClick={() => !isInvalid && setIsFullscreen(true)}
+          >
             <QRContent size={Math.min(220, window.innerWidth - 120)} />
             <div className="mt-4 text-center">
               <p className="font-mono text-sm text-muted-foreground">{member.member_id}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Scan at gym entrance
+                {isInvalid ? "QR disabled" : "Tap to view fullscreen"}
               </p>
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
+          {/* Single Download Button */}
+          <div className="mt-6">
             <Button
-              variant="outline"
-              className="h-12 rounded-xl flex flex-col items-center justify-center gap-1 px-2"
-              onClick={() => setIsFullscreen(true)}
-              disabled={isInvalid}
-            >
-              <Maximize2 className="h-4 w-4" />
-              <span className="text-[10px] sm:text-xs">Fullscreen</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-12 rounded-xl flex flex-col items-center justify-center gap-1 px-2"
-              onClick={handleShare}
-              disabled={isInvalid}
-            >
-              <Share2 className="h-4 w-4" />
-              <span className="text-[10px] sm:text-xs">Share</span>
-            </Button>
-            <Button
-              className="h-12 rounded-xl flex flex-col items-center justify-center gap-1 px-2"
+              className="w-full h-12 rounded-xl"
               onClick={handleDownload}
               disabled={isInvalid}
             >
-              <Download className="h-4 w-4" />
-              <span className="text-[10px] sm:text-xs">Download</span>
+              <Download className="h-4 w-4 mr-2" />
+              Download QR Code
             </Button>
           </div>
         </div>
@@ -198,7 +166,7 @@ export default function MemberQRCode() {
         </div>
       </div>
 
-      {/* Fullscreen Modal */}
+      {/* Fullscreen Modal - Click anywhere to close */}
       {isFullscreen && (
         <div 
           className="fixed inset-0 z-[100] bg-black flex items-center justify-center safe-area-pt safe-area-pb"
@@ -223,6 +191,7 @@ export default function MemberQRCode() {
             </div>
             <p className="text-white font-mono text-lg mt-4">{member.member_id}</p>
             <p className="text-white/60 text-sm mt-1">{member.full_name}</p>
+            <p className="text-white/40 text-xs mt-4">Tap anywhere to close</p>
           </div>
         </div>
       )}

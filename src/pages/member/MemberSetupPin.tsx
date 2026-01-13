@@ -38,6 +38,12 @@ export default function MemberSetupPin() {
       if (error) throw error;
 
       if (data.success) {
+        // Check if PIN is already set - redirect to login
+        if (data.pin_already_set) {
+          toast.info("PIN already set! Please login.");
+          navigate("/member/login");
+          return;
+        }
         setIsValid(true);
         setMemberInfo(data);
       }
