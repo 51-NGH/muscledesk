@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Dumbbell, Lock, Mail, Loader2, Activity, Calendar, QrCode, Trophy, WifiOff } from "lucide-react";
-import muscledeskLogo from "@/assets/muscledesk-logo.png";
+import muscledeskMembersDark from "@/assets/muscledesk-members-dark.png";
+import muscledeskMembersLight from "@/assets/muscledesk-members-light.png";
+import { useTheme } from "next-themes";
 
 export default function MemberLogin() {
   const [email, setEmail] = useState("");
@@ -16,6 +18,9 @@ export default function MemberLogin() {
   const { signIn } = useMemberAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { resolvedTheme } = useTheme();
+  
+  const memberLogo = resolvedTheme === "dark" ? muscledeskMembersDark : muscledeskMembersLight;
 
   const from = location.state?.from?.pathname || "/member";
 
@@ -61,9 +66,8 @@ export default function MemberLogin() {
       <div className="flex-1 flex flex-col bg-background safe-area-pt">
         {/* Header */}
         <div className="p-6 lg:p-8">
-          <div className="flex items-center gap-2.5">
-            <img src={muscledeskLogo} alt="MuscleDesk" className="h-9 w-9" />
-            <span className="font-bold text-xl tracking-tight">MuscleDesk</span>
+          <div className="flex items-center gap-3">
+            <img src={memberLogo} alt="MuscleDesk Members" className="h-10 w-auto" />
           </div>
         </div>
 

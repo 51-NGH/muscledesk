@@ -10,7 +10,9 @@ import {
   LogOut,
   WifiOff
 } from "lucide-react";
-import muscledeskLogo from "@/assets/muscledesk-logo.png";
+import muscledeskMembersDark from "@/assets/muscledesk-members-dark.png";
+import muscledeskMembersLight from "@/assets/muscledesk-members-light.png";
+import { useTheme } from "next-themes";
 
 interface MemberLayoutProps {
   children: ReactNode;
@@ -30,6 +32,9 @@ export function MemberLayout({ children, title, showBack, containerRef }: Member
   const { signOut, isOffline } = useMemberAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { resolvedTheme } = useTheme();
+  
+  const memberLogo = resolvedTheme === "dark" ? muscledeskMembersDark : muscledeskMembersLight;
 
   const handleSignOut = async () => {
     await signOut();
@@ -45,8 +50,7 @@ export function MemberLayout({ children, title, showBack, containerRef }: Member
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border safe-area-pt">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={muscledeskLogo} alt="MuscleDesk" className="h-8 w-8" />
-            <h1 className="font-semibold text-lg">{title}</h1>
+            <img src={memberLogo} alt="MuscleDesk Members" className="h-8 w-auto" />
             {isOffline && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 text-xs font-medium">
                 <WifiOff className="h-3 w-3" />
