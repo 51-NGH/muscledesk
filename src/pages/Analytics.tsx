@@ -69,17 +69,19 @@ export default function Analytics() {
   // Show upgrade page for Lite plan
   if (features && !features.hasAnalyticsPage) {
     return (
-      <UpgradeRequiredPage
-        feature="Advanced Analytics"
-        description="Gain deep insights into your gym's performance with comprehensive analytics, revenue trends, member statistics, and growth metrics."
-        benefits={[
-          "Revenue & profit analysis",
-          "Attendance trends & patterns",
-          "Member growth tracking",
-          "Peak hours analysis",
-          "Export reports"
-        ]}
-      />
+      <DashboardLayout>
+        <UpgradeRequiredPage
+          feature="Advanced Analytics"
+          description="Gain deep insights into your gym's performance with comprehensive analytics, revenue trends, member statistics, and growth metrics."
+          benefits={[
+            "Revenue & profit analysis",
+            "Attendance trends & patterns",
+            "Member growth tracking",
+            "Peak hours analysis",
+            "Export reports"
+          ]}
+        />
+      </DashboardLayout>
     );
   }
   const { data: members = [] } = useMembers();
