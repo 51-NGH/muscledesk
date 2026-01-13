@@ -108,25 +108,27 @@ export function UpgradeRequiredPage({
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4">
-      <div className="text-center max-w-lg animate-fade-in">
-        {/* Decorative gradient background */}
+      <div className="text-center max-w-md animate-fade-in">
+        {/* Gradient header background */}
+        <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-muted/50 to-transparent pointer-events-none" />
+        
+        {/* Lock Icon */}
         <div className="relative mx-auto mb-8">
-          <div className="absolute inset-0 blur-3xl bg-gradient-to-r from-primary/20 via-purple-500/20 to-orange-500/20 rounded-full scale-150" />
-          <div className="relative h-24 w-24 mx-auto rounded-3xl bg-gradient-to-br from-muted to-card border border-border flex items-center justify-center shadow-xl">
-            <Lock className="h-12 w-12 text-muted-foreground" />
+          <div className="relative h-20 w-20 mx-auto rounded-2xl bg-card border border-border flex items-center justify-center shadow-sm">
+            <Lock className="h-10 w-10 text-muted-foreground" />
           </div>
         </div>
 
-        {/* Text */}
+        {/* Title & Description */}
         <h2 className="text-2xl font-bold text-foreground mb-3">
           {feature}
         </h2>
-        <p className="text-muted-foreground mb-8 max-w-sm mx-auto">
+        <p className="text-muted-foreground mb-8 max-w-sm mx-auto leading-relaxed">
           {description || `This feature is not available on the Lite plan. Upgrade to unlock powerful capabilities.`}
         </p>
 
-        {/* Features list */}
-        <div className="bg-card border border-border rounded-xl p-6 mb-8 text-left">
+        {/* Benefits Card */}
+        <div className="bg-card border border-border rounded-xl p-6 mb-8 text-left shadow-sm">
           <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
             Upgrade to {recommendedPlan === "pro" ? "Pro" : "Standard"} for:
@@ -134,24 +136,24 @@ export function UpgradeRequiredPage({
           <ul className="space-y-3 text-sm text-muted-foreground">
             {displayBenefits.map((benefit, index) => (
               <li key={index} className="flex items-center gap-3">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                <span className="h-1.5 w-1.5 rounded-full bg-foreground/70 flex-shrink-0" />
                 {benefit}
               </li>
             ))}
           </ul>
         </div>
 
-        {/* CTA */}
+        {/* CTA Button */}
         <Button 
           size="lg"
           onClick={() => navigate("/settings")}
-          className="gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg shadow-primary/25"
+          className="gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg shadow-primary/25 px-8"
         >
           Upgrade Your Plan
           <ArrowRight className="h-4 w-4" />
         </Button>
         
-        <p className="text-xs text-muted-foreground mt-4">
+        <p className="text-sm text-muted-foreground mt-4">
           Contact your admin to upgrade your gym's plan
         </p>
       </div>
