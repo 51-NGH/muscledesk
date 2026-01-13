@@ -452,9 +452,11 @@ export default function Members() {
             <div className="space-y-2">
               <Label>Phone Number *</Label>
               <Input
+                type="tel"
+                maxDigits={10}
                 value={newMember.phone}
                 onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })}
-                placeholder="+91 9876543210"
+                placeholder="9876543210"
                 required
               />
             </div>
@@ -557,6 +559,8 @@ export default function Members() {
             <div className="space-y-2">
               <Label>Phone Number *</Label>
               <Input
+                type="tel"
+                maxDigits={10}
                 value={newMember.phone}
                 onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })}
                 required
