@@ -30,7 +30,6 @@ serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
-    // Verify authorization
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { 
@@ -46,15 +45,10 @@ serve(async (req) => {
       });
     }
 
-    // Get member with gym info (including gym plan)
     const { data: member, error: memberError } = await supabaseAdmin
       .from("members")
       .select(`
-        id,
-        full_name,
-        email,
-        member_id,
-        gym_id,
+        id, full_name, email, member_id, gym_id,
         gyms!inner(name, logo_url, phone, address, plan)
       `)
       .eq("id", member_id)
@@ -66,20 +60,14 @@ serve(async (req) => {
       });
     }
 
-    // gyms is an array from the join, take the first element
     const gymData = member.gyms as unknown as { name: string; logo_url: string | null; phone: string | null; address: string | null; plan: string };
     const gym = Array.isArray(gymData) ? gymData[0] : gymData;
 
-    // Check if gym is on Lite plan - skip sending email for Lite gyms
     if (gym.plan === "lite") {
       console.log(`Skipping welcome email for member ${member_id} - gym is on Lite plan`);
       return new Response(JSON.stringify({ 
-        success: true, 
-        message: "Email skipped - gym is on Lite plan (Member Portal not available)",
-        skipped: true
-      }), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
+        success: true, message: "Email skipped - gym is on Lite plan", skipped: true
+      }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     if (!member.email) {
@@ -88,18 +76,13 @@ serve(async (req) => {
       });
     }
 
-    // Generate portal token (expires in 7 days)
     const portalToken = crypto.randomUUID() + crypto.randomUUID().replace(/-/g, '');
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    // Update member with portal token
     const { error: updateError } = await supabaseAdmin
       .from("members")
-      .update({
-        portal_token: portalToken,
-        portal_token_expires_at: expiresAt.toISOString()
-      })
+      .update({ portal_token: portalToken, portal_token_expires_at: expiresAt.toISOString() })
       .eq("id", member_id);
 
     if (updateError) {
@@ -109,112 +92,107 @@ serve(async (req) => {
       });
     }
 
-    // Use the member portal domain
     const memberPortalUrl = "https://members.muscledesk.online";
     const setupLink = `${memberPortalUrl}/member/setup-pin?token=${portalToken}`;
 
-    // Send welcome email using Resend REST API
+    // Professional HTML email template with better deliverability
     const emailHtml = `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>Welcome to ${gym.name}</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f5; padding: 40px 20px;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 32px 16px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px; background-color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0;">
+          
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #18181b 0%, #27272a 100%); padding: 40px 40px 30px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">
-                💪 MuscleDesk
+            <td style="background-color: #18181b; padding: 32px 24px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600; letter-spacing: -0.5px;">
+                Welcome to ${gym.name}
               </h1>
-              <p style="margin: 8px 0 0; color: #a1a1aa; font-size: 14px;">
-                Gym Management System
-              </p>
-            </td>
-          </tr>
-          
-          <!-- Gym Banner -->
-          <tr>
-            <td style="background-color: #f97316; padding: 20px 40px; text-align: center;">
-              <h2 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 600;">
-                ${gym.name}
-              </h2>
             </td>
           </tr>
           
           <!-- Content -->
           <tr>
-            <td style="padding: 40px;">
-              <h3 style="margin: 0 0 16px; color: #18181b; font-size: 24px; font-weight: 600;">
-                Welcome, ${member.full_name}! 🎉
-              </h3>
-              
-              <p style="margin: 0 0 24px; color: #52525b; font-size: 16px; line-height: 1.6;">
-                You've been registered as a member at <strong>${gym.name}</strong>. Your Member ID is:
+            <td style="padding: 32px 24px;">
+              <p style="margin: 0 0 20px; color: #334155; font-size: 16px; line-height: 1.6;">
+                Hi <strong>${member.full_name.split(' ')[0]}</strong>,
               </p>
               
-              <div style="background-color: #f4f4f5; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 24px;">
-                <p style="margin: 0; color: #71717a; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
-                  Member ID
-                </p>
-                <p style="margin: 8px 0 0; color: #18181b; font-size: 28px; font-weight: 700; font-family: monospace;">
-                  ${member.member_id}
-                </p>
-              </div>
+              <p style="margin: 0 0 24px; color: #334155; font-size: 16px; line-height: 1.6;">
+                You've been registered as a member. Here's your Member ID:
+              </p>
               
-              <p style="margin: 0 0 24px; color: #52525b; font-size: 16px; line-height: 1.6;">
-                To access your Member Portal and view your attendance, payments, and QR code, please set up your 4-digit PIN:
+              <!-- Member ID Box -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+                <tr>
+                  <td style="background-color: #f1f5f9; border-radius: 8px; padding: 20px; text-align: center;">
+                    <p style="margin: 0 0 4px; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Member ID</p>
+                    <p style="margin: 0; color: #18181b; font-size: 28px; font-weight: 700; font-family: 'Courier New', monospace;">${member.member_id}</p>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 0 0 24px; color: #334155; font-size: 16px; line-height: 1.6;">
+                Set up your 4-digit PIN to access your Member Portal where you can view your QR code for check-ins, attendance history, and payments.
               </p>
               
               <!-- CTA Button -->
-              <table width="100%" cellpadding="0" cellspacing="0">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
                 <tr>
-                  <td align="center" style="padding: 8px 0 32px;">
-                    <a href="${setupLink}" style="display: inline-block; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 12px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);">
-                      Set Up My PIN →
+                  <td align="center">
+                    <a href="${setupLink}" style="display: inline-block; background-color: #18181b; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                      Set Up My PIN
                     </a>
                   </td>
                 </tr>
               </table>
               
-              <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 0 8px 8px 0; margin-bottom: 24px;">
-                <p style="margin: 0; color: #92400e; font-size: 14px;">
-                  <strong>⚠️ Important:</strong> This setup link expires in 7 days. If it expires, contact your gym for a new link.
-                </p>
-              </div>
+              <!-- Warning -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+                <tr>
+                  <td style="background-color: #fef3c7; border-left: 3px solid #f59e0b; padding: 12px 16px; border-radius: 0 6px 6px 0;">
+                    <p style="margin: 0; color: #92400e; font-size: 14px;">
+                      This link expires in 7 days. Contact your gym if it expires.
+                    </p>
+                  </td>
+                </tr>
+              </table>
               
-              <p style="margin: 0; color: #71717a; font-size: 14px; line-height: 1.6;">
-                If the button doesn't work, copy and paste this link into your browser:<br>
-                <a href="${setupLink}" style="color: #f97316; word-break: break-all;">${setupLink}</a>
+              <p style="margin: 0; color: #64748b; font-size: 13px; line-height: 1.6;">
+                If the button doesn't work, copy this link:<br>
+                <a href="${setupLink}" style="color: #3b82f6; word-break: break-all;">${setupLink}</a>
               </p>
             </td>
           </tr>
           
           <!-- Footer -->
           <tr>
-            <td style="background-color: #f4f4f5; padding: 24px 40px; text-align: center;">
-              <p style="margin: 0 0 8px; color: #52525b; font-size: 14px;">
-                ${gym.name}${gym.phone ? ` • ${gym.phone}` : ''}
-              </p>
-              ${gym.address ? `<p style="margin: 0; color: #71717a; font-size: 12px;">${gym.address}</p>` : ''}
-              <p style="margin: 16px 0 0; color: #a1a1aa; font-size: 12px;">
-                Powered by MuscleDesk
-              </p>
+            <td style="background-color: #f8fafc; padding: 20px 24px; text-align: center; border-top: 1px solid #e2e8f0;">
+              <p style="margin: 0 0 4px; color: #475569; font-size: 14px; font-weight: 500;">${gym.name}</p>
+              ${gym.phone ? `<p style="margin: 0; color: #64748b; font-size: 13px;">${gym.phone}</p>` : ''}
+              ${gym.address ? `<p style="margin: 4px 0 0; color: #94a3b8; font-size: 12px;">${gym.address}</p>` : ''}
             </td>
           </tr>
         </table>
+        
+        <!-- Powered by -->
+        <p style="margin: 16px 0 0; color: #94a3b8; font-size: 12px; text-align: center;">
+          Powered by MuscleDesk
+        </p>
       </td>
     </tr>
   </table>
 </body>
-</html>
-    `;
+</html>`;
 
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -225,8 +203,11 @@ serve(async (req) => {
       body: JSON.stringify({
         from: "MuscleDesk <noreply@muscledesk.in>",
         to: [member.email],
-        subject: `Welcome to ${gym.name} - Set Up Your Member Portal`,
+        subject: `Welcome to ${gym.name} - Set Up Your Portal Access`,
         html: emailHtml,
+        headers: {
+          "X-Entity-Ref-ID": member_id,
+        },
       }),
     });
 
@@ -241,10 +222,7 @@ serve(async (req) => {
 
     console.log("Welcome email sent:", emailResult);
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      message: "Welcome email sent successfully"
-    }), {
+    return new Response(JSON.stringify({ success: true, message: "Welcome email sent successfully" }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
 

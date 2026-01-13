@@ -1,39 +1,8 @@
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { UpgradeRequiredPage } from "@/components/UpgradeOverlay";
 import { useGymPlanFeatures } from "@/hooks/useGymPlanFeatures";
 import { Skeleton } from "@/components/ui/skeleton";
-
-export default function Reminders() {
-  const { data: features, isLoading } = useGymPlanFeatures();
-
-  if (isLoading) {
-    return (
-      <DashboardLayout>
-        <div className="space-y-4">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-[400px] w-full" />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  // Show upgrade page for lite plan
-  if (!features?.hasRemindersPage) {
-    return (
-      <DashboardLayout>
-        <UpgradeRequiredPage 
-          feature="Renewal Reminders"
-          description="Send automated WhatsApp reminders to members with expiring memberships. Never miss a renewal opportunity again."
-        />
-      </DashboardLayout>
-    );
-  }
-
-  return <RemindersContent />;
-}
-
-// Full Reminders content for Standard/Pro
-import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -76,6 +45,35 @@ const messageTemplates: MessageTemplate[] = [
     getMessage: (name) => `Hi ${name}, We miss you! Your membership expires soon. Reply to renew.`,
   },
 ];
+
+export default function Reminders() {
+  const { data: features, isLoading } = useGymPlanFeatures();
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-[400px] w-full" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Show upgrade page for lite plan
+  if (!features?.hasRemindersPage) {
+    return (
+      <DashboardLayout>
+        <UpgradeRequiredPage 
+          feature="Renewal Reminders"
+          description="Send automated WhatsApp reminders to members with expiring memberships. Never miss a renewal opportunity again."
+        />
+      </DashboardLayout>
+    );
+  }
+
+  return <RemindersContent />;
+}
 
 function RemindersContent() {
   const { data: expiringMembers = [], isLoading } = useExpiringMembers(30);

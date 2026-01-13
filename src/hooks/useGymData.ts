@@ -263,10 +263,51 @@ export function useDeleteMember() {
 
   return useMutation({
     mutationFn: async (memberId: string) => {
-      // Soft delete
+      // First, delete related records to avoid foreign key constraints
+      // Delete attendance records
+      const { error: attendanceError } = await supabase
+        .from("attendance")
+        .delete()
+        .eq("member_id", memberId);
+
+      if (attendanceError) {
+        console.error("Error deleting attendance:", attendanceError);
+      }
+
+      // Delete payment records
+      const { error: paymentsError } = await supabase
+        .from("payments")
+        .delete()
+        .eq("member_id", memberId);
+
+      if (paymentsError) {
+        console.error("Error deleting payments:", paymentsError);
+      }
+
+      // Delete notification logs
+      const { error: notificationError } = await supabase
+        .from("notification_logs")
+        .delete()
+        .eq("member_id", memberId);
+
+      if (notificationError) {
+        console.error("Error deleting notification logs:", notificationError);
+      }
+
+      // Delete push subscriptions
+      const { error: pushError } = await supabase
+        .from("push_subscriptions")
+        .delete()
+        .eq("member_id", memberId);
+
+      if (pushError) {
+        console.error("Error deleting push subscriptions:", pushError);
+      }
+
+      // Hard delete the member
       const { error } = await supabase
         .from("members")
-        .update({ deleted_at: new Date().toISOString() })
+        .delete()
         .eq("id", memberId)
         .eq("gym_id", gymId!);
 
@@ -275,7 +316,7 @@ export function useDeleteMember() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["members", gymId] });
       queryClient.invalidateQueries({ queryKey: ["dashboard_stats", gymId] });
-      toast.success("Member removed successfully!");
+      toast.success("Member permanently deleted!");
     },
     onError: (error: Error) => {
       toast.error(error.message);
