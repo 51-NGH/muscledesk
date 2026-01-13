@@ -73,43 +73,7 @@ export default function Analytics() {
     return startOfDay(subDays(new Date(), daysBack));
   }, [daysBack]);
 
-  // Show loading state while checking features
-  if (featuresLoading) {
-    return (
-      <DashboardLayout>
-        <div className="space-y-6">
-          <Skeleton className="h-10 w-64" />
-          <div className="grid grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-28" />
-            ))}
-          </div>
-          <Skeleton className="h-96" />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  // Show upgrade page for Lite plan
-  if (features && !features.hasAnalyticsPage) {
-    return (
-      <DashboardLayout>
-        <UpgradeRequiredPage
-          feature="Advanced Analytics"
-          description="Gain deep insights into your gym's performance with comprehensive analytics, revenue trends, member statistics, and growth metrics."
-          benefits={[
-            "Revenue & profit analysis",
-            "Attendance trends & patterns",
-            "Member growth tracking",
-            "Peak hours analysis",
-            "Export reports"
-          ]}
-        />
-      </DashboardLayout>
-    );
-  }
-
-  // Filter payments by selected range
+  // Filter payments by selected range - MUST BE BEFORE CONDITIONAL RETURNS
   const filteredPayments = useMemo(() => {
     return allPayments.filter((p: any) => {
       const paymentDate = parseISO(p.created_at);
@@ -302,6 +266,42 @@ export default function Analytics() {
       default: return "Last 30 days";
     }
   };
+
+  // Show loading state while checking features - AFTER ALL HOOKS
+  if (featuresLoading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <Skeleton className="h-10 w-64" />
+          <div className="grid grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-28" />
+            ))}
+          </div>
+          <Skeleton className="h-96" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Show upgrade page for Lite plan
+  if (features && !features.hasAnalyticsPage) {
+    return (
+      <DashboardLayout>
+        <UpgradeRequiredPage
+          feature="Advanced Analytics"
+          description="Gain deep insights into your gym's performance with comprehensive analytics, revenue trends, member statistics, and growth metrics."
+          benefits={[
+            "Revenue & profit analysis",
+            "Attendance trends & patterns",
+            "Member growth tracking",
+            "Peak hours analysis",
+            "Export reports"
+          ]}
+        />
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
