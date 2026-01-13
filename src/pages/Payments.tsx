@@ -71,43 +71,8 @@ export default function Payments() {
     extend_days: "30",
   });
 
+  // ALL hooks must be called BEFORE any conditional returns
   const { data: payments = [], isLoading } = usePayments();
-
-  // Show loading state while checking features
-  if (featuresLoading) {
-    return (
-      <DashboardLayout>
-        <div className="space-y-6">
-          <Skeleton className="h-10 w-64" />
-          <div className="grid grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-28" />
-            ))}
-          </div>
-          <Skeleton className="h-96" />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  // Show upgrade page for Lite plan
-  if (features && !features.hasPaymentsPage) {
-    return (
-      <DashboardLayout>
-        <UpgradeRequiredPage
-          feature="Payments & Billing"
-          description="Track payments, generate invoices, view transaction history, and manage your gym's revenue with detailed analytics."
-          benefits={[
-            "Complete payment tracking",
-            "Multiple payment methods (Cash, UPI, Card)",
-            "Transaction history & exports",
-            "Revenue analytics",
-            "Member billing management"
-          ]}
-        />
-      </DashboardLayout>
-    );
-  }
   const { data: members = [] } = useMembers();
   const { data: plans = [] } = useMembershipPlans();
   const { data: stats } = useDashboardStats();
@@ -208,6 +173,42 @@ export default function Payments() {
     URL.revokeObjectURL(url);
     toast.success("Export downloaded!");
   };
+
+  // Show loading state while checking features
+  if (featuresLoading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <Skeleton className="h-10 w-64" />
+          <div className="grid grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-28" />
+            ))}
+          </div>
+          <Skeleton className="h-96" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Show upgrade page for Lite plan
+  if (features && !features.hasPaymentsPage) {
+    return (
+      <DashboardLayout>
+        <UpgradeRequiredPage
+          feature="Payments & Billing"
+          description="Track payments, generate invoices, view transaction history, and manage your gym's revenue with detailed analytics."
+          benefits={[
+            "Complete payment tracking",
+            "Multiple payment methods (Cash, UPI, Card)",
+            "Transaction history & exports",
+            "Revenue analytics",
+            "Member billing management"
+          ]}
+        />
+      </DashboardLayout>
+    );
+  }
 
   if (!gymId) {
     return (
