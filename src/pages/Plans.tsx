@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
+import { useGymPlanFeatures } from "@/hooks/useGymPlanFeatures";
 import { useMembershipPlans, useCreatePlan, useUpdatePlan, useDeletePlan, MembershipPlan } from "@/hooks/useGymData";
+import { toast } from "sonner";
 import { 
   CreditCard, 
   Plus, 
@@ -14,6 +16,7 @@ import {
   Trash2, 
   Clock,
   IndianRupee,
+  AlertTriangle,
 } from "lucide-react";
 import {
   Dialog,
@@ -31,10 +34,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
 
 export default function Plans() {
   const { gymId } = useAuth();
+  const { data: features } = useGymPlanFeatures();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -47,6 +50,10 @@ export default function Plans() {
   });
 
   const { data: plans = [], isLoading } = useMembershipPlans();
+  
+  // Plan limit based on gym plan
+  const maxPlans = features?.maxPlans ?? 999;
+  const isAtPlanLimit = plans.length >= maxPlans;
   const createPlan = useCreatePlan();
   const updatePlan = useUpdatePlan();
   const deletePlan = useDeletePlan();
@@ -60,6 +67,12 @@ export default function Plans() {
 
     if (!formData.name || !formData.price || !formData.duration_days) {
       toast.error("Please fill all required fields");
+      return;
+    }
+
+    // Check plan limit
+    if (isAtPlanLimit) {
+      toast.error(`You've reached the maximum of ${maxPlans} plans. Upgrade to add more.`);
       return;
     }
 
@@ -153,11 +166,37 @@ export default function Plans() {
   return (
     <DashboardLayout>
       <PageHeader title="Membership Plans" description="Create and manage membership plans for your gym">
-        <Button onClick={() => setIsAddDialogOpen(true)}>
+        <Button 
+          onClick={() => {
+            if (isAtPlanLimit) {
+              toast.error(`You've reached the maximum of ${maxPlans} plans on your current plan. Upgrade to add more.`);
+            } else {
+              setIsAddDialogOpen(true);
+            }
+          }}
+          variant={isAtPlanLimit ? "outline" : "default"}
+          className={isAtPlanLimit ? "opacity-70" : ""}
+        >
           <Plus className="mr-2 h-4 w-4" />
-          Add Plan
+          Add Plan {isAtPlanLimit && `(${plans.length}/${maxPlans})`}
         </Button>
       </PageHeader>
+
+      {/* Plan Limit Warning for Lite */}
+      {isAtPlanLimit && (
+        <div className="mb-6 p-4 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="font-medium text-amber-800 dark:text-amber-200">Plan Limit Reached</h4>
+              <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                You've created {plans.length} of {maxPlans} plans allowed on your current subscription. 
+                Upgrade to Standard or Pro for more plans.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">

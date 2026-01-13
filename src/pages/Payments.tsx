@@ -59,6 +59,7 @@ const paymentModeIcons: Record<PaymentMode, typeof Banknote> = {
 
 export default function Payments() {
   const { gymId } = useAuth();
+  const { data: features, isLoading: featuresLoading } = useGymPlanFeatures();
   const [activeFilter, setActiveFilter] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddPaymentOpen, setIsAddPaymentOpen] = useState(false);
@@ -71,6 +72,40 @@ export default function Payments() {
   });
 
   const { data: payments = [], isLoading } = usePayments();
+
+  // Show loading state while checking features
+  if (featuresLoading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <Skeleton className="h-10 w-64" />
+          <div className="grid grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-28" />
+            ))}
+          </div>
+          <Skeleton className="h-96" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Show upgrade page for Lite plan
+  if (features && !features.hasPaymentsPage) {
+    return (
+      <UpgradeRequiredPage
+        feature="Payments & Billing"
+        description="Track payments, generate invoices, view transaction history, and manage your gym's revenue with detailed analytics."
+        benefits={[
+          "Complete payment tracking",
+          "Multiple payment methods (Cash, UPI, Card)",
+          "Transaction history & exports",
+          "Revenue analytics",
+          "Member billing management"
+        ]}
+      />
+    );
+  }
   const { data: members = [] } = useMembers();
   const { data: plans = [] } = useMembershipPlans();
   const { data: stats } = useDashboardStats();

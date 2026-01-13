@@ -46,7 +46,7 @@ serve(async (req) => {
       });
     }
 
-    // Get member with gym info
+    // Get member with gym info (including gym plan)
     const { data: member, error: memberError } = await supabaseAdmin
       .from("members")
       .select(`
@@ -55,7 +55,7 @@ serve(async (req) => {
         email,
         member_id,
         gym_id,
-        gyms!inner(name, logo_url, phone, address)
+        gyms!inner(name, logo_url, phone, address, plan)
       `)
       .eq("id", member_id)
       .single();
@@ -63,6 +63,22 @@ serve(async (req) => {
     if (memberError || !member) {
       return new Response(JSON.stringify({ error: "Member not found" }), {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    // gyms is an array from the join, take the first element
+    const gymData = member.gyms as unknown as { name: string; logo_url: string | null; phone: string | null; address: string | null; plan: string };
+    const gym = Array.isArray(gymData) ? gymData[0] : gymData;
+
+    // Check if gym is on Lite plan - skip sending email for Lite gyms
+    if (gym.plan === "lite") {
+      console.log(`Skipping welcome email for member ${member_id} - gym is on Lite plan`);
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: "Email skipped - gym is on Lite plan (Member Portal not available)",
+        skipped: true
+      }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
@@ -96,10 +112,6 @@ serve(async (req) => {
     // Use the member portal domain
     const memberPortalUrl = "https://members.muscledesk.online";
     const setupLink = `${memberPortalUrl}/member/setup-pin?token=${portalToken}`;
-    
-    // gyms is an array from the join, take the first element
-    const gymData = member.gyms as unknown as { name: string; logo_url: string | null; phone: string | null; address: string | null };
-    const gym = Array.isArray(gymData) ? gymData[0] : gymData;
 
     // Send welcome email using Resend REST API
     const emailHtml = `

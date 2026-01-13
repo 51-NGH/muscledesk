@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { MemberProfile } from "@/components/MemberProfile";
+import { UpgradeOverlay } from "@/components/UpgradeOverlay";
 import { useAuth } from "@/contexts/AuthContext";
+import { useGymPlanFeatures } from "@/hooks/useGymPlanFeatures";
 import { useDashboardStats, useMembers, useAttendance, useMonthlyRevenue, useExpiringMembers, useUserProfile, useDailyAttendance, usePayments, Member } from "@/hooks/useGymData";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -51,6 +53,7 @@ function getFirstName(fullName: string | null | undefined): string {
 export default function Dashboard() {
   const { gymId } = useAuth();
   const navigate = useNavigate();
+  const { data: features } = useGymPlanFeatures();
   const { data: stats, isLoading: statsLoading, isFetching: statsFetching } = useDashboardStats();
   const { data: members = [], isLoading: membersLoading } = useMembers();
   const { data: todayAttendance = [], isLoading: attendanceLoading } = useAttendance(new Date().toISOString().split("T")[0]);
@@ -59,6 +62,9 @@ export default function Dashboard() {
   const { data: profile, isLoading: profileLoading } = useUserProfile();
   const { data: dailyAttendance = [] } = useDailyAttendance(7);
   const { data: payments = [] } = usePayments();
+  
+  // Check if charts should be shown (not for Lite plan)
+  const showCharts = features?.hasCharts ?? true;
   
   const [greeting, setGreeting] = useState(getGreeting());
   const [animatedStats, setAnimatedStats] = useState(false);
@@ -231,7 +237,7 @@ export default function Dashboard() {
       {/* Charts & Activity Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 lg:mb-8">
         {/* Weekly Attendance Chart */}
-        <div className="lg:col-span-2 rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
+        <div className="lg:col-span-2 rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 relative overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-base sm:text-lg font-semibold text-foreground">Weekly Attendance</h3>
@@ -242,44 +248,52 @@ export default function Dashboard() {
               <ArrowUpRight className="ml-1 h-4 w-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </Button>
           </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={weeklyAttendanceData.length > 0 ? weeklyAttendanceData : [{ day: 'Mon', checkIns: 0 }, { day: 'Tue', checkIns: 0 }, { day: 'Wed', checkIns: 0 }, { day: 'Thu', checkIns: 0 }, { day: 'Fri', checkIns: 0 }, { day: 'Sat', checkIns: 0 }, { day: 'Sun', checkIns: 0 }]}>
-              <defs>
-                <linearGradient id="colorAttendance" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(var(--foreground))" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="hsl(var(--foreground))" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis
-                dataKey="day"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
-              />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
-                width={30}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                }}
-                formatter={(value: number) => [value, "Check-ins"]}
-              />
-              <Area
-                type="monotone"
-                dataKey="checkIns"
-                stroke="hsl(var(--foreground))"
-                strokeWidth={2}
-                fill="url(#colorAttendance)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          {showCharts ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={weeklyAttendanceData.length > 0 ? weeklyAttendanceData : [{ day: 'Mon', checkIns: 0 }, { day: 'Tue', checkIns: 0 }, { day: 'Wed', checkIns: 0 }, { day: 'Thu', checkIns: 0 }, { day: 'Fri', checkIns: 0 }, { day: 'Sat', checkIns: 0 }, { day: 'Sun', checkIns: 0 }]}>
+                <defs>
+                  <linearGradient id="colorAttendance" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--foreground))" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="hsl(var(--foreground))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="day"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                  width={30}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                    fontSize: "12px",
+                  }}
+                  formatter={(value: number) => [value, "Check-ins"]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="checkIns"
+                  stroke="hsl(var(--foreground))"
+                  strokeWidth={2}
+                  fill="url(#colorAttendance)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <UpgradeOverlay
+              feature="Attendance Charts"
+              description="Visualize attendance trends and patterns with interactive charts"
+              minHeight="200px"
+            />
+          )}
         </div>
 
         {/* Today's Check-ins */}

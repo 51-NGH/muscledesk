@@ -46,6 +46,7 @@ const categoryConfig: Record<ExpenseCategory, { label: string; icon: typeof Buil
 };
 
 export default function Expenses() {
+  const { data: features, isLoading: featuresLoading } = useGymPlanFeatures();
   const { data: expenses = [], isLoading } = useExpenses();
   const createExpense = useCreateExpense();
   
@@ -57,6 +58,40 @@ export default function Expenses() {
     description: "",
     expense_date: format(new Date(), "yyyy-MM-dd"),
   });
+
+  // Show loading state while checking features
+  if (featuresLoading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <Skeleton className="h-10 w-64" />
+          <div className="grid grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-28" />
+            ))}
+          </div>
+          <Skeleton className="h-96" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Show upgrade page for Lite plan
+  if (features && !features.hasExpenseTracking) {
+    return (
+      <UpgradeRequiredPage
+        feature="Expense Tracking"
+        description="Track and categorize all your gym expenses, monitor spending patterns, and maintain complete financial records."
+        benefits={[
+          "Categorized expense tracking",
+          "Monthly expense reports",
+          "Receipt management",
+          "Spending analytics",
+          "Export financial data"
+        ]}
+      />
+    );
+  }
 
   // Filter expenses by selected month
   const filteredExpenses = useMemo(() => {

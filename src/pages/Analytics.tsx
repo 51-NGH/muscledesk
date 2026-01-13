@@ -45,8 +45,43 @@ const timeRanges = ["7 Days", "30 Days", "90 Days", "6 Months"] as const;
 
 export default function Analytics() {
   const [activeRange, setActiveRange] = useState<string>("30 Days");
+  const { data: features, isLoading: featuresLoading } = useGymPlanFeatures();
   
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
+
+  // Show loading state while checking features
+  if (featuresLoading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <Skeleton className="h-10 w-64" />
+          <div className="grid grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-28" />
+            ))}
+          </div>
+          <Skeleton className="h-96" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Show upgrade page for Lite plan
+  if (features && !features.hasAnalyticsPage) {
+    return (
+      <UpgradeRequiredPage
+        feature="Advanced Analytics"
+        description="Gain deep insights into your gym's performance with comprehensive analytics, revenue trends, member statistics, and growth metrics."
+        benefits={[
+          "Revenue & profit analysis",
+          "Attendance trends & patterns",
+          "Member growth tracking",
+          "Peak hours analysis",
+          "Export reports"
+        ]}
+      />
+    );
+  }
   const { data: members = [] } = useMembers();
   const { data: allPayments = [] } = usePayments();
   const { data: allExpenses = [] } = useExpenses();
