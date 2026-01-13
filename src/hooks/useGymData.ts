@@ -341,13 +341,12 @@ export function useCreatePayment() {
 
       if (error) throw error;
 
-      // Update member expiry if renewal
+      // Update member expiry if renewal - NEVER change start_date (joining date)
       if (payment.new_expiry_date) {
         await supabase
           .from("members")
           .update({
             expiry_date: payment.new_expiry_date,
-            start_date: payment.new_start_date,
             plan_id: payment.plan_id || null,
             plan_name: payment.plan_name || null,
           })

@@ -99,12 +99,26 @@ export default function Payments() {
     const member = members.find((m) => m.id === newPayment.member_id);
     const plan = plans.find((p) => p.id === newPayment.plan_id);
 
-    // Calculate new dates
-    const currentExpiry = member ? new Date(member.expiry_date) : new Date();
-    const newStart = currentExpiry > new Date() ? currentExpiry : new Date();
+    // Calculate new expiry date - extend from current expiry if active, or from today if expired
+    // IMPORTANT: start_date (joining date) should NEVER change after member creation
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const currentExpiry = member ? new Date(member.expiry_date) : today;
+    currentExpiry.setHours(0, 0, 0, 0);
+    
+    // If membership is still active (expiry in future), extend from expiry date
+    // If membership expired, start fresh from today
+    const extensionStartDate = currentExpiry >= today ? currentExpiry : today;
+    
     const extendDays = newPayment.plan_id ? (plan?.duration_days || 30) : parseInt(newPayment.extend_days);
-    const newExpiry = new Date(newStart);
+    const newExpiry = new Date(extensionStartDate);
     newExpiry.setDate(newExpiry.getDate() + extendDays);
+
+    // For payment record: track the billing period (when this payment's validity starts and ends)
+    // This is NOT the member's joining date - it's just for this payment's reference
+    const billingPeriodStart = extensionStartDate.toISOString().split("T")[0];
+    const billingPeriodEnd = newExpiry.toISOString().split("T")[0];
 
     try {
       await createPayment.mutateAsync({
@@ -113,8 +127,8 @@ export default function Payments() {
         payment_mode: newPayment.payment_mode,
         plan_id: newPayment.plan_id || undefined,
         plan_name: plan?.name,
-        new_start_date: newStart.toISOString().split("T")[0],
-        new_expiry_date: newExpiry.toISOString().split("T")[0],
+        new_start_date: billingPeriodStart, // This is for payment record only, NOT member's joining date
+        new_expiry_date: billingPeriodEnd,
       });
       setIsAddPaymentOpen(false);
       setNewPayment({ member_id: "", amount: "", payment_mode: "cash", plan_id: "", extend_days: "30" });
