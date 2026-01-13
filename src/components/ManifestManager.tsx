@@ -1,30 +1,41 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 
 /**
  * Component that manages PWA manifest and meta tags based on current route
  * - /member/* routes → Member Portal manifest (emerald green theme)
  * - All other routes → Admin manifest (dark theme)
+ * 
+ * CRITICAL: The manifest MUST be set before the browser checks for PWA installability.
+ * We force a manifest reload by removing and re-adding the link element.
  */
 export function ManifestManager() {
   const location = useLocation();
+  const lastManifestRef = useRef<string | null>(null);
   
   useEffect(() => {
     const isMemberPortal = location.pathname.startsWith("/member");
     const manifestPath = isMemberPortal ? "/manifest-member.json" : "/manifest-admin.json";
     
-    // Update manifest link
-    let manifestLink = document.querySelector('link[rel="manifest"]') as HTMLLinkElement | null;
+    // Skip if manifest hasn't changed
+    if (lastManifestRef.current === manifestPath) {
+      return;
+    }
+    lastManifestRef.current = manifestPath;
     
-    if (!manifestLink) {
-      manifestLink = document.createElement("link");
-      manifestLink.rel = "manifest";
-      document.head.appendChild(manifestLink);
+    // CRITICAL: Remove existing manifest link completely to force browser to re-read
+    const existingManifest = document.querySelector('link[rel="manifest"]');
+    if (existingManifest) {
+      existingManifest.remove();
     }
     
-    if (!manifestLink.href.endsWith(manifestPath)) {
-      manifestLink.href = manifestPath;
-    }
+    // Create and append new manifest link with cache-busting
+    const manifestLink = document.createElement("link");
+    manifestLink.rel = "manifest";
+    manifestLink.href = `${manifestPath}?v=${Date.now()}`;
+    document.head.appendChild(manifestLink);
+    
+    console.log(`[ManifestManager] Switched to ${isMemberPortal ? "member" : "admin"} manifest:`, manifestPath);
     
     // Update theme color for both light and dark modes
     const themeColors = document.querySelectorAll('meta[name="theme-color"]');
@@ -49,11 +60,15 @@ export function ManifestManager() {
       }
     });
     
-    // Update apple touch icon
-    const appleTouchIcon = document.querySelector('link[rel="apple-touch-icon"]') as HTMLLinkElement | null;
-    if (appleTouchIcon) {
-      appleTouchIcon.href = isMemberPortal ? "/member-apple-touch-icon.png" : "/apple-touch-icon.png";
+    // Update apple touch icon - also remove and re-add to force refresh
+    const existingAppleTouchIcon = document.querySelector('link[rel="apple-touch-icon"]');
+    if (existingAppleTouchIcon) {
+      existingAppleTouchIcon.remove();
     }
+    const appleTouchIcon = document.createElement("link");
+    appleTouchIcon.rel = "apple-touch-icon";
+    appleTouchIcon.href = isMemberPortal ? "/member-apple-touch-icon.png" : "/apple-touch-icon.png";
+    document.head.appendChild(appleTouchIcon);
     
     // Update apple-mobile-web-app-title
     const appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]') as HTMLMetaElement | null;
@@ -69,6 +84,12 @@ export function ManifestManager() {
     
     // Update page title
     document.title = isMemberPortal ? "My Gym - Member Portal" : "MuscleDesk - Gym Management";
+    
+    // Update favicon for member portal
+    const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement | null;
+    if (favicon) {
+      favicon.href = isMemberPortal ? "/member-icon-192.png" : "/pwa-192x192.png";
+    }
     
   }, [location.pathname]);
   
