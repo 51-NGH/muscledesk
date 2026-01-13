@@ -9,8 +9,10 @@ import {
   useMonthlyExpenses,
   useDailyAttendance,
   useMembers,
+  usePayments,
+  useExpenses,
 } from "@/hooks/useGymData";
-import { format, subMonths } from "date-fns";
+import { format, subDays, subMonths, isAfter, parseISO, startOfDay } from "date-fns";
 import {
   DollarSign,
   Users,
@@ -42,62 +44,140 @@ export default function Analytics() {
   const [activeRange, setActiveRange] = useState<string>("30 Days");
   
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
-  const { data: monthlyRevenue = [] } = useMonthlyRevenue(6);
-  const { data: monthlyExpenses = [] } = useMonthlyExpenses(6);
   const { data: members = [] } = useMembers();
+  const { data: allPayments = [] } = usePayments();
+  const { data: allExpenses = [] } = useExpenses();
   
-  // Get days based on selected range
-  const daysBack = useMemo(() => {
+  // Calculate days and months based on selected range
+  const { daysBack, monthsBack } = useMemo(() => {
     switch (activeRange) {
-      case "7 Days": return 7;
-      case "30 Days": return 30;
-      case "90 Days": return 90;
-      case "6 Months": return 180;
-      default: return 30;
+      case "7 Days": return { daysBack: 7, monthsBack: 1 };
+      case "30 Days": return { daysBack: 30, monthsBack: 1 };
+      case "90 Days": return { daysBack: 90, monthsBack: 3 };
+      case "6 Months": return { daysBack: 180, monthsBack: 6 };
+      default: return { daysBack: 30, monthsBack: 1 };
     }
   }, [activeRange]);
-  
+
+  // Fetch data based on range
+  const { data: monthlyRevenue = [] } = useMonthlyRevenue(monthsBack);
+  const { data: monthlyExpenses = [] } = useMonthlyExpenses(monthsBack);
   const { data: dailyAttendance = [] } = useDailyAttendance(daysBack);
 
-  // Process revenue data for chart
+  // Calculate date range start
+  const rangeStartDate = useMemo(() => {
+    return startOfDay(subDays(new Date(), daysBack));
+  }, [daysBack]);
+
+  // Filter payments by selected range
+  const filteredPayments = useMemo(() => {
+    return allPayments.filter((p: any) => {
+      const paymentDate = parseISO(p.created_at);
+      return isAfter(paymentDate, rangeStartDate);
+    });
+  }, [allPayments, rangeStartDate]);
+
+  // Filter expenses by selected range
+  const filteredExpenses = useMemo(() => {
+    return allExpenses.filter((e: any) => {
+      const expenseDate = parseISO(e.expense_date);
+      return isAfter(expenseDate, rangeStartDate);
+    });
+  }, [allExpenses, rangeStartDate]);
+
+  // Calculate totals for the selected range
+  const rangeRevenue = useMemo(() => {
+    return filteredPayments.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+  }, [filteredPayments]);
+
+  const rangeExpenses = useMemo(() => {
+    return filteredExpenses.reduce((sum: number, e: any) => sum + Number(e.amount || 0), 0);
+  }, [filteredExpenses]);
+
+  const rangeProfit = useMemo(() => {
+    return rangeRevenue - rangeExpenses;
+  }, [rangeRevenue, rangeExpenses]);
+
+  // Process revenue data for chart - group by appropriate period
   const revenueChartData = useMemo(() => {
-    const revenueByMonth: Record<string, { revenue: number; expenses: number; profit: number }> = {};
-    
-    // Initialize with last 6 months
-    for (let i = 5; i >= 0; i--) {
-      const monthDate = subMonths(new Date(), i);
-      const monthKey = format(monthDate, "yyyy-MM");
-      revenueByMonth[monthKey] = { revenue: 0, expenses: 0, profit: 0 };
+    if (daysBack <= 30) {
+      // For 7 or 30 days, show daily data
+      const dailyData: Record<string, { revenue: number; expenses: number; profit: number }> = {};
+      
+      // Initialize all days in range
+      for (let i = daysBack - 1; i >= 0; i--) {
+        const date = subDays(new Date(), i);
+        const dateKey = format(date, "yyyy-MM-dd");
+        dailyData[dateKey] = { revenue: 0, expenses: 0, profit: 0 };
+      }
+      
+      // Add payment data
+      filteredPayments.forEach((p: any) => {
+        const dateKey = format(parseISO(p.created_at), "yyyy-MM-dd");
+        if (dailyData[dateKey]) {
+          dailyData[dateKey].revenue += Number(p.amount || 0);
+        }
+      });
+      
+      // Add expense data
+      filteredExpenses.forEach((e: any) => {
+        const dateKey = format(parseISO(e.expense_date), "yyyy-MM-dd");
+        if (dailyData[dateKey]) {
+          dailyData[dateKey].expenses += Number(e.amount || 0);
+        }
+      });
+      
+      // Calculate profit
+      Object.keys(dailyData).forEach((key) => {
+        dailyData[key].profit = dailyData[key].revenue - dailyData[key].expenses;
+      });
+      
+      return Object.entries(dailyData)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([date, data]) => ({
+          month: format(parseISO(date), daysBack <= 7 ? "EEE" : "MMM d"),
+          ...data,
+        }));
+    } else {
+      // For 90 days and 6 months, show monthly data
+      const revenueByMonth: Record<string, { revenue: number; expenses: number; profit: number }> = {};
+      
+      // Initialize months
+      for (let i = monthsBack - 1; i >= 0; i--) {
+        const monthDate = subMonths(new Date(), i);
+        const monthKey = format(monthDate, "yyyy-MM");
+        revenueByMonth[monthKey] = { revenue: 0, expenses: 0, profit: 0 };
+      }
+      
+      // Add revenue data
+      monthlyRevenue.forEach((r: any) => {
+        const monthKey = format(new Date(r.month), "yyyy-MM");
+        if (revenueByMonth[monthKey]) {
+          revenueByMonth[monthKey].revenue = Number(r.total_revenue || 0);
+        }
+      });
+      
+      // Add expense data
+      monthlyExpenses.forEach((e: any) => {
+        const monthKey = format(new Date(e.month), "yyyy-MM");
+        if (revenueByMonth[monthKey]) {
+          revenueByMonth[monthKey].expenses += Number(e.total_amount || 0);
+        }
+      });
+      
+      // Calculate profit
+      Object.keys(revenueByMonth).forEach((key) => {
+        revenueByMonth[key].profit = revenueByMonth[key].revenue - revenueByMonth[key].expenses;
+      });
+      
+      return Object.entries(revenueByMonth)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([month, data]) => ({
+          month: format(new Date(month + "-01"), "MMM"),
+          ...data,
+        }));
     }
-    
-    // Add revenue data
-    monthlyRevenue.forEach((r: any) => {
-      const monthKey = format(new Date(r.month), "yyyy-MM");
-      if (revenueByMonth[monthKey]) {
-        revenueByMonth[monthKey].revenue = Number(r.total_revenue || 0);
-      }
-    });
-    
-    // Add expense data
-    monthlyExpenses.forEach((e: any) => {
-      const monthKey = format(new Date(e.month), "yyyy-MM");
-      if (revenueByMonth[monthKey]) {
-        revenueByMonth[monthKey].expenses += Number(e.total_amount || 0);
-      }
-    });
-    
-    // Calculate profit
-    Object.keys(revenueByMonth).forEach((key) => {
-      revenueByMonth[key].profit = revenueByMonth[key].revenue - revenueByMonth[key].expenses;
-    });
-    
-    return Object.entries(revenueByMonth)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([month, data]) => ({
-        month: format(new Date(month + "-01"), "MMM"),
-        ...data,
-      }));
-  }, [monthlyRevenue, monthlyExpenses]);
+  }, [monthlyRevenue, monthlyExpenses, filteredPayments, filteredExpenses, daysBack, monthsBack]);
 
   // Membership distribution data
   const membershipData = useMemo(() => {
@@ -124,23 +204,24 @@ export default function Analytics() {
     }));
   }, [members]);
 
-  // Attendance trend data
+  // Attendance trend data - adjusted to show appropriate number of days
   const attendanceChartData = useMemo(() => {
     if (dailyAttendance.length === 0) return [];
     
+    // Show all data points but limit display for readability
+    const maxPoints = daysBack <= 7 ? 7 : daysBack <= 30 ? 14 : daysBack <= 90 ? 30 : 30;
+    
     return [...dailyAttendance]
       .reverse()
-      .slice(-14) // Last 14 days for better visualization
+      .slice(-maxPoints)
       .map((d: any) => ({
-        day: format(new Date(d.date), "MMM d"),
+        day: format(new Date(d.date), daysBack <= 7 ? "EEE" : "MMM d"),
         checkIns: Number(d.check_ins || 0),
       }));
-  }, [dailyAttendance]);
+  }, [dailyAttendance, daysBack]);
 
   // Peak hours data (simulated based on attendance - in real app would need hourly data)
   const peakHoursData = useMemo(() => {
-    // This would need a dedicated RPC function for hourly data
-    // For now, create a reasonable distribution based on total attendance
     const totalAttendance = dailyAttendance.reduce((sum: number, d: any) => sum + Number(d.check_ins || 0), 0);
     const avgPerDay = dailyAttendance.length > 0 ? totalAttendance / dailyAttendance.length : 0;
     
@@ -157,7 +238,7 @@ export default function Analytics() {
     ];
   }, [dailyAttendance]);
 
-  // Calculate attendance rate
+  // Calculate attendance rate for the selected period
   const attendanceRate = useMemo(() => {
     if (!stats?.activeMembers || stats.activeMembers === 0) return 0;
     const avgDailyAttendance = dailyAttendance.length > 0 
@@ -166,10 +247,21 @@ export default function Analytics() {
     return Math.min(100, Math.round((avgDailyAttendance / stats.activeMembers) * 100));
   }, [dailyAttendance, stats]);
 
-  // Calculate total revenue
-  const totalRevenue = useMemo(() => {
-    return monthlyRevenue.reduce((sum: number, r: any) => sum + Number(r.total_revenue || 0), 0);
-  }, [monthlyRevenue]);
+  // Calculate total check-ins for the period
+  const totalCheckIns = useMemo(() => {
+    return dailyAttendance.reduce((sum: number, d: any) => sum + Number(d.check_ins || 0), 0);
+  }, [dailyAttendance]);
+
+  // Get subtitle based on active range
+  const getSubtitle = () => {
+    switch (activeRange) {
+      case "7 Days": return "Last 7 days";
+      case "30 Days": return "Last 30 days";
+      case "90 Days": return "Last 90 days";
+      case "6 Months": return "Last 6 months";
+      default: return "Last 30 days";
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -206,8 +298,8 @@ export default function Analytics() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
         <StatCard
           title="Total Revenue"
-          value={statsLoading ? "..." : `₹${totalRevenue.toLocaleString()}`}
-          subtitle="Last 6 months"
+          value={statsLoading ? "..." : `₹${rangeRevenue.toLocaleString()}`}
+          subtitle={getSubtitle()}
           icon={DollarSign}
           iconVariant="teal"
         />
@@ -219,16 +311,16 @@ export default function Analytics() {
           iconVariant="green"
         />
         <StatCard
-          title="Attendance Rate"
-          value={statsLoading ? "..." : `${attendanceRate}%`}
-          subtitle="Avg daily"
+          title="Total Check-ins"
+          value={statsLoading ? "..." : totalCheckIns.toLocaleString()}
+          subtitle={`${attendanceRate}% avg rate`}
           icon={TrendingUp}
           iconVariant="orange"
         />
         <StatCard
           title="Net Profit"
-          value={statsLoading ? "..." : `₹${(stats?.profit || 0).toLocaleString()}`}
-          subtitle="This month"
+          value={statsLoading ? "..." : `₹${rangeProfit.toLocaleString()}`}
+          subtitle={getSubtitle()}
           icon={Calendar}
           iconVariant="blue"
         />
@@ -240,7 +332,7 @@ export default function Analytics() {
         <div className="lg:col-span-2 rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-foreground">Revenue Analysis</h3>
-            <p className="text-sm text-muted-foreground">Revenue, expenses, and profit trends</p>
+            <p className="text-sm text-muted-foreground">Revenue, expenses, and profit trends • {getSubtitle()}</p>
           </div>
           <ResponsiveContainer width="100%" height={280}>
             <ComposedChart data={revenueChartData}>
@@ -256,6 +348,7 @@ export default function Analytics() {
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                interval={daysBack <= 7 ? 0 : "preserveStartEnd"}
               />
               <YAxis
                 axisLine={false}
@@ -376,7 +469,7 @@ export default function Analytics() {
         <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-foreground">Attendance Trend</h3>
-            <p className="text-sm text-muted-foreground">Daily check-ins over time</p>
+            <p className="text-sm text-muted-foreground">Daily check-ins • {getSubtitle()}</p>
           </div>
           {attendanceChartData.length === 0 ? (
             <div className="flex items-center justify-center h-[200px] text-muted-foreground">
@@ -391,7 +484,7 @@ export default function Analytics() {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
-                  interval="preserveStartEnd"
+                  interval={daysBack <= 7 ? 0 : "preserveStartEnd"}
                 />
                 <YAxis
                   axisLine={false}
@@ -422,7 +515,7 @@ export default function Analytics() {
         <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-foreground">Peak Hours</h3>
-            <p className="text-sm text-muted-foreground">Estimated visitor distribution</p>
+            <p className="text-sm text-muted-foreground">Estimated visitor distribution • {getSubtitle()}</p>
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={peakHoursData}>
