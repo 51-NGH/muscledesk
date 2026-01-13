@@ -12,6 +12,9 @@ import {
   usePayments,
   useExpenses,
 } from "@/hooks/useGymData";
+import { UpgradeRequiredPage } from "@/components/UpgradeOverlay";
+import { useGymPlanFeatures } from "@/hooks/useGymPlanFeatures";
+import { Skeleton } from "@/components/ui/skeleton";
 import { format, subDays, subMonths, isAfter, parseISO, startOfDay } from "date-fns";
 import {
   DollarSign,

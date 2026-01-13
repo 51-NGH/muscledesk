@@ -1,5 +1,39 @@
-import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { UpgradeRequiredPage } from "@/components/UpgradeOverlay";
+import { useGymPlanFeatures } from "@/hooks/useGymPlanFeatures";
+import { Skeleton } from "@/components/ui/skeleton";
+
+export default function Reminders() {
+  const { data: features, isLoading } = useGymPlanFeatures();
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-[400px] w-full" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Show upgrade page for lite plan
+  if (!features?.hasRemindersPage) {
+    return (
+      <DashboardLayout>
+        <UpgradeRequiredPage 
+          feature="Renewal Reminders"
+          description="Send automated WhatsApp reminders to members with expiring memberships. Never miss a renewal opportunity again."
+        />
+      </DashboardLayout>
+    );
+  }
+
+  return <RemindersContent />;
+}
+
+// Full Reminders content for Standard/Pro
+import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +43,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useExpiringMembers } from "@/hooks/useGymData";
 import { AlertCircle, MessageCircle } from "lucide-react";
-import { differenceInDays, parseISO, format } from "date-fns";
+import { differenceInDays, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 
 type TemplateType = "renewal" | "expired" | "followup";
@@ -43,20 +77,18 @@ const messageTemplates: MessageTemplate[] = [
   },
 ];
 
-const Reminders = () => {
+function RemindersContent() {
   const { data: expiringMembers = [], isLoading } = useExpiringMembers(30);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>("renewal");
 
-  // Get all members who are expired or expiring soon (within 7 days)
   const relevantMembers = useMemo(() => {
     const today = new Date();
     return expiringMembers.filter((member) => {
       const expiryDate = parseISO(member.expiry_date);
       const daysRemaining = differenceInDays(expiryDate, today);
-      return daysRemaining <= 7; // Show expiring within 7 days or already expired
+      return daysRemaining <= 7;
     }).sort((a, b) => {
-      // Sort by days remaining (most urgent first)
       const daysA = differenceInDays(parseISO(a.expiry_date), today);
       const daysB = differenceInDays(parseISO(b.expiry_date), today);
       return daysA - daysB;
@@ -77,9 +109,7 @@ const Reminders = () => {
   };
 
   const formatPhoneForWhatsApp = (phone: string) => {
-    // Remove all non-digit characters
     let cleaned = phone.replace(/\D/g, "");
-    // Add India country code if not present
     if (!cleaned.startsWith("91") && cleaned.length === 10) {
       cleaned = "91" + cleaned;
     }
@@ -135,7 +165,6 @@ const Reminders = () => {
   const handleOpenWhatsApp = () => {
     if (selectedMembers.length === 0) return;
 
-    // Open WhatsApp for each selected member
     selectedMembers.forEach((memberId, index) => {
       const member = relevantMembers.find((m) => m.id === memberId);
       if (member) {
@@ -145,7 +174,6 @@ const Reminders = () => {
         );
         const link = getWhatsAppLink(member.phone, message);
         
-        // Small delay between opening multiple tabs
         setTimeout(() => {
           window.open(link, "_blank");
         }, index * 300);
@@ -160,7 +188,6 @@ const Reminders = () => {
         description="Send WhatsApp reminders to members with expiring memberships."
       />
 
-      {/* Alert Banner */}
       {relevantMembers.length > 0 && (
         <Alert className="mb-6 border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/30">
           <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
@@ -174,7 +201,6 @@ const Reminders = () => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Members List - Left Side */}
         <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle className="text-lg font-semibold">Expiring Members</CardTitle>
@@ -244,13 +270,11 @@ const Reminders = () => {
           </CardContent>
         </Card>
 
-        {/* Message Templates - Right Side */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-lg font-semibold">Message Template</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Template Buttons */}
             <div className="space-y-2">
               {messageTemplates.map((template) => (
                 <button
@@ -268,7 +292,6 @@ const Reminders = () => {
               ))}
             </div>
 
-            {/* Preview Section */}
             <div className="pt-4">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
                 Preview
@@ -278,7 +301,6 @@ const Reminders = () => {
               </div>
             </div>
 
-            {/* WhatsApp Button */}
             <Button
               onClick={handleOpenWhatsApp}
               disabled={selectedMembers.length === 0}
@@ -296,6 +318,4 @@ const Reminders = () => {
       </div>
     </DashboardLayout>
   );
-};
-
-export default Reminders;
+}
