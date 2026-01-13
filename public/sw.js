@@ -1,6 +1,8 @@
 // MuscleDesk Service Worker for Push Notifications and Offline Support
+// Version is updated on each publish to force cache refresh
 
-const CACHE_NAME = 'muscledesk-v1';
+const CACHE_VERSION = 'v2-' + Date.now(); // Forces new cache on each deploy
+const CACHE_NAME = 'muscledesk-' + CACHE_VERSION;
 const OFFLINE_URLS = [
   '/member/qr',
   '/member/dashboard',
@@ -8,35 +10,47 @@ const OFFLINE_URLS = [
 ];
 
 self.addEventListener('install', (event) => {
-  console.log('Service Worker installed');
+  console.log('Service Worker installing - new version detected');
   
   // Pre-cache essential pages for offline use
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('Caching offline pages');
-      // We don't cache actual URLs here since Vite handles this via workbox
-      // This is just for the service worker to be ready
+      console.log('Caching offline pages with new cache:', CACHE_NAME);
     })
   );
   
+  // IMPORTANT: Skip waiting to activate immediately
+  // This forces the new service worker to take over right away
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker activated');
+  console.log('Service Worker activated - taking control');
   
-  // Clean up old caches
+  // Clean up ALL old caches to ensure fresh content
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          if (cacheName !== CACHE_NAME && cacheName.startsWith('muscledesk-')) {
             console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    }).then(() => self.clients.claim())
+    }).then(() => {
+      // IMPORTANT: Claim all clients immediately
+      // This makes the new SW control all open tabs/windows right away
+      console.log('Claiming all clients for immediate update');
+      return self.clients.claim();
+    }).then(() => {
+      // Notify all clients to reload for the update
+      return self.clients.matchAll({ type: 'window' }).then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({ type: 'SW_UPDATED', version: CACHE_VERSION });
+        });
+      });
+    })
   );
 });
 

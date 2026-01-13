@@ -2,6 +2,7 @@ import { ReactNode, RefObject } from "react";
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { OfflineIndicator } from "@/components/offline/OfflineIndicator";
+import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
 import { 
   Home, 
   QrCode, 
@@ -33,6 +34,9 @@ export function MemberLayout({ children, title, showBack, containerRef }: Member
   const navigate = useNavigate();
   const location = useLocation();
   const { resolvedTheme } = useTheme();
+  
+  // Listen for service worker updates and auto-refresh
+  useServiceWorkerUpdate();
   
   const memberLogo = resolvedTheme === "dark" ? muscledeskMembersDark : muscledeskMembersLight;
 
