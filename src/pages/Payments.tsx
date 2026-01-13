@@ -8,6 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePayments, useMembers, useCreatePayment, useMembershipPlans, useDashboardStats } from "@/hooks/useGymData";
+import { UpgradeRequiredPage } from "@/components/UpgradeOverlay";
+import { useGymPlanFeatures } from "@/hooks/useGymPlanFeatures";
+import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import {
   DollarSign,

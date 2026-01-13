@@ -22,6 +22,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useExpenses, useCreateExpense, ExpenseCategory } from "@/hooks/useGymData";
+import { UpgradeRequiredPage } from "@/components/UpgradeOverlay";
+import { useGymPlanFeatures } from "@/hooks/useGymPlanFeatures";
+import { Skeleton } from "@/components/ui/skeleton";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import {
   TrendingDown,
