@@ -159,35 +159,50 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
   }, [session]);
 
   useEffect(() => {
-    // Check for existing session on mount
-    const storedSession = localStorage.getItem(STORAGE_KEY);
-    if (storedSession) {
-      try {
-        const parsed = JSON.parse(storedSession) as MemberSession;
-        const expiresAt = new Date(parsed.expires_at);
-        
-        if (expiresAt > new Date()) {
-          setSession(parsed);
+    let isMounted = true;
+    
+    const initSession = async () => {
+      // Check for existing session on mount
+      const storedSession = localStorage.getItem(STORAGE_KEY);
+      if (storedSession) {
+        try {
+          const parsed = JSON.parse(storedSession) as MemberSession;
+          const expiresAt = new Date(parsed.expires_at);
           
-          // If offline, load cached data immediately
-          if (!navigator.onLine) {
-            const cached = loadCachedMember();
-            if (cached) {
-              setMember(cached);
+          if (expiresAt > new Date()) {
+            if (isMounted) {
+              setSession(parsed);
+            }
+            
+            // If offline, load cached data immediately
+            if (!navigator.onLine) {
+              const cached = loadCachedMember();
+              if (cached && isMounted) {
+                setMember(cached);
+              }
+            } else {
+              // Await the fetch to ensure member data is loaded before setting loading to false
+              await fetchMemberData(parsed.member_id);
             }
           } else {
-            fetchMemberData(parsed.member_id);
+            // Session expired
+            localStorage.removeItem(STORAGE_KEY);
           }
-        } else {
-          // Session expired
+        } catch {
           localStorage.removeItem(STORAGE_KEY);
         }
-      } catch {
-        localStorage.removeItem(STORAGE_KEY);
       }
-    }
-    setLoading(false);
-  }, []);
+      if (isMounted) {
+        setLoading(false);
+      }
+    };
+    
+    initSession();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchMemberData, loadCachedMember]);
 
   const signIn = async (email: string, pin: string) => {
     if (!navigator.onLine) {

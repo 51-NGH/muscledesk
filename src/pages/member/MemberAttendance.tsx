@@ -3,7 +3,7 @@ import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { MemberLayout } from "@/components/member-portal/MemberLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO, isToday, isYesterday, isThisWeek } from "date-fns";
-import { Clock, Calendar, CheckCircle, Loader2 } from "lucide-react";
+import { Clock, Calendar, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 
 interface AttendanceRecord {
   id: string;
@@ -14,22 +14,26 @@ interface AttendanceRecord {
 export default function MemberAttendance() {
   const { member, loading, memberLoading } = useMemberAuth();
 
-  const { data: attendance, isLoading } = useQuery({
+  const { data: attendance, isLoading, error } = useQuery({
     queryKey: ["member-attendance", member?.id],
     queryFn: async () => {
       if (!member) return [];
       
-      const { data, error } = await supabase
-        .from("attendance")
-        .select("id, check_in_at, source")
-        .eq("member_id", member.id)
-        .order("check_in_at", { ascending: false })
-        .limit(20);
+      // Use edge function with service role to bypass RLS
+      const { data, error } = await supabase.functions.invoke("member-auth", {
+        body: { action: "get-attendance", member_id: member.id, limit: 50 }
+      });
 
-      if (error) throw error;
-      return data as AttendanceRecord[];
+      if (error) {
+        console.error("Error fetching attendance:", error);
+        throw new Error("Failed to fetch attendance");
+      }
+
+      return (data?.attendance || []) as AttendanceRecord[];
     },
     enabled: !!member,
+    retry: 2,
+    staleTime: 30000, // Consider data fresh for 30 seconds
   });
 
   const formatDateLabel = (dateStr: string) => {
@@ -94,6 +98,16 @@ export default function MemberAttendance() {
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : error ? (
+            <div className="bg-card rounded-xl border border-destructive/20 p-6 sm:p-8 text-center">
+              <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-3">
+                <AlertCircle className="h-6 w-6 text-destructive" />
+              </div>
+              <p className="font-medium text-sm sm:text-base text-destructive">Failed to load attendance</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                Please try again later or contact support
+              </p>
             </div>
           ) : !attendance || attendance.length === 0 ? (
             <div className="bg-card rounded-xl border border-border p-6 sm:p-8 text-center">
