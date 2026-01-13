@@ -79,17 +79,19 @@ export default function Expenses() {
   // Show upgrade page for Lite plan
   if (features && !features.hasExpenseTracking) {
     return (
-      <UpgradeRequiredPage
-        feature="Expense Tracking"
-        description="Track and categorize all your gym expenses, monitor spending patterns, and maintain complete financial records."
-        benefits={[
-          "Categorized expense tracking",
-          "Monthly expense reports",
-          "Receipt management",
-          "Spending analytics",
-          "Export financial data"
-        ]}
-      />
+      <DashboardLayout>
+        <UpgradeRequiredPage
+          feature="Expense Tracking"
+          description="Track and categorize all your gym expenses, monitor spending patterns, and maintain complete financial records."
+          benefits={[
+            "Categorized expense tracking",
+            "Monthly expense reports",
+            "Receipt management",
+            "Spending analytics",
+            "Export financial data"
+          ]}
+        />
+      </DashboardLayout>
     );
   }
 

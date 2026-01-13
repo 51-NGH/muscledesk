@@ -93,17 +93,19 @@ export default function Payments() {
   // Show upgrade page for Lite plan
   if (features && !features.hasPaymentsPage) {
     return (
-      <UpgradeRequiredPage
-        feature="Payments & Billing"
-        description="Track payments, generate invoices, view transaction history, and manage your gym's revenue with detailed analytics."
-        benefits={[
-          "Complete payment tracking",
-          "Multiple payment methods (Cash, UPI, Card)",
-          "Transaction history & exports",
-          "Revenue analytics",
-          "Member billing management"
-        ]}
-      />
+      <DashboardLayout>
+        <UpgradeRequiredPage
+          feature="Payments & Billing"
+          description="Track payments, generate invoices, view transaction history, and manage your gym's revenue with detailed analytics."
+          benefits={[
+            "Complete payment tracking",
+            "Multiple payment methods (Cash, UPI, Card)",
+            "Transaction history & exports",
+            "Revenue analytics",
+            "Member billing management"
+          ]}
+        />
+      </DashboardLayout>
     );
   }
   const { data: members = [] } = useMembers();
