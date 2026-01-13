@@ -107,11 +107,8 @@ export function UpgradeRequiredPage({
   const displayBenefits = benefits || defaultBenefits;
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center px-4">
+    <div className="flex-1 flex items-center justify-center py-12 px-4">
       <div className="text-center max-w-md animate-fade-in">
-        {/* Gradient header background */}
-        <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-muted/50 to-transparent pointer-events-none" />
-        
         {/* Lock Icon */}
         <div className="relative mx-auto mb-8">
           <div className="relative h-20 w-20 mx-auto rounded-2xl bg-card border border-border flex items-center justify-center shadow-sm">
