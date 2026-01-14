@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
@@ -11,13 +11,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMembers, useCreateMember, useUpdateMember, useDeleteMember, useMembershipPlans, MemberStatus, Member } from "@/hooks/useGymData";
 import { MemberProfile } from "@/components/MemberProfile";
-import { MemberSearchAutocomplete } from "@/components/members/MemberSearchAutocomplete";
 import { format } from "date-fns";
 import { 
   Users, 
   UserPlus, 
   TrendingUp, 
   UserX, 
+  Search, 
   Download, 
   MoreVertical,
   Phone,
@@ -60,18 +60,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
-// Status filter mapping for quick filters
-const statusFilterMap: Record<string, (m: Member) => boolean> = {
-  all: () => true,
-  active: (m) => m.status === "active" && !m.is_blocked,
-  expiring_soon: (m) => m.status === "expiring_soon",
-  expired: (m) => m.status === "expired",
-  blocked: (m) => m.is_blocked,
+const filterTabs = ["All", "Active", "Expiring", "Expired"] as const;
+
+const statusMap: Record<string, MemberStatus> = {
+  Active: "active",
+  Expiring: "expiring_soon",
+  Expired: "expired",
 };
 
 export default function Members() {
   const { gymId } = useAuth();
-  const [activeFilter, setActiveFilter] = useState<string>("all");
+  const [activeFilter, setActiveFilter] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -94,21 +93,17 @@ export default function Members() {
   const updateMember = useUpdateMember();
   const deleteMember = useDeleteMember();
 
-  const filteredMembers = useMemo(() => {
-    return members.filter((member) => {
-      // Apply status filter
-      const filterFn = statusFilterMap[activeFilter] || statusFilterMap.all;
-      if (!filterFn(member)) return false;
+  const filteredMembers = members.filter((member) => {
+    const matchesSearch =
+      member.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.phone.includes(searchQuery) ||
+      member.member_id.toLowerCase().includes(searchQuery.toLowerCase());
 
-      // Apply search
-      if (!searchQuery) return true;
-      return (
-        member.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        member.phone.includes(searchQuery) ||
-        member.member_id.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    });
-  }, [members, activeFilter, searchQuery]);
+    if (activeFilter === "All") return matchesSearch;
+
+    const targetStatus = statusMap[activeFilter];
+    return matchesSearch && member.status === targetStatus;
+  });
 
   const stats = {
     total: members.length,
@@ -314,15 +309,31 @@ export default function Members() {
       </div>
 
       {/* Search & Filters */}
-      <div className="mb-6">
-        <MemberSearchAutocomplete
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
-          members={members}
-          onMemberSelect={(member) => openViewDialog(member)}
-        />
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search by name, phone, or ID..."
+            className="pl-10"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center rounded-lg border border-border p-1 overflow-x-auto">
+          {filterTabs.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveFilter(tab)}
+              className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
+                activeFilter === tab
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Member Cards Grid */}
