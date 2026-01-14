@@ -205,7 +205,7 @@ export default function Login() {
       </div>
 
       {/* Right Side - Hero (Hidden on mobile) */}
-      <div className="hidden lg:flex flex-1 relative overflow-hidden bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700">
+      <div className="hidden lg:flex flex-1 relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600">
         {/* Animated Background Pattern */}
         <div className="absolute inset-0">
           {/* Floating orbs with animation */}
