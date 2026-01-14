@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback, memo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
@@ -93,24 +93,28 @@ export default function Members() {
   const updateMember = useUpdateMember();
   const deleteMember = useDeleteMember();
 
-  const filteredMembers = members.filter((member) => {
-    const matchesSearch =
-      member.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.phone.includes(searchQuery) ||
-      member.member_id.toLowerCase().includes(searchQuery.toLowerCase());
+  // Memoize expensive computations
+  const filteredMembers = useMemo(() => {
+    const searchLower = searchQuery.toLowerCase();
+    return members.filter((member) => {
+      const matchesSearch =
+        member.full_name.toLowerCase().includes(searchLower) ||
+        member.phone.includes(searchQuery) ||
+        member.member_id.toLowerCase().includes(searchLower);
 
-    if (activeFilter === "All") return matchesSearch;
+      if (activeFilter === "All") return matchesSearch;
 
-    const targetStatus = statusMap[activeFilter];
-    return matchesSearch && member.status === targetStatus;
-  });
+      const targetStatus = statusMap[activeFilter];
+      return matchesSearch && member.status === targetStatus;
+    });
+  }, [members, searchQuery, activeFilter]);
 
-  const stats = {
+  const stats = useMemo(() => ({
     total: members.length,
     active: members.filter((m) => m.status === "active").length,
     expiring: members.filter((m) => m.status === "expiring_soon").length,
     expired: members.filter((m) => m.status === "expired" || m.status === "blocked").length,
-  };
+  }), [members]);
 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
