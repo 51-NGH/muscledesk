@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
@@ -78,20 +78,24 @@ export default function Payments() {
   const { data: stats } = useDashboardStats();
   const createPayment = useCreatePayment();
 
-  const filteredPayments = payments.filter((p) => {
-    const matchesSearch =
-      p.member?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.member?.member_id?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = activeFilter === "All" || p.status === activeFilter.toLowerCase();
-    return matchesSearch && matchesFilter;
-  });
+  // Memoize expensive computations
+  const filteredPayments = useMemo(() => {
+    const searchLower = searchQuery.toLowerCase();
+    return payments.filter((p) => {
+      const matchesSearch =
+        p.member?.full_name?.toLowerCase().includes(searchLower) ||
+        p.member?.member_id?.toLowerCase().includes(searchLower);
+      const matchesFilter = activeFilter === "All" || p.status === activeFilter.toLowerCase();
+      return matchesSearch && matchesFilter;
+    });
+  }, [payments, searchQuery, activeFilter]);
 
-  const paymentStats = {
+  const paymentStats = useMemo(() => ({
     total: payments.reduce((sum, p) => p.status === "completed" ? sum + Number(p.amount) : sum, 0),
     completed: payments.filter((p) => p.status === "completed").length,
     pending: payments.filter((p) => p.status === "pending").length,
     failed: payments.filter((p) => p.status === "failed").length,
-  };
+  }), [payments]);
 
   const handleAddPayment = async (e: React.FormEvent) => {
     e.preventDefault();
