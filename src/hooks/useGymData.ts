@@ -125,6 +125,8 @@ export function useMembers() {
       return (data || []) as Member[];
     },
     enabled: !!gymId,
+    staleTime: 1000 * 60 * 2, // 2 minutes - data stays fresh
+    gcTime: 1000 * 60 * 10, // 10 minutes cache
   });
 }
 
@@ -337,12 +339,15 @@ export function usePayments() {
         .from("payments")
         .select("*, member:members(full_name, member_id)")
         .eq("gym_id", gymId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(200); // Limit for faster loading
 
       if (error) throw error;
       return (data || []) as unknown as PaymentWithMember[];
     },
     enabled: !!gymId,
+    staleTime: 1000 * 60 * 2, // 2 minutes fresh
+    gcTime: 1000 * 60 * 10, // 10 minutes cache
   });
 }
 
@@ -550,6 +555,8 @@ export function useMembershipPlans() {
       return (data || []) as MembershipPlan[];
     },
     enabled: !!gymId,
+    staleTime: 1000 * 60 * 5, // 5 minutes - plans don't change often
+    gcTime: 1000 * 60 * 15, // 15 minutes cache
   });
 }
 
@@ -725,7 +732,9 @@ export function useDashboardStats() {
       };
     },
     enabled: !!gymId,
-    refetchInterval: 30000, // Refresh every 30 seconds
+    staleTime: 1000 * 60, // 1 minute fresh
+    gcTime: 1000 * 60 * 5, // 5 minutes cache
+    refetchInterval: 60000, // Refresh every 60 seconds (was 30)
   });
 }
 
@@ -747,6 +756,8 @@ export function useExpiringMembers(daysAhead: number = 7) {
       return data || [];
     },
     enabled: !!gymId,
+    staleTime: 1000 * 60 * 2, // 2 minutes fresh
+    gcTime: 1000 * 60 * 10, // 10 minutes cache
   });
 }
 
