@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMembers, useCreateMember, useUpdateMember, useDeleteMember, useMembershipPlans, MemberStatus, Member } from "@/hooks/useGymData";
 import { MemberProfile } from "@/components/MemberProfile";
-import { MemberSearchAutocomplete, QUICK_FILTERS } from "@/components/members/MemberSearchAutocomplete";
+import { MemberSearchAutocomplete } from "@/components/members/MemberSearchAutocomplete";
 import { format } from "date-fns";
 import { 
   Users, 
@@ -60,19 +60,19 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
-const filterTabs = ["All", "Active", "Expiring", "Expired"] as const;
-
-const statusMap: Record<string, MemberStatus> = {
-  Active: "active",
-  Expiring: "expiring_soon",
-  Expired: "expired",
+// Status filter mapping for quick filters
+const statusFilterMap: Record<string, (m: Member) => boolean> = {
+  all: () => true,
+  active: (m) => m.status === "active" && !m.is_blocked,
+  expiring_soon: (m) => m.status === "expiring_soon",
+  expired: (m) => m.status === "expired",
+  blocked: (m) => m.is_blocked,
 };
 
 export default function Members() {
   const { gymId } = useAuth();
-  const [activeFilter, setActiveFilter] = useState<string>("All");
+  const [activeFilter, setActiveFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -96,23 +96,19 @@ export default function Members() {
 
   const filteredMembers = useMemo(() => {
     return members.filter((member) => {
-      // Quick filter takes priority
-      if (activeQuickFilter) {
-        const quickFilter = QUICK_FILTERS.find((f) => f.id === activeQuickFilter);
-        if (quickFilter && !quickFilter.filter(member)) return false;
-      }
+      // Apply status filter
+      const filterFn = statusFilterMap[activeFilter] || statusFilterMap.all;
+      if (!filterFn(member)) return false;
 
-      const matchesSearch =
+      // Apply search
+      if (!searchQuery) return true;
+      return (
         member.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         member.phone.includes(searchQuery) ||
-        member.member_id.toLowerCase().includes(searchQuery.toLowerCase());
-
-      if (activeFilter === "All") return matchesSearch;
-
-      const targetStatus = statusMap[activeFilter];
-      return matchesSearch && member.status === targetStatus;
+        member.member_id.toLowerCase().includes(searchQuery.toLowerCase())
+      );
     });
-  }, [members, activeQuickFilter, searchQuery, activeFilter]);
+  }, [members, activeFilter, searchQuery]);
 
   const stats = {
     total: members.length,
@@ -318,39 +314,15 @@ export default function Members() {
       </div>
 
       {/* Search & Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
+      <div className="mb-6">
         <MemberSearchAutocomplete
           searchQuery={searchQuery}
-          onSearchChange={(query) => {
-            setSearchQuery(query);
-            if (query) setActiveFilter("All"); // Reset tab filter when searching
-          }}
-          onQuickFilter={(filterId) => {
-            setActiveQuickFilter(filterId);
-            if (filterId) setActiveFilter("All"); // Reset tab filter when using quick filter
-          }}
-          activeQuickFilter={activeQuickFilter}
+          onSearchChange={setSearchQuery}
+          activeFilter={activeFilter}
+          onFilterChange={setActiveFilter}
           members={members}
           onMemberSelect={(member) => openViewDialog(member)}
         />
-        <div className="flex items-center rounded-lg border border-border p-1 overflow-x-auto flex-shrink-0">
-          {filterTabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => {
-                setActiveFilter(tab);
-                setActiveQuickFilter(null); // Clear quick filter when using tab
-              }}
-              className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
-                activeFilter === tab && !activeQuickFilter
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Member Cards Grid */}
