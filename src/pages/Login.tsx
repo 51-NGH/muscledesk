@@ -205,12 +205,12 @@ export default function Login() {
       </div>
 
       {/* Right Side - Hero (Hidden on mobile) */}
-      <div className="hidden lg:flex flex-1 relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/70">
+      <div className="hidden lg:flex flex-1 relative overflow-hidden bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700">
         {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0 opacity-15">
           <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl" />
           <div className="absolute bottom-20 right-10 w-96 h-96 bg-white rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-white rounded-full blur-3xl opacity-50" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-white rounded-full blur-3xl opacity-60" />
         </div>
 
         {/* Content */}
