@@ -42,6 +42,11 @@ export function usePWAInstall(): PWAInstallState {
   const appType: AppType = isMemberPortal ? "member" : "admin";
   const appName = isMemberPortal ? "My Gym" : "MuscleDesk";
   
+  // Only show install prompt on specific pages
+  const isInstallPage = isMemberPortal 
+    ? (location.pathname === "/member" || location.pathname === "/member/dashboard" || location.pathname === "/member/")
+    : location.pathname === "/";
+  
   // Check if iOS
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
   
@@ -74,16 +79,7 @@ export function usePWAInstall(): PWAInstallState {
       // Save the event for later use
       setDeferredPrompt(e);
       
-      // Check if user previously dismissed for this app type
-      const dismissed = localStorage.getItem(getDismissedKey());
-      const dismissedTime = dismissed ? parseInt(dismissed, 10) : 0;
-      const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24);
-      
-      // Show prompt if not dismissed or dismissed more than 7 days ago
-      if (!dismissed || daysSinceDismissed > 7) {
-        // Delay showing prompt for better UX
-        setTimeout(() => setShowPrompt(true), 3000);
-      }
+      // Don't auto-show here - let the isInstallPage effect handle it
     };
     
     window.addEventListener("beforeinstallprompt", handler);
@@ -100,20 +96,27 @@ export function usePWAInstall(): PWAInstallState {
     };
   }, [getDismissedKey]);
   
-  // Reset prompt when switching between admin/member
+  // Only show prompt on designated install pages
   useEffect(() => {
-    if (deferredPrompt) {
+    if (!isInstallPage) {
+      setShowPrompt(false);
+      return;
+    }
+    
+    if (deferredPrompt || isIOS) {
       const dismissed = localStorage.getItem(getDismissedKey());
       const dismissedTime = dismissed ? parseInt(dismissed, 10) : 0;
       const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24);
       
       if (!dismissed || daysSinceDismissed > 7) {
-        setShowPrompt(true);
+        // Delay showing prompt for better UX
+        const timer = setTimeout(() => setShowPrompt(true), 2000);
+        return () => clearTimeout(timer);
       } else {
         setShowPrompt(false);
       }
     }
-  }, [appType, deferredPrompt, getDismissedKey]);
+  }, [appType, deferredPrompt, getDismissedKey, isInstallPage, isIOS]);
   
   const promptInstall = useCallback(async (): Promise<boolean> => {
     if (!deferredPrompt) {
