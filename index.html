@@ -27,8 +27,36 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/pwa-192x192.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/pwa-192x192.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <!-- Manifest is managed dynamically by ManifestManager component -->
-    <link rel="manifest" href="/manifest-admin.json" />
+    <!-- Manifest is set by inline script below based on route -->
+    <link rel="manifest" href="/manifest-admin.json" id="pwa-manifest" />
+    
+    <!-- CRITICAL: Set correct manifest BEFORE browser checks PWA installability -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isMemberPortal = path.startsWith('/member');
+        var manifest = document.getElementById('pwa-manifest');
+        if (manifest) {
+          manifest.href = isMemberPortal ? '/manifest-member.json' : '/manifest-admin.json';
+        }
+        // Also update apple-touch-icon
+        var appleIcon = document.querySelector('link[rel="apple-touch-icon"]');
+        if (appleIcon) {
+          appleIcon.href = isMemberPortal ? '/member-apple-touch-icon.png' : '/apple-touch-icon.png';
+        }
+        // Update theme color
+        var themeMetas = document.querySelectorAll('meta[name="theme-color"]');
+        themeMetas.forEach(function(meta) {
+          if (isMemberPortal) {
+            meta.content = '#10b981';
+          }
+        });
+        // Update title
+        if (isMemberPortal) {
+          document.title = 'My Gym - Member Portal';
+        }
+      })();
+    </script>
     
     <!-- Splash Screens for iOS -->
     <link rel="apple-touch-startup-image" href="/apple-touch-icon.png" />
