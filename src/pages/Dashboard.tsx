@@ -15,6 +15,8 @@ import { useDashboardStats, useMembers, useAttendance, useMonthlyRevenue, useExp
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { useEffect, useState, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Users,
   DollarSign,
@@ -53,6 +55,7 @@ function getFirstName(fullName: string | null | undefined): string {
 export default function Dashboard() {
   const { gymId } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: features } = useGymPlanFeatures();
   const { data: stats, isLoading: statsLoading, isFetching: statsFetching } = useDashboardStats();
   const { data: members = [], isLoading: membersLoading } = useMembers();
@@ -62,6 +65,62 @@ export default function Dashboard() {
   const { data: profile, isLoading: profileLoading } = useUserProfile();
   const { data: dailyAttendance = [] } = useDailyAttendance(7);
   const { data: payments = [] } = usePayments();
+
+  // Real-time subscription for instant dashboard updates
+  useEffect(() => {
+    if (!gymId) return;
+
+    const channel = supabase
+      .channel(`dashboard-${gymId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'attendance',
+          filter: `gym_id=eq.${gymId}`,
+        },
+        () => {
+          // Instantly invalidate all dashboard-related queries
+          queryClient.invalidateQueries({ queryKey: ['attendance'], refetchType: 'all' });
+          queryClient.invalidateQueries({ queryKey: ['dashboard-stats'], refetchType: 'all' });
+          queryClient.invalidateQueries({ queryKey: ['daily-attendance'], refetchType: 'all' });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'members',
+          filter: `gym_id=eq.${gymId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['members'], refetchType: 'all' });
+          queryClient.invalidateQueries({ queryKey: ['dashboard-stats'], refetchType: 'all' });
+          queryClient.invalidateQueries({ queryKey: ['expiring-members'], refetchType: 'all' });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'payments',
+          filter: `gym_id=eq.${gymId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['payments'], refetchType: 'all' });
+          queryClient.invalidateQueries({ queryKey: ['dashboard-stats'], refetchType: 'all' });
+          queryClient.invalidateQueries({ queryKey: ['monthly-revenue'], refetchType: 'all' });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [gymId, queryClient]);
   
   // Check if charts should be shown (not for Lite plan)
   const showCharts = features?.hasCharts ?? true;
