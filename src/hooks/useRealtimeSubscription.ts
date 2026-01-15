@@ -29,10 +29,10 @@ export function useRealtimeSubscription() {
         },
         (payload) => {
           console.log('Members change:', payload.eventType);
-          // Invalidate all member-related queries
-          queryClient.invalidateQueries({ queryKey: ['members'] });
-          queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-          queryClient.invalidateQueries({ queryKey: ['expiring-members'] });
+          // Invalidate and refetch all member-related queries immediately
+          queryClient.invalidateQueries({ queryKey: ['members'], refetchType: 'all' });
+          queryClient.invalidateQueries({ queryKey: ['dashboard-stats'], refetchType: 'all' });
+          queryClient.invalidateQueries({ queryKey: ['expiring-members'], refetchType: 'all' });
         }
       )
       // Attendance table changes
@@ -46,10 +46,10 @@ export function useRealtimeSubscription() {
         },
         (payload) => {
           console.log('Attendance change:', payload.eventType);
-          // Invalidate attendance and dashboard queries
-          queryClient.invalidateQueries({ queryKey: ['attendance'] });
-          queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-          queryClient.invalidateQueries({ queryKey: ['daily-attendance'] });
+          // Invalidate and refetch attendance and dashboard queries immediately
+          queryClient.invalidateQueries({ queryKey: ['attendance'], refetchType: 'all' });
+          queryClient.invalidateQueries({ queryKey: ['dashboard-stats'], refetchType: 'all' });
+          queryClient.invalidateQueries({ queryKey: ['daily-attendance'], refetchType: 'all' });
         }
       )
       // Payments table changes
@@ -63,10 +63,10 @@ export function useRealtimeSubscription() {
         },
         (payload) => {
           console.log('Payments change:', payload.eventType);
-          // Invalidate payment and revenue queries
-          queryClient.invalidateQueries({ queryKey: ['payments'] });
-          queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-          queryClient.invalidateQueries({ queryKey: ['monthly-revenue'] });
+          // Invalidate and refetch payment and revenue queries immediately
+          queryClient.invalidateQueries({ queryKey: ['payments'], refetchType: 'all' });
+          queryClient.invalidateQueries({ queryKey: ['dashboard-stats'], refetchType: 'all' });
+          queryClient.invalidateQueries({ queryKey: ['monthly-revenue'], refetchType: 'all' });
         }
       )
       // Expenses table changes
@@ -80,10 +80,10 @@ export function useRealtimeSubscription() {
         },
         (payload) => {
           console.log('Expenses change:', payload.eventType);
-          // Invalidate expense queries
-          queryClient.invalidateQueries({ queryKey: ['expenses'] });
-          queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-          queryClient.invalidateQueries({ queryKey: ['monthly-expenses'] });
+          // Invalidate and refetch expense queries immediately
+          queryClient.invalidateQueries({ queryKey: ['expenses'], refetchType: 'all' });
+          queryClient.invalidateQueries({ queryKey: ['dashboard-stats'], refetchType: 'all' });
+          queryClient.invalidateQueries({ queryKey: ['monthly-expenses'], refetchType: 'all' });
         }
       )
       // Membership plans table changes
@@ -97,8 +97,8 @@ export function useRealtimeSubscription() {
         },
         (payload) => {
           console.log('Plans change:', payload.eventType);
-          // Invalidate plan queries
-          queryClient.invalidateQueries({ queryKey: ['membership-plans'] });
+          // Invalidate and refetch plan queries immediately
+          queryClient.invalidateQueries({ queryKey: ['membership-plans'], refetchType: 'all' });
         }
       )
       .subscribe((status) => {
