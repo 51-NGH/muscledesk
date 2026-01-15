@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import muscleDeskLogo from "@/assets/muscledesk-logo.png";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -11,6 +12,9 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Subscribe to real-time database changes
+  useRealtimeSubscription();
 
   return (
     <div className="min-h-screen min-h-[100dvh] bg-background transition-colors duration-300">

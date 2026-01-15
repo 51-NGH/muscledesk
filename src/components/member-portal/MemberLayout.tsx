@@ -3,6 +3,7 @@ import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { OfflineIndicator } from "@/components/offline/OfflineIndicator";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
+import { useMemberRealtimeSubscription } from "@/hooks/useMemberRealtimeSubscription";
 import { 
   Home, 
   QrCode, 
@@ -37,6 +38,9 @@ export function MemberLayout({ children, title, showBack, containerRef }: Member
   
   // Listen for service worker updates and auto-refresh
   useServiceWorkerUpdate();
+  
+  // Subscribe to real-time updates for member data
+  useMemberRealtimeSubscription();
   
   const memberLogo = resolvedTheme === "dark" ? muscledeskMembersDark : muscledeskMembersLight;
 
