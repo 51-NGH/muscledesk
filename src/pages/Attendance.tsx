@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
@@ -61,6 +62,7 @@ function LiveClock() {
 
 export default function Attendance() {
   const { gymId } = useAuth();
+  const queryClient = useQueryClient();
   const { data: features } = useGymPlanFeatures();
   const getTodayDate = () => new Date().toISOString().split("T")[0];
   const [selectedDate, setSelectedDate] = useState(getTodayDate);
@@ -93,9 +95,37 @@ export default function Attendance() {
     setWasViewingToday(selectedDate === getTodayDate());
   }, [selectedDate]);
 
-  const { data: attendance = [], isLoading, refetch } = useAttendance(selectedDate);
+  const { data: attendance = [], isLoading } = useAttendance(selectedDate);
   const { data: members = [] } = useMembers();
   const { data: stats } = useDashboardStats();
+
+  // Real-time subscription for attendance updates - instant refresh
+  useEffect(() => {
+    if (!gymId) return;
+
+    const channel = supabase
+      .channel(`attendance-page-${gymId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'attendance',
+          filter: `gym_id=eq.${gymId}`,
+        },
+        () => {
+          // Instantly invalidate attendance queries
+          queryClient.invalidateQueries({ queryKey: ['attendance'] });
+          queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+          queryClient.invalidateQueries({ queryKey: ['daily-attendance'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [gymId, queryClient]);
 
   const activeMembers = members.filter((m) => m.status === "active" || m.status === "expiring_soon");
 
@@ -130,7 +160,7 @@ export default function Attendance() {
         toast.success("Check-in recorded successfully!");
         setIsManualCheckInOpen(false);
         setSelectedMember("");
-        refetch();
+        // Realtime will handle the refresh automatically
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to record check-in");
@@ -161,7 +191,7 @@ export default function Attendance() {
       };
 
       if (result.success) {
-        refetch();
+        // Realtime will handle the refresh automatically
         toast.success(`${result.member_name} checked in!`);
       }
 

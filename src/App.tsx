@@ -38,16 +38,16 @@ import MemberPayments from "./pages/member/MemberPayments";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Data is considered fresh for 30 seconds - allows quick refetches
-      staleTime: 30 * 1000,
+      // Data is always stale - realtime invalidation triggers immediate refetch
+      staleTime: 0,
       // Keep unused data in cache for 5 minutes
       gcTime: 5 * 60 * 1000,
       // Retry failed requests once
       retry: 1,
       // Don't refetch on window focus - realtime handles updates
       refetchOnWindowFocus: false,
-      // Refetch on mount if data is stale
-      refetchOnMount: true,
+      // Always refetch on mount
+      refetchOnMount: 'always',
       // Don't refetch on reconnect - realtime will catch up
       refetchOnReconnect: false,
     },
