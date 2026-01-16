@@ -543,16 +543,17 @@ export default function Dashboard() {
               {recentPayments.map((payment, index) => (
                 <div key={payment.id} className="flex items-center justify-between py-2 animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-md-green/10 text-md-green shrink-0">
-                      <DollarSign className="h-4 w-4" />
-                    </div>
+                    <MemberAvatar name={payment.member?.full_name || "Unknown"} size="sm" />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground">₹{payment.amount.toLocaleString()}</p>
-                      <p className="text-xs text-muted-foreground uppercase">{payment.payment_mode}</p>
+                      <p className="text-sm font-medium text-foreground truncate">{payment.member?.full_name || "Unknown"}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {payment.plan_name || "Payment"} • <span className="uppercase">{payment.payment_mode}</span>
+                      </p>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-xs text-muted-foreground">{format(new Date(payment.created_at), "MMM d")}</p>
+                    <p className="text-sm font-bold text-md-green">₹{payment.amount.toLocaleString()}</p>
+                    <p className="text-[10px] text-muted-foreground">{format(new Date(payment.created_at), "MMM d, h:mm a")}</p>
                   </div>
                 </div>
               ))}
