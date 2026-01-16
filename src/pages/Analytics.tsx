@@ -4,6 +4,12 @@ import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   useDashboardStats,
   useMonthlyRevenue,
   useMonthlyExpenses,
@@ -12,9 +18,11 @@ import {
   usePayments,
   useExpenses,
 } from "@/hooks/useGymData";
+import { useAnalyticsExport } from "@/hooks/useAnalyticsExport";
 import { UpgradeRequiredPage } from "@/components/UpgradeOverlay";
 import { useGymPlanFeatures } from "@/hooks/useGymPlanFeatures";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 import { format, subDays, subMonths, isAfter, parseISO, startOfDay } from "date-fns";
 import {
   DollarSign,
@@ -28,6 +36,9 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Activity,
+  FileText,
+  FileSpreadsheet,
+  ChevronDown,
 } from "lucide-react";
 import {
   Area,
@@ -57,6 +68,7 @@ export default function Analytics() {
   const { data: members = [] } = useMembers();
   const { data: allPayments = [] } = usePayments();
   const { data: allExpenses = [] } = useExpenses();
+  const { exportToCSV, exportToPDF } = useAnalyticsExport();
   
   // Calculate days and months based on selected range
   const { daysBack, monthsBack } = useMemo(() => {
@@ -475,7 +487,43 @@ export default function Analytics() {
     }
   };
 
-  // Show loading state while checking features - AFTER ALL HOOKS
+  // Handle export
+  const handleExport = (type: "csv" | "pdf") => {
+    const exportData = {
+      activeRange,
+      rangeRevenue,
+      rangeExpenses,
+      rangeProfit,
+      totalCheckIns,
+      attendanceRate,
+      newMembersInPeriod,
+      activeMembers: stats?.activeMembers || 0,
+      totalMembers: stats?.totalMembers || 0,
+      retentionRate,
+      avgTransactionValue,
+      filteredPaymentsCount: filteredPayments.length,
+      revenueChartData,
+      membershipData,
+      memberStatusData,
+      expenseCategoryData,
+      paymentModeData,
+      attendanceChartData,
+    };
+
+    try {
+      if (type === "csv") {
+        exportToCSV(exportData);
+        toast.success("CSV report downloaded successfully!");
+      } else {
+        exportToPDF(exportData);
+        toast.success("PDF report downloaded successfully!");
+      }
+    } catch (error) {
+      toast.error("Failed to export report. Please try again.");
+      console.error("Export error:", error);
+    }
+  };
+
   if (featuresLoading) {
     return (
       <DashboardLayout>
@@ -535,10 +583,25 @@ export default function Analytics() {
               </button>
             ))}
           </div>
-          <Button variant="outline" size="sm" className="hidden sm:flex">
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="hidden sm:flex">
+                <Download className="mr-2 h-4 w-4" />
+                Export
+                <ChevronDown className="ml-2 h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleExport("csv")}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                Export as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("pdf")}>
+                <FileText className="mr-2 h-4 w-4" />
+                Export as PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
