@@ -113,9 +113,12 @@ export function QRScanner({ onScan, isOpen, onClose }: QRScannerProps) {
   const handleQRDetected = async (decodedText: string) => {
     if (processingRef.current) return;
     
+    console.log('[QRScanner] QR detected:', decodedText.substring(0, 20) + '...');
+    
     // Check client-side cache first
     const cached = scanCache.get(decodedText);
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      console.log('[QRScanner] Using cached result');
       // Show cached result without API call
       playSound(cached.result.type === 'success' ? 'approve' : 'warning');
       triggerHaptic('light');
@@ -133,7 +136,9 @@ export function QRScanner({ onScan, isOpen, onClose }: QRScannerProps) {
     processingRef.current = true;
     
     try {
+      console.log('[QRScanner] Calling onScan...');
       const result = await onScan(decodedText);
+      console.log('[QRScanner] Scan result:', result);
       
       const scanResult: ScanResult = {
         success: result.success,
@@ -149,20 +154,30 @@ export function QRScanner({ onScan, isOpen, onClose }: QRScannerProps) {
       // Cache the result
       scanCache.set(decodedText, { timestamp: Date.now(), result: scanResult });
       
-      // Play appropriate sound and haptic
+      // Play appropriate sound and haptic - BOTH together
+      console.log('[QRScanner] Playing feedback for type:', scanResult.type);
+      
       if (scanResult.success) {
+        console.log('[QRScanner] SUCCESS - Playing approve sound + haptic');
         playSound('approve');
-        triggerScanSuccess(); // Sweet double-tap
+        // Trigger haptic with slight delay for better feel
+        setTimeout(() => {
+          console.log('[QRScanner] Triggering success haptic now');
+          triggerScanSuccess();
+        }, 50);
         setScanCount(prev => prev + 1);
       } else if (scanResult.type === 'duplicate') {
+        console.log('[QRScanner] DUPLICATE - Playing warning sound');
         playSound('warning');
         triggerHaptic('light');
       } else if (scanResult.type === 'warning') {
+        console.log('[QRScanner] WARNING/EXPIRED - Playing deny sound + warning haptic');
         playSound('deny');
-        triggerScanWarning(); // Triple pulse for expired
+        setTimeout(() => triggerScanWarning(), 50);
       } else {
+        console.log('[QRScanner] ERROR - Playing deny sound + error haptic');
         playSound('deny');
-        triggerScanError(); // Long buzz for errors
+        setTimeout(() => triggerScanError(), 50);
       }
       
       setLastResult(scanResult);
@@ -174,6 +189,7 @@ export function QRScanner({ onScan, isOpen, onClose }: QRScannerProps) {
       }, scanResult.success ? 2500 : 2000);
       
     } catch (err) {
+      console.error('[QRScanner] Error:', err);
       processingRef.current = false;
     }
   };
