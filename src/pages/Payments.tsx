@@ -238,19 +238,20 @@ export default function Payments() {
 
   return (
     <DashboardLayout>
-      <PageHeader title="Payments & Billing" description="Manage transactions and revenue">
-        <Button variant="outline" onClick={handleExport}>
+      <PageHeader title="Payments" description="Manage transactions and revenue">
+        <Button variant="outline" size="sm" onClick={handleExport} className="hidden sm:flex">
           <Download className="mr-2 h-4 w-4" />
           Export
         </Button>
-        <Button onClick={() => setIsAddPaymentOpen(true)}>
+        <Button size="sm" onClick={() => setIsAddPaymentOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Record Payment
+          <span className="hidden sm:inline">Record Payment</span>
+          <span className="sm:hidden">Add</span>
         </Button>
       </PageHeader>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      {/* Stats Grid - Responsive */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
         <StatCard
           title="Monthly Revenue"
           value={`₹${(stats?.monthlyRevenue || 0).toLocaleString()}`}
@@ -277,9 +278,9 @@ export default function Payments() {
         />
       </div>
 
-      {/* Search & Filters */}
-      <div className="flex items-center gap-4 mb-6">
-        <div className="relative flex-1 max-w-md">
+      {/* Search & Filters - Mobile Optimized */}
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search by member name or ID..."
@@ -288,12 +289,12 @@ export default function Payments() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="flex items-center rounded-lg border border-border p-1">
+        <div className="flex items-center rounded-lg border border-border p-1 overflow-x-auto">
           {filterTabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveFilter(tab)}
-              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+              className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
                 activeFilter === tab
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground"
@@ -305,82 +306,122 @@ export default function Payments() {
         </div>
       </div>
 
-      {/* Transactions Table */}
+      {/* Transactions - Mobile Cards / Desktop Table */}
       <div className="rounded-xl border border-border bg-card">
-        <div className="p-5 border-b border-border">
-          <h3 className="text-lg font-semibold text-foreground">Recent Transactions</h3>
-          <p className="text-sm text-muted-foreground">{filteredPayments.length} payment records</p>
+        <div className="p-4 sm:p-5 border-b border-border">
+          <h3 className="text-base sm:text-lg font-semibold text-foreground">Recent Transactions</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground">{filteredPayments.length} payment records</p>
         </div>
 
         {isLoading ? (
-          <div className="p-10 text-center">
+          <div className="p-8 sm:p-10 text-center">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent" />
           </div>
         ) : filteredPayments.length === 0 ? (
-          <div className="p-10 text-center">
-            <DollarSign className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">No Payments</h3>
-            <p className="text-muted-foreground mb-4">
+          <div className="p-8 sm:p-10 text-center">
+            <DollarSign className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">No Payments</h3>
+            <p className="text-sm text-muted-foreground mb-4">
               {searchQuery ? "No payments match your search" : "No payment records yet"}
             </p>
-            <Button onClick={() => setIsAddPaymentOpen(true)}>
+            <Button size="sm" onClick={() => setIsAddPaymentOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Record First Payment
             </Button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b border-border">
-                <tr className="text-left text-sm text-muted-foreground">
-                  <th className="px-5 py-3 font-medium">Member</th>
-                  <th className="px-5 py-3 font-medium">Plan</th>
-                  <th className="px-5 py-3 font-medium">Amount</th>
-                  <th className="px-5 py-3 font-medium">Method</th>
-                  <th className="px-5 py-3 font-medium">Status</th>
-                  <th className="px-5 py-3 font-medium">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPayments.map((payment) => {
-                  const StatusIcon = statusConfig[payment.status].icon;
-                  const MethodIcon = paymentModeIcons[payment.payment_mode];
-                  return (
-                    <tr key={payment.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-3">
-                          <MemberAvatar name={payment.member?.full_name || "Unknown"} size="sm" />
-                          <div>
-                            <p className="text-sm font-medium text-foreground">{payment.member?.full_name}</p>
-                            <p className="text-xs text-muted-foreground">{payment.member?.member_id}</p>
-                          </div>
+          <>
+            {/* Mobile Card View */}
+            <div className="lg:hidden divide-y divide-border">
+              {filteredPayments.map((payment) => {
+                const StatusIcon = statusConfig[payment.status].icon;
+                const MethodIcon = paymentModeIcons[payment.payment_mode];
+                return (
+                  <div key={payment.id} className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <MemberAvatar name={payment.member?.full_name || "Unknown"} size="sm" />
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{payment.member?.full_name}</p>
+                          <p className="text-xs text-muted-foreground">{payment.member?.member_id}</p>
                         </div>
-                      </td>
-                      <td className="px-5 py-4">
-                        <span className="text-sm text-foreground">{payment.plan_name || "Custom"}</span>
-                      </td>
-                      <td className="px-5 py-4 text-sm font-semibold text-foreground">₹{Number(payment.amount).toLocaleString()}</td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground capitalize">
-                          <MethodIcon className="h-4 w-4" />
-                          {payment.payment_mode}
-                        </div>
-                      </td>
-                      <td className="px-5 py-4">
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs ${statusConfig[payment.status].className}`}>
+                      </div>
+                      <p className="text-base font-bold text-foreground">₹{Number(payment.amount).toLocaleString()}</p>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-4">
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${statusConfig[payment.status].className}`}>
                           <StatusIcon className="h-3 w-3" />
                           {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
                         </span>
-                      </td>
-                      <td className="px-5 py-4 text-sm text-muted-foreground">
-                        {format(new Date(payment.created_at), "MMM d, yyyy h:mm a")}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        <span className="flex items-center gap-1 text-muted-foreground capitalize">
+                          <MethodIcon className="h-3 w-3" />
+                          {payment.payment_mode}
+                        </span>
+                      </div>
+                      <span className="text-muted-foreground">
+                        {format(new Date(payment.created_at), "MMM d, h:mm a")}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full">
+                <thead className="border-b border-border">
+                  <tr className="text-left text-sm text-muted-foreground">
+                    <th className="px-5 py-3 font-medium">Member</th>
+                    <th className="px-5 py-3 font-medium">Plan</th>
+                    <th className="px-5 py-3 font-medium">Amount</th>
+                    <th className="px-5 py-3 font-medium">Method</th>
+                    <th className="px-5 py-3 font-medium">Status</th>
+                    <th className="px-5 py-3 font-medium">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredPayments.map((payment) => {
+                    const StatusIcon = statusConfig[payment.status].icon;
+                    const MethodIcon = paymentModeIcons[payment.payment_mode];
+                    return (
+                      <tr key={payment.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <MemberAvatar name={payment.member?.full_name || "Unknown"} size="sm" />
+                            <div>
+                              <p className="text-sm font-medium text-foreground">{payment.member?.full_name}</p>
+                              <p className="text-xs text-muted-foreground">{payment.member?.member_id}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className="text-sm text-foreground">{payment.plan_name || "Custom"}</span>
+                        </td>
+                        <td className="px-5 py-4 text-sm font-semibold text-foreground">₹{Number(payment.amount).toLocaleString()}</td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground capitalize">
+                            <MethodIcon className="h-4 w-4" />
+                            {payment.payment_mode}
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs ${statusConfig[payment.status].className}`}>
+                            <StatusIcon className="h-3 w-3" />
+                            {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-sm text-muted-foreground">
+                          {format(new Date(payment.created_at), "MMM d, yyyy h:mm a")}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
@@ -448,30 +489,31 @@ export default function Payments() {
 
             <div className="space-y-2">
               <Label>Payment Method *</Label>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 {(["cash", "upi", "card"] as PaymentMode[]).map((mode) => {
                   const Icon = paymentModeIcons[mode];
                   return (
                     <Button
                       key={mode}
                       type="button"
+                      size="sm"
                       variant={newPayment.payment_mode === mode ? "default" : "outline"}
                       className="flex-1"
                       onClick={() => setNewPayment({ ...newPayment, payment_mode: mode })}
                     >
-                      <Icon className="mr-2 h-4 w-4" />
-                      {mode.toUpperCase()}
+                      <Icon className="mr-1.5 h-4 w-4" />
+                      <span className="text-xs sm:text-sm">{mode.toUpperCase()}</span>
                     </Button>
                   );
                 })}
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={() => setIsAddPaymentOpen(false)}>
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsAddPaymentOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={createPayment.isPending}>
+              <Button type="submit" size="sm" disabled={createPayment.isPending}>
                 {createPayment.isPending ? "Recording..." : "Record Payment"}
               </Button>
             </div>

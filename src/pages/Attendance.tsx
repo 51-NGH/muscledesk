@@ -285,71 +285,82 @@ export default function Attendance() {
         />
       </div>
 
-      {/* Date Navigation & Search */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="flex items-center gap-2 rounded-lg border border-border p-1 shrink-0">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goToPreviousDay}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <div className="flex items-center gap-2 px-2 py-1">
-            <Calendar className="h-4 w-4 text-muted-foreground hidden sm:block" />
-            <Input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="border-0 bg-transparent p-0 text-sm font-medium w-[120px] sm:w-[130px]"
-            />
+      {/* Date Navigation & Search - Mobile Optimized */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="flex items-center justify-between sm:justify-start gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 rounded-lg border border-border p-1 shrink-0">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goToPreviousDay}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="flex items-center gap-1 sm:gap-2 px-1 sm:px-2 py-1">
+              <Calendar className="h-4 w-4 text-muted-foreground hidden sm:block" />
+              <Input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="border-0 bg-transparent p-0 text-xs sm:text-sm font-medium w-[110px] sm:w-[130px]"
+              />
+            </div>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goToNextDay} disabled={isToday}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goToNextDay} disabled={isToday}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
 
-        <div className="relative flex-1 min-w-0">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search by name or ID..."
-            className="pl-10"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
-        {isToday && (
-          <div className="hidden sm:flex items-center gap-3 shrink-0">
-            <LiveClock />
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          {isToday && (
+            <div className="flex sm:hidden items-center gap-2 text-xs text-muted-foreground">
               <div className="h-2 w-2 rounded-full bg-md-green animate-pulse" />
               Live
             </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3 flex-1">
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search..."
+              className="pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-        )}
+
+          {isToday && (
+            <div className="hidden sm:flex items-center gap-3 shrink-0">
+              <LiveClock />
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="h-2 w-2 rounded-full bg-md-green animate-pulse" />
+                Live
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Attendance List */}
       <div className="rounded-xl border border-border bg-card">
-        <div className="p-5 border-b border-border">
-          <h3 className="text-lg font-semibold text-foreground">
-            Check-ins for {format(new Date(selectedDate), "MMMM d, yyyy")}
+        <div className="p-4 sm:p-5 border-b border-border">
+          <h3 className="text-base sm:text-lg font-semibold text-foreground">
+            Check-ins for {format(new Date(selectedDate), "MMM d, yyyy")}
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             {filteredAttendance.length} member{filteredAttendance.length !== 1 ? "s" : ""} checked in
           </p>
         </div>
 
         {isLoading ? (
-          <div className="p-10 text-center">
+          <div className="p-8 sm:p-10 text-center">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent" />
           </div>
         ) : filteredAttendance.length === 0 ? (
-          <div className="p-10 text-center">
-            <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">No Check-ins</h3>
-            <p className="text-muted-foreground mb-4">
-              {isToday ? "No members have checked in yet today" : "No attendance records for this date"}
+          <div className="p-8 sm:p-10 text-center">
+            <Calendar className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">No Check-ins</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              {isToday ? "No members have checked in yet" : "No attendance records for this date"}
             </p>
             {isToday && (
-              <Button onClick={() => setIsManualCheckInOpen(true)}>
+              <Button size="sm" onClick={() => setIsManualCheckInOpen(true)}>
                 <UserCheck className="mr-2 h-4 w-4" />
                 Record Check-In
               </Button>
@@ -358,23 +369,25 @@ export default function Attendance() {
         ) : (
           <div className="divide-y divide-border">
             {filteredAttendance.map((record) => (
-              <div key={record.id} className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
-                <div className="flex items-center gap-4">
+              <div key={record.id} className="flex items-center justify-between p-3 sm:p-4 hover:bg-muted/50 transition-colors">
+                <div className="flex items-center gap-3 min-w-0">
                   <MemberAvatar name={record.member?.full_name || "Unknown"} size="sm" />
-                  <div>
-                    <p className="font-medium text-foreground">{record.member?.full_name}</p>
-                    <p className="text-sm text-muted-foreground">{record.member?.member_id}</p>
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm text-foreground truncate">{record.member?.full_name}</p>
+                    <p className="text-xs text-muted-foreground">{record.member?.member_id}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <StatusBadge status={record.member?.status || "active"} />
+                <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+                  <div className="hidden sm:block">
+                    <StatusBadge status={record.member?.status || "active"} />
+                  </div>
                   <div className="text-right">
-                    <div className="flex items-center gap-2 text-sm text-foreground">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-foreground">
+                      <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                       {format(new Date(record.check_in_at), "h:mm a")}
                     </div>
-                    <p className="text-xs text-muted-foreground capitalize">
-                      via {record.source === "qr" ? "QR Scan" : "Manual"}
+                    <p className="text-[10px] sm:text-xs text-muted-foreground capitalize">
+                      {record.source === "qr" ? "QR" : "Manual"}
                     </p>
                   </div>
                 </div>
