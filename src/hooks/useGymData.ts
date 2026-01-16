@@ -169,11 +169,26 @@ export function useCreateMember() {
     }) => {
       if (!gymId) throw new Error("No gym selected");
 
+      // Check for duplicate email within the same gym (application-level validation)
+      if (member.email) {
+        const { data: existingMember } = await supabase
+          .from("members")
+          .select("id")
+          .eq("gym_id", gymId)
+          .eq("email", member.email.toLowerCase().trim())
+          .is("deleted_at", null)
+          .maybeSingle();
+
+        if (existingMember) {
+          throw new Error("A member with this email already exists");
+        }
+      }
+
       const insertData = {
         gym_id: gymId,
         full_name: member.full_name,
         phone: member.phone,
-        email: member.email || null,
+        email: member.email?.toLowerCase().trim() || null,
         plan_id: member.plan_id || null,
         plan_name: member.plan_name || null,
         start_date: member.start_date || new Date().toISOString().split("T")[0],
@@ -223,8 +238,10 @@ export function useCreateMember() {
       }
     },
     onError: (error: Error) => {
-      if (error.message.includes("members_gym_phone_unique")) {
+      if (error.message.includes("members_gym_phone_unique") || error.message.includes("idx_members_phone_gym_unique")) {
         toast.error("A member with this phone number already exists");
+      } else if (error.message.includes("email already exists")) {
+        toast.error("A member with this email already exists");
       } else {
         toast.error(error.message);
       }
@@ -238,6 +255,25 @@ export function useUpdateMember() {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Member> & { id: string }) => {
+      // Check for duplicate email within the same gym (application-level validation)
+      if (updates.email) {
+        const { data: existingMember } = await supabase
+          .from("members")
+          .select("id")
+          .eq("gym_id", gymId!)
+          .eq("email", updates.email.toLowerCase().trim())
+          .neq("id", id)
+          .is("deleted_at", null)
+          .maybeSingle();
+
+        if (existingMember) {
+          throw new Error("A member with this email already exists");
+        }
+        
+        // Normalize email
+        updates.email = updates.email.toLowerCase().trim();
+      }
+
       const { data, error } = await supabase
         .from("members")
         .update(updates)
@@ -256,7 +292,13 @@ export function useUpdateMember() {
       toast.success("Member updated successfully!");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      if (error.message.includes("idx_members_phone_gym_unique")) {
+        toast.error("A member with this phone number already exists");
+      } else if (error.message.includes("email already exists")) {
+        toast.error("A member with this email already exists");
+      } else {
+        toast.error(error.message);
+      }
     },
   });
 }
