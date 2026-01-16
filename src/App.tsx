@@ -33,6 +33,7 @@ import MemberDashboard from "./pages/member/MemberDashboard";
 import MemberQRCode from "./pages/member/MemberQRCode";
 import MemberAttendance from "./pages/member/MemberAttendance";
 import MemberPayments from "./pages/member/MemberPayments";
+import MemberSettings from "./pages/member/MemberSettings";
 
 // Ultra-fast QueryClient - zero stale time for instant real-time updates
 const queryClient = new QueryClient({
@@ -104,6 +105,11 @@ const App = () => (
             <Route path="/member/payments" element={
               <MemberAuthProvider>
                 <MemberProtectedRoute><MemberPayments /></MemberProtectedRoute>
+              </MemberAuthProvider>
+            } />
+            <Route path="/member/settings" element={
+              <MemberAuthProvider>
+                <MemberProtectedRoute><MemberSettings /></MemberProtectedRoute>
               </MemberAuthProvider>
             } />
 

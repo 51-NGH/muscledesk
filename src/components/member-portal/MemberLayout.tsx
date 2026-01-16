@@ -10,7 +10,8 @@ import {
   Clock, 
   CreditCard, 
   LogOut,
-  WifiOff
+  WifiOff,
+  Settings
 } from "lucide-react";
 import muscledeskMembersDark from "@/assets/muscledesk-members-dark.png";
 import muscledeskMembersLight from "@/assets/muscledesk-members-light.png";
@@ -28,6 +29,7 @@ const navItems = [
   { icon: QrCode, label: "QR Code", path: "/member/qr" },
   { icon: Clock, label: "Attendance", path: "/member/attendance" },
   { icon: CreditCard, label: "Payments", path: "/member/payments" },
+  { icon: Settings, label: "Settings", path: "/member/settings" },
 ];
 
 export function MemberLayout({ children, title, showBack, containerRef }: MemberLayoutProps) {
