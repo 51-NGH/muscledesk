@@ -38,7 +38,9 @@ export function usePWAInstall(): PWAInstallState {
   const [showPrompt, setShowPrompt] = useState(false);
   
   // Determine app type based on route
-  const isMemberPortal = location.pathname.startsWith("/member");
+  // IMPORTANT: Check for exact "/member" path or "/member/" prefix to avoid matching "/members" (admin route)
+  const isMemberPortal = location.pathname === "/member" || 
+                         location.pathname.startsWith("/member/");
   const appType: AppType = isMemberPortal ? "member" : "admin";
   const appName = isMemberPortal ? "My Gym" : "MuscleDesk";
   
