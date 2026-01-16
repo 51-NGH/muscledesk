@@ -18,7 +18,6 @@ import {
   usePayments,
   useExpenses,
 } from "@/hooks/useGymData";
-import { useAnalyticsExport } from "@/hooks/useAnalyticsExport";
 import { UpgradeRequiredPage } from "@/components/UpgradeOverlay";
 import { useGymPlanFeatures } from "@/hooks/useGymPlanFeatures";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -68,7 +67,7 @@ export default function Analytics() {
   const { data: members = [] } = useMembers();
   const { data: allPayments = [] } = usePayments();
   const { data: allExpenses = [] } = useExpenses();
-  const { exportToCSV, exportToPDF } = useAnalyticsExport();
+  
   
   // Calculate days and months based on selected range
   const { daysBack, monthsBack } = useMemo(() => {
@@ -487,41 +486,64 @@ export default function Analytics() {
     }
   };
 
-  // Handle export
-  const handleExport = (type: "csv" | "pdf") => {
-    const exportData = {
-      activeRange,
-      rangeRevenue,
-      rangeExpenses,
-      rangeProfit,
-      totalCheckIns,
-      attendanceRate,
-      newMembersInPeriod,
-      activeMembers: stats?.activeMembers || 0,
-      totalMembers: stats?.totalMembers || 0,
-      retentionRate,
-      avgTransactionValue,
-      filteredPaymentsCount: filteredPayments.length,
-      revenueChartData,
-      membershipData,
-      memberStatusData,
-      expenseCategoryData,
-      paymentModeData,
-      attendanceChartData,
-    };
+  // Handle CSV export
+  const handleExport = () => {
+    const currentDate = format(new Date(), "yyyy-MM-dd");
+    const lines: string[] = [];
 
-    try {
-      if (type === "csv") {
-        exportToCSV(exportData);
-        toast.success("CSV report downloaded successfully!");
-      } else {
-        exportToPDF(exportData);
-        toast.success("PDF report downloaded successfully!");
-      }
-    } catch (error) {
-      toast.error("Failed to export report. Please try again.");
-      console.error("Export error:", error);
-    }
+    lines.push(`Analytics Report - ${activeRange}`);
+    lines.push(`Generated: ${format(new Date(), "PPpp")}`);
+    lines.push("");
+
+    lines.push("=== SUMMARY STATISTICS ===");
+    lines.push(`Total Revenue,₹${rangeRevenue.toLocaleString()}`);
+    lines.push(`Net Profit,₹${rangeProfit.toLocaleString()}`);
+    lines.push(`Total Expenses,₹${rangeExpenses.toLocaleString()}`);
+    lines.push(`Total Check-ins,${totalCheckIns}`);
+    lines.push(`Attendance Rate,${attendanceRate}%`);
+    lines.push(`New Members,${newMembersInPeriod}`);
+    lines.push(`Active Members,${stats?.activeMembers || 0}`);
+    lines.push(`Total Members,${stats?.totalMembers || 0}`);
+    lines.push(`Retention Rate,${retentionRate}%`);
+    lines.push(`Avg Transaction,₹${avgTransactionValue.toLocaleString()}`);
+    lines.push("");
+
+    lines.push("=== REVENUE ANALYSIS ===");
+    lines.push("Period,Revenue,Expenses,Profit");
+    revenueChartData.forEach((row) => {
+      lines.push(`${row.month},${row.revenue},${row.expenses},${row.profit}`);
+    });
+    lines.push("");
+
+    lines.push("=== MEMBERSHIP PLANS ===");
+    lines.push("Plan,Members");
+    membershipData.forEach((row) => {
+      lines.push(`${row.name},${row.value}`);
+    });
+    lines.push("");
+
+    lines.push("=== MEMBER STATUS ===");
+    lines.push("Status,Count");
+    memberStatusData.forEach((row) => {
+      lines.push(`${row.name},${row.value}`);
+    });
+    lines.push("");
+
+    lines.push("=== ATTENDANCE TREND ===");
+    lines.push("Day,Check-ins");
+    attendanceChartData.forEach((row) => {
+      lines.push(`${row.day},${row.checkIns}`);
+    });
+
+    const csvContent = lines.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `analytics-report-${currentDate}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    
+    toast.success("CSV report downloaded successfully!");
   };
 
   if (featuresLoading) {
@@ -592,13 +614,9 @@ export default function Analytics() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleExport("csv")}>
+              <DropdownMenuItem onClick={handleExport}>
                 <FileSpreadsheet className="mr-2 h-4 w-4" />
                 Export as CSV
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport("pdf")}>
-                <FileText className="mr-2 h-4 w-4" />
-                Export as PDF
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
