@@ -1,74 +1,99 @@
 /**
  * Audio feedback hook for the admin QR scanner.
  * Generates beep sounds using Web Audio API - no external files needed.
+ * Respects user sound settings from useSoundSettings.
  */
 
 type SoundType = 'approve' | 'deny';
 
-const audioContext = typeof window !== 'undefined' ? new (window.AudioContext || (window as any).webkitAudioContext)() : null;
+let audioContext: AudioContext | null = null;
+
+function getAudioContext() {
+  if (!audioContext && typeof window !== 'undefined') {
+    audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  }
+  return audioContext;
+}
 
 function playTone(frequency: number, duration: number, type: OscillatorType = 'sine', volume: number = 0.3) {
-  if (!audioContext) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
   
   // Resume audio context if suspended (required by browsers)
-  if (audioContext.state === 'suspended') {
-    audioContext.resume();
+  if (ctx.state === 'suspended') {
+    ctx.resume();
   }
 
-  const oscillator = audioContext.createOscillator();
-  const gainNode = audioContext.createGain();
+  const oscillator = ctx.createOscillator();
+  const gainNode = ctx.createGain();
   
   oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
+  gainNode.connect(ctx.destination);
   
   oscillator.type = type;
-  oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+  oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
   
   // Smooth fade out to avoid clicking
-  gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
-  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+  gainNode.gain.setValueAtTime(volume, ctx.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
   
-  oscillator.start(audioContext.currentTime);
-  oscillator.stop(audioContext.currentTime + duration);
+  oscillator.start(ctx.currentTime);
+  oscillator.stop(ctx.currentTime + duration);
 }
 
 /**
  * Play approval sound - pleasant ascending two-tone beep
  */
-function playApproveSound() {
-  if (!audioContext) return;
+function playApproveSound(volumePercent: number = 70) {
+  const volume = (volumePercent / 100) * 0.35;
   
   // First tone - lower
-  playTone(880, 0.15, 'sine', 0.25);
+  playTone(880, 0.15, 'sine', volume);
   
   // Second tone - higher (delayed)
   setTimeout(() => {
-    playTone(1318.5, 0.2, 'sine', 0.25); // E6 note
+    playTone(1318.5, 0.2, 'sine', volume); // E6 note
   }, 100);
 }
 
 /**
  * Play denial sound - descending two-tone buzz
  */
-function playDenySound() {
-  if (!audioContext) return;
+function playDenySound(volumePercent: number = 70) {
+  const volume = (volumePercent / 100) * 0.2;
   
   // First tone - higher
-  playTone(400, 0.15, 'square', 0.15);
+  playTone(400, 0.15, 'square', volume);
   
   // Second tone - lower (delayed)
   setTimeout(() => {
-    playTone(250, 0.25, 'square', 0.15);
+    playTone(250, 0.25, 'square', volume);
   }, 120);
 }
 
-export function useAudioFeedback() {
+interface SoundSettings {
+  enabled: boolean;
+  volume: number;
+  approveSound: boolean;
+  denySound: boolean;
+}
+
+export function useAudioFeedback(settings?: SoundSettings) {
   const playSound = (type: SoundType) => {
+    // If settings provided, respect them
+    if (settings) {
+      if (!settings.enabled) return;
+      if (type === 'approve' && !settings.approveSound) return;
+      if (type === 'deny' && !settings.denySound) return;
+    }
+
+    const volume = settings?.volume ?? 70;
+
     try {
       if (type === 'approve') {
-        playApproveSound();
+        playApproveSound(volume);
       } else {
-        playDenySound();
+        playDenySound(volume);
       }
     } catch (error) {
       console.warn('Audio feedback failed:', error);
@@ -77,8 +102,9 @@ export function useAudioFeedback() {
 
   // Prepare audio context on first user interaction
   const prepareAudio = () => {
-    if (audioContext && audioContext.state === 'suspended') {
-      audioContext.resume();
+    const ctx = getAudioContext();
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume();
     }
   };
 

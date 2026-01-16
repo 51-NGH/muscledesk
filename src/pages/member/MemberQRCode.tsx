@@ -1,16 +1,53 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { MemberLayout } from "@/components/member-portal/MemberLayout";
 import { QRCodeCanvas } from "qrcode.react";
 import { Button } from "@/components/ui/button";
-import { Download, X, AlertTriangle, WifiOff } from "lucide-react";
+import { Download, X, AlertTriangle, WifiOff, CheckCircle2 } from "lucide-react";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { toast } from "sonner";
+import { useHapticFeedback } from "@/hooks/useHapticFeedback";
+import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 export default function MemberQRCode() {
   const { member, isOffline, loading, memberLoading } = useMemberAuth();
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showSuccessPulse, setShowSuccessPulse] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
+  const { triggerScanSuccess } = useHapticFeedback();
+
+  // Listen for attendance check-ins in real-time
+  useEffect(() => {
+    if (!member?.id) return;
+
+    const channel = supabase
+      .channel(`qr-checkin-${member.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'attendance',
+          filter: `member_id=eq.${member.id}`,
+        },
+        () => {
+          // Trigger success animation
+          setShowSuccessPulse(true);
+          triggerScanSuccess();
+          
+          // Hide animation after 3 seconds
+          setTimeout(() => {
+            setShowSuccessPulse(false);
+          }, 3000);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [member?.id, triggerScanSuccess]);
 
   // Show loading state
   if (loading || memberLoading || !member) {
@@ -44,10 +81,26 @@ export default function MemberQRCode() {
   };
 
   const QRContent = ({ size = 200 }: { size?: number }) => (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center relative">
+      {/* Success Pulse Animation Overlay */}
+      {showSuccessPulse && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center">
+          <div className="absolute inset-0 bg-md-green/20 rounded-2xl animate-pulse" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-full h-full rounded-2xl border-4 border-md-green animate-[ping_1s_ease-out_infinite]" />
+          </div>
+          <div className="relative z-20 bg-md-green rounded-full p-4 animate-scale-in shadow-lg">
+            <CheckCircle2 className="h-12 w-12 text-white" />
+          </div>
+        </div>
+      )}
       <div 
         id="member-qr-code"
-        className={`p-4 sm:p-5 bg-white rounded-2xl shadow-lg ${isInvalid ? "opacity-50 grayscale" : ""}`}
+        className={cn(
+          "p-4 sm:p-5 bg-white rounded-2xl shadow-lg transition-all duration-300",
+          isInvalid && "opacity-50 grayscale",
+          showSuccessPulse && "ring-4 ring-md-green ring-offset-4 ring-offset-background"
+        )}
       >
         <QRCodeCanvas
           value={member.qr_token}

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Camera, CameraOff, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAudioFeedback } from "@/hooks/useAudioFeedback";
+import { useSoundSettings } from "@/hooks/useSoundSettings";
 
 interface QRScannerProps {
   onScan: (qrToken: string) => Promise<{
@@ -30,8 +31,9 @@ export function QRScanner({ onScan, isOpen, onClose }: QRScannerProps) {
   const lastScannedRef = useRef<string | null>(null);
   const processingRef = useRef(false);
   
-  // Audio feedback for scan results
-  const { playSound, prepareAudio } = useAudioFeedback();
+  // Audio feedback with settings
+  const { settings } = useSoundSettings();
+  const { playSound, prepareAudio } = useAudioFeedback(settings);
 
   useEffect(() => {
     if (isOpen && !isScanning) {
