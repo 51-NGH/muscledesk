@@ -175,32 +175,32 @@ export function MemberProfile({
             <div className="space-y-6">
               {/* Tabs */}
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="w-full grid grid-cols-4">
-                  <TabsTrigger value="overview">Overview</TabsTrigger>
-                  <TabsTrigger value="memberships">Memberships</TabsTrigger>
-                  <TabsTrigger value="payments">Payments</TabsTrigger>
-                  <TabsTrigger value="attendance">Attendance</TabsTrigger>
+                <TabsList className="w-full grid grid-cols-4 h-auto">
+                  <TabsTrigger value="overview" className="text-xs sm:text-sm px-2 py-1.5 sm:py-2">Overview</TabsTrigger>
+                  <TabsTrigger value="memberships" className="text-xs sm:text-sm px-2 py-1.5 sm:py-2">Memberships</TabsTrigger>
+                  <TabsTrigger value="payments" className="text-xs sm:text-sm px-2 py-1.5 sm:py-2">Payments</TabsTrigger>
+                  <TabsTrigger value="attendance" className="text-xs sm:text-sm px-2 py-1.5 sm:py-2">Attendance</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="mt-4 space-y-4">
-                  {/* Stats Grid */}
-                  <div className="grid grid-cols-4 gap-3">
-                    <div className="rounded-lg border border-border bg-card p-3">
-                      <p className="text-xs text-muted-foreground">Total Visits</p>
-                      <p className="text-xl font-bold text-foreground">{member.total_visits}</p>
+                  {/* Stats Grid - 2x2 on mobile, 4 on desktop */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                    <div className="rounded-lg border border-border bg-muted/30 p-3">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">Total Visits</p>
+                      <p className="text-lg sm:text-xl font-bold text-foreground">{member.total_visits}</p>
                     </div>
-                    <div className="rounded-lg border border-border bg-card p-3">
-                      <p className="text-xs text-muted-foreground">Total Paid</p>
-                      <p className="text-xl font-bold text-foreground">₹{totalPaid.toLocaleString()}</p>
+                    <div className="rounded-lg border border-border bg-muted/30 p-3">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">Total Paid</p>
+                      <p className="text-lg sm:text-xl font-bold text-foreground">₹{totalPaid.toLocaleString()}</p>
                     </div>
-                    <div className="rounded-lg border border-border bg-card p-3">
-                      <p className="text-xs text-muted-foreground">Memberships</p>
-                      <p className="text-xl font-bold text-foreground">{memberPayments.length || 1}</p>
+                    <div className="rounded-lg border border-border bg-muted/30 p-3">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">Memberships</p>
+                      <p className="text-lg sm:text-xl font-bold text-foreground">{memberPayments.length || 1}</p>
                     </div>
-                    <div className="rounded-lg border border-border bg-card p-3">
-                      <p className="text-xs text-muted-foreground">Last Visit</p>
-                      <p className="text-xl font-bold text-foreground">
-                        {member.last_visit_at ? format(new Date(member.last_visit_at), "d/M/yyyy") : "-"}
+                    <div className="rounded-lg border border-border bg-muted/30 p-3">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">Last Visit</p>
+                      <p className="text-lg sm:text-xl font-bold text-foreground">
+                        {member.last_visit_at ? format(new Date(member.last_visit_at), "d/M/yy") : "-"}
                       </p>
                     </div>
                   </div>
