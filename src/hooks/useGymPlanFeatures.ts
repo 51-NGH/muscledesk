@@ -19,8 +19,14 @@ export interface PlanFeatures {
   hasAnalyticsPage: boolean;
   hasMemberPortal: boolean;
   hasCharts: boolean;
-  hasCustomPricing: boolean; // Custom pricing & notes per member
+  hasCustomPricing: boolean;
   maxPlans: number;
+  // Pro-exclusive features
+  hasFullAnalytics: boolean; // Full analytics with trends, forecasting, retention
+  hasEquipmentTracking: boolean;
+  hasAuditLogs: boolean;
+  hasBulkImport: boolean;
+  hasWhiteLabel: boolean; // Custom gym logo on member portal
   // Brand info for multi-branch
   brandId: string | null;
 }
@@ -41,6 +47,11 @@ const DEFAULT_FEATURES: PlanFeatures = {
   hasCharts: false,
   hasCustomPricing: false,
   maxPlans: 3,
+  hasFullAnalytics: false,
+  hasEquipmentTracking: false,
+  hasAuditLogs: false,
+  hasBulkImport: false,
+  hasWhiteLabel: false,
   brandId: null,
 };
 
@@ -93,19 +104,25 @@ export function useGymPlanFeatures() {
         hasStaffManagement: planLimits.has_staff_management,
         hasMultiBranch: planLimits.has_multi_branch,
         // Lite restrictions
-        hasQRAttendance: isStandardOrAbove, // No QR for lite
-        hasPaymentsPage: isStandardOrAbove, // No payments page for lite
-        hasRemindersPage: isStandardOrAbove, // No reminders for lite
-        hasAnalyticsPage: isStandardOrAbove, // No analytics for lite
-        hasMemberPortal: isStandardOrAbove, // No member app/emails for lite
-        hasCharts: isStandardOrAbove, // No charts in dashboard for lite
-        hasCustomPricing: isStandardOrAbove, // No custom pricing/notes for lite
-        maxPlans: isLite ? 3 : (isPro ? 999 : 10), // Lite: 3, Standard: 10, Pro: unlimited
+        hasQRAttendance: isStandardOrAbove,
+        hasPaymentsPage: isStandardOrAbove,
+        hasRemindersPage: isStandardOrAbove,
+        hasAnalyticsPage: isStandardOrAbove, // Basic analytics for Standard
+        hasMemberPortal: isStandardOrAbove,
+        hasCharts: isStandardOrAbove,
+        hasCustomPricing: isStandardOrAbove,
+        maxPlans: isLite ? 3 : (isPro ? 999 : 10),
+        // Pro-exclusive features
+        hasFullAnalytics: isPro, // Full analytics with trends, forecasting, retention
+        hasEquipmentTracking: isPro,
+        hasAuditLogs: isPro,
+        hasBulkImport: isPro,
+        hasWhiteLabel: isPro,
         brandId,
       };
     },
     enabled: !!gymId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 
