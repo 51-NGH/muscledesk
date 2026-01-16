@@ -1,23 +1,34 @@
+import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { useAuth } from "@/contexts/AuthContext";
-import { Building2, Shield, AlertTriangle, CheckCircle2, Volume2, VolumeX, Bell, BellOff, Lock } from "lucide-react";
+import { Building2, Shield, AlertTriangle, CheckCircle2, Volume2, VolumeX, Bell, BellOff, Lock, ClipboardList, Crown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSoundSettings } from "@/hooks/useSoundSettings";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button";
 import { useAudioFeedback } from "@/hooks/useAudioFeedback";
 import { useGymPlanFeatures } from "@/hooks/useGymPlanFeatures";
+import { AuditLogsViewer } from "@/components/AuditLogsViewer";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function Settings() {
   const { user, gymId, role, isSuperAdmin } = useAuth();
   const { settings, toggleSound, setVolume, toggleApproveSound, toggleDenySound } = useSoundSettings();
   const { playSound } = useAudioFeedback(settings);
   const { data: features } = useGymPlanFeatures();
+  const [isAuditLogsOpen, setIsAuditLogsOpen] = useState(false);
 
   // Check if QR sounds should be available (Standard+ only)
   const hasQRSounds = features?.hasQRAttendance ?? false;
+  const hasAuditLogs = features?.hasAuditLogs ?? false;
 
   // Fetch gym details if gymId exists
   const { data: gym } = useQuery({
@@ -231,6 +242,30 @@ export default function Settings() {
                 </div>
               </div>
             )}
+
+            {/* Audit Logs Section - Pro only */}
+            {hasAuditLogs && (
+              <div className="rounded-xl border border-border bg-card p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-md-purple/20">
+                    <ClipboardList className="h-5 w-5 text-md-purple" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h2 className="font-semibold text-foreground">Audit Logs</h2>
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-md-purple/10 text-md-purple text-xs font-medium">
+                        <Crown className="h-3 w-3" />
+                        Pro
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Track all admin actions and changes</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setIsAuditLogsOpen(true)}>
+                    View Logs
+                  </Button>
+                </div>
+              </div>
+            )}
           </>
         )}
 
@@ -259,6 +294,18 @@ export default function Settings() {
           </div>
         )}
       </div>
+
+      {/* Audit Logs Dialog */}
+      <Dialog open={isAuditLogsOpen} onOpenChange={setIsAuditLogsOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Audit Logs</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto">
+            <AuditLogsViewer />
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
