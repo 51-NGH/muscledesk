@@ -15,6 +15,7 @@ export default function MemberQRCode() {
   const { member, isOffline, loading, memberLoading } = useMemberAuth();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showSuccessPulse, setShowSuccessPulse] = useState(false);
+  const [pollingStatus, setPollingStatus] = useState<string>("initializing...");
   const qrRef = useRef<HTMLDivElement>(null);
   const { triggerScanSuccess, triggerScanError, triggerScanWarning } = useHapticFeedback();
   const { playSound, prepareAudio } = useAudioFeedback();
@@ -56,10 +57,12 @@ export default function MemberQRCode() {
   useEffect(() => {
     if (!member?.id) {
       console.log('[MemberQR] No member ID, skipping polling');
+      setPollingStatus("No member ID");
       return;
     }
 
     console.log('[MemberQR] Setting up secure polling for member:', member.id);
+    setPollingStatus(`Polling for ${member.id.slice(0,8)}...`);
     
     // Prepare audio context on mount
     prepareAudio();
@@ -76,9 +79,12 @@ export default function MemberQRCode() {
 
         if (error) {
           console.error('[MemberQR] Polling error:', error);
+          setPollingStatus(`Error: ${error.message}`);
           return;
         }
 
+        const now = new Date().toLocaleTimeString();
+        setPollingStatus(`Last poll: ${now} | ID: ${data?.attendance_id?.slice(0,8) || 'none'}`);
         console.log('[MemberQR] Current attendance:', data?.attendance_id, 'Last known:', lastAttendanceRef.current);
 
         if (data?.attendance_id && data.attendance_id !== lastAttendanceRef.current) {
@@ -285,6 +291,13 @@ export default function MemberQRCode() {
               </span>
             </div>
           </div>
+        </div>
+
+        {/* DEBUG: Polling status */}
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 text-center">
+          <p className="text-xs text-blue-600 dark:text-blue-400 font-mono">
+            🔄 {pollingStatus}
+          </p>
         </div>
 
         {/* How to use */}
