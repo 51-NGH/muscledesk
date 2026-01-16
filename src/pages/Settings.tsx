@@ -1,18 +1,23 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { useAuth } from "@/contexts/AuthContext";
-import { Building2, Shield, AlertTriangle, CheckCircle2, Volume2, VolumeX, Bell, BellOff } from "lucide-react";
+import { Building2, Shield, AlertTriangle, CheckCircle2, Volume2, VolumeX, Bell, BellOff, Lock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSoundSettings } from "@/hooks/useSoundSettings";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { useAudioFeedback } from "@/hooks/useAudioFeedback";
+import { useGymPlanFeatures } from "@/hooks/useGymPlanFeatures";
 
 export default function Settings() {
   const { user, gymId, role, isSuperAdmin } = useAuth();
   const { settings, toggleSound, setVolume, toggleApproveSound, toggleDenySound } = useSoundSettings();
   const { playSound } = useAudioFeedback(settings);
+  const { data: features } = useGymPlanFeatures();
+
+  // Check if QR sounds should be available (Standard+ only)
+  const hasQRSounds = features?.hasQRAttendance ?? false;
 
   // Fetch gym details if gymId exists
   const { data: gym } = useQuery({
@@ -116,95 +121,116 @@ export default function Settings() {
               </div>
             </div>
 
-            {/* Sound Settings Section */}
-            <div className="rounded-xl border border-border bg-card p-6">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-md-teal/20">
-                  {settings.enabled ? (
-                    <Volume2 className="h-5 w-5 text-md-teal" />
-                  ) : (
-                    <VolumeX className="h-5 w-5 text-muted-foreground" />
+            {/* Sound Settings Section - Only for Standard+ */}
+            {hasQRSounds ? (
+              <div className="rounded-xl border border-border bg-card p-6">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-md-teal/20">
+                    {settings.enabled ? (
+                      <Volume2 className="h-5 w-5 text-md-teal" />
+                    ) : (
+                      <VolumeX className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div>
+                    <h2 className="font-semibold text-foreground">QR Scanner Sounds</h2>
+                    <p className="text-sm text-muted-foreground">Customize audio feedback for QR scans</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-5">
+                  {/* Master Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {settings.enabled ? (
+                        <Bell className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <BellOff className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <div>
+                        <p className="text-sm font-medium">Enable Sounds</p>
+                        <p className="text-xs text-muted-foreground">Turn all scanner sounds on/off</p>
+                      </div>
+                    </div>
+                    <Switch checked={settings.enabled} onCheckedChange={toggleSound} />
+                  </div>
+
+                  {settings.enabled && (
+                    <>
+                      {/* Volume Slider */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium">Volume</p>
+                          <span className="text-sm text-muted-foreground">{settings.volume}%</span>
+                        </div>
+                        <Slider
+                          value={[settings.volume]}
+                          onValueChange={([value]) => setVolume(value)}
+                          max={100}
+                          min={10}
+                          step={10}
+                          className="w-full"
+                        />
+                      </div>
+
+                      {/* Individual Sound Toggles */}
+                      <div className="pt-3 border-t border-border space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-md-green">Approval Sound</p>
+                            <p className="text-xs text-muted-foreground">Plays when QR scan is successful</p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => playSound('approve')}
+                              className="text-xs text-primary hover:underline"
+                            >
+                              Test
+                            </button>
+                            <Switch checked={settings.approveSound} onCheckedChange={toggleApproveSound} />
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-destructive">Denial Sound</p>
+                            <p className="text-xs text-muted-foreground">Plays when QR scan fails</p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => playSound('deny')}
+                              className="text-xs text-primary hover:underline"
+                            >
+                              Test
+                            </button>
+                            <Switch checked={settings.denySound} onCheckedChange={toggleDenySound} />
+                          </div>
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
-                <div>
-                  <h2 className="font-semibold text-foreground">QR Scanner Sounds</h2>
-                  <p className="text-sm text-muted-foreground">Customize audio feedback for QR scans</p>
-                </div>
               </div>
-              
-              <div className="space-y-5">
-                {/* Master Toggle */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {settings.enabled ? (
-                      <Bell className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <BellOff className="h-4 w-4 text-muted-foreground" />
-                    )}
+            ) : (
+              <div className="rounded-xl border border-border bg-card p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center">
+                  <Lock className="h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="font-semibold text-foreground">QR Scanner Sounds</p>
+                  <p className="text-sm text-muted-foreground">Upgrade to Standard plan to unlock</p>
+                </div>
+                <div className="opacity-30">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-md-teal/20">
+                      <Volume2 className="h-5 w-5 text-md-teal" />
+                    </div>
                     <div>
-                      <p className="text-sm font-medium">Enable Sounds</p>
-                      <p className="text-xs text-muted-foreground">Turn all scanner sounds on/off</p>
+                      <h2 className="font-semibold text-foreground">QR Scanner Sounds</h2>
+                      <p className="text-sm text-muted-foreground">Customize audio feedback for QR scans</p>
                     </div>
                   </div>
-                  <Switch checked={settings.enabled} onCheckedChange={toggleSound} />
                 </div>
-
-                {settings.enabled && (
-                  <>
-                    {/* Volume Slider */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium">Volume</p>
-                        <span className="text-sm text-muted-foreground">{settings.volume}%</span>
-                      </div>
-                      <Slider
-                        value={[settings.volume]}
-                        onValueChange={([value]) => setVolume(value)}
-                        max={100}
-                        min={10}
-                        step={10}
-                        className="w-full"
-                      />
-                    </div>
-
-                    {/* Individual Sound Toggles */}
-                    <div className="pt-3 border-t border-border space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-md-green">Approval Sound</p>
-                          <p className="text-xs text-muted-foreground">Plays when QR scan is successful</p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => playSound('approve')}
-                            className="text-xs text-primary hover:underline"
-                          >
-                            Test
-                          </button>
-                          <Switch checked={settings.approveSound} onCheckedChange={toggleApproveSound} />
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-destructive">Denial Sound</p>
-                          <p className="text-xs text-muted-foreground">Plays when QR scan fails</p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => playSound('deny')}
-                            className="text-xs text-primary hover:underline"
-                          >
-                            Test
-                          </button>
-                          <Switch checked={settings.denySound} onCheckedChange={toggleDenySound} />
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
               </div>
-            </div>
+            )}
           </>
         )}
 

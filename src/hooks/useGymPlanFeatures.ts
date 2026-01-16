@@ -19,6 +19,7 @@ export interface PlanFeatures {
   hasAnalyticsPage: boolean;
   hasMemberPortal: boolean;
   hasCharts: boolean;
+  hasCustomPricing: boolean; // Custom pricing & notes per member
   maxPlans: number;
   // Brand info for multi-branch
   brandId: string | null;
@@ -38,6 +39,7 @@ const DEFAULT_FEATURES: PlanFeatures = {
   hasAnalyticsPage: false,
   hasMemberPortal: false,
   hasCharts: false,
+  hasCustomPricing: false,
   maxPlans: 3,
   brandId: null,
 };
@@ -97,6 +99,7 @@ export function useGymPlanFeatures() {
         hasAnalyticsPage: isStandardOrAbove, // No analytics for lite
         hasMemberPortal: isStandardOrAbove, // No member app/emails for lite
         hasCharts: isStandardOrAbove, // No charts in dashboard for lite
+        hasCustomPricing: isStandardOrAbove, // No custom pricing/notes for lite
         maxPlans: isLite ? 3 : (isPro ? 999 : 10), // Lite: 3, Standard: 10, Pro: unlimited
         brandId,
       };
