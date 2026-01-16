@@ -2,18 +2,14 @@ import { useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useMemberAuth } from '@/contexts/MemberAuthContext';
-import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { toast } from 'sonner';
 
 /**
  * Hook that subscribes to real-time database changes for the member portal.
  * Automatically invalidates React Query cache when member-specific data changes.
- * Also triggers haptic feedback when QR code is scanned.
  */
 export function useMemberRealtimeSubscription() {
   const queryClient = useQueryClient();
   const { member } = useMemberAuth();
-  const { triggerScanSuccess } = useHapticFeedback();
 
   const invalidateMemberData = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['member-data'], refetchType: 'all' });
@@ -49,7 +45,7 @@ export function useMemberRealtimeSubscription() {
           invalidateMemberData();
         }
       )
-      // Attendance changes - triggers haptic feedback when QR is scanned
+      // Attendance changes - invalidate data (haptic/animation handled in MemberQRCode)
       .on(
         'postgres_changes',
         {
@@ -60,16 +56,6 @@ export function useMemberRealtimeSubscription() {
         },
         (payload) => {
           console.log('Realtime: Member attendance change detected:', payload.eventType);
-          
-          // Trigger haptic feedback for successful check-in
-          triggerScanSuccess();
-          
-          // Show toast notification
-          toast.success('Check-in recorded! 💪', {
-            description: 'Your attendance has been logged.',
-            duration: 3000,
-          });
-          
           invalidateAttendance();
         }
       )
