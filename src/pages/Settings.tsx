@@ -296,16 +296,7 @@ export default function Settings() {
       </div>
 
       {/* Audit Logs Dialog */}
-      <Dialog open={isAuditLogsOpen} onOpenChange={setIsAuditLogsOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle>Audit Logs</DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-auto">
-            <AuditLogsViewer />
-          </div>
-        </DialogContent>
-      </Dialog>
+      <AuditLogsViewer isOpen={isAuditLogsOpen} onClose={() => setIsAuditLogsOpen(false)} />
     </DashboardLayout>
   );
 }

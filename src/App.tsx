@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { MemberAuthProvider } from "@/contexts/MemberAuthContext";
@@ -11,6 +11,7 @@ import { MemberProtectedRoute } from "@/components/member-portal/MemberProtected
 import { SubdomainRouter } from "@/components/SubdomainRouter";
 import { ManifestManager } from "@/components/ManifestManager";
 import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
+import { queryClient } from "@/lib/queryClient";
 
 // Admin pages
 import Dashboard from "./pages/Dashboard";
@@ -35,33 +36,6 @@ import MemberQRCode from "./pages/member/MemberQRCode";
 import MemberAttendance from "./pages/member/MemberAttendance";
 import MemberPayments from "./pages/member/MemberPayments";
 import MemberSettings from "./pages/member/MemberSettings";
-
-// Ultra-fast QueryClient - zero stale time for instant real-time updates
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      // CRITICAL: Zero stale time - any invalidation triggers immediate refetch
-      staleTime: 0,
-      // Keep data in cache for quick display while refetching
-      gcTime: 2 * 60 * 1000, // 2 minutes
-      // Single retry on failure
-      retry: 1,
-      // Don't refetch on window focus - realtime subscriptions handle this
-      refetchOnWindowFocus: false,
-      // Always refetch fresh data on mount
-      refetchOnMount: 'always',
-      // Refetch when network reconnects to sync any missed updates
-      refetchOnReconnect: true,
-      // Always attempt network requests
-      networkMode: 'always',
-    },
-    mutations: {
-      // Single retry for mutations
-      retry: 1,
-      networkMode: 'always',
-    },
-  },
-});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

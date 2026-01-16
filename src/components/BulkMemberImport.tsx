@@ -76,15 +76,11 @@ interface ParsedRow {
   errors: string[];
 }
 
-interface BulkMemberImportProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export function BulkMemberImport({ isOpen, onClose }: BulkMemberImportProps) {
+export function BulkMemberImport() {
   const { gymId } = useAuth();
   const queryClient = useQueryClient();
   
+  const [isOpen, setIsOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<ParsedRow[]>([]);
   const [isParsing, setIsParsing] = useState(false);
@@ -310,14 +306,19 @@ Jane Smith,8765432109,,2025-01-15,2025-04-15,Quarterly,`;
 
   const handleClose = () => {
     reset();
-    onClose();
+    setIsOpen(false);
   };
 
   const validCount = parsedData.filter((r) => r.isValid).length;
   const invalidCount = parsedData.filter((r) => !r.isValid).length;
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <>
+      <Button variant="outline" size="sm" onClick={() => setIsOpen(true)} className="hidden sm:flex">
+        <Upload className="mr-2 h-4 w-4" />
+        Bulk Import
+      </Button>
+      <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-3xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -492,5 +493,6 @@ Jane Smith,8765432109,,2025-01-15,2025-04-15,Quarterly,`;
         )}
       </DialogContent>
     </Dialog>
+    </>
   );
 }

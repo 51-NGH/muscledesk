@@ -329,9 +329,7 @@ export default function Members() {
   return (
     <DashboardLayout>
       <PageHeader title="Members" description="Manage your gym members and memberships">
-        {features?.hasBulkImport && (
-          <BulkMemberImport />
-        )}
+        {features?.hasBulkImport && <BulkMemberImport />}
         <Button variant="outline" size="sm" onClick={handleExport} className="hidden sm:flex">
           <Download className="mr-2 h-4 w-4" />
           Export
