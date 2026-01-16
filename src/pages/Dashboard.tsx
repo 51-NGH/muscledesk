@@ -296,7 +296,7 @@ export default function Dashboard() {
       {/* Charts & Activity Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 lg:mb-8">
         {/* Weekly Attendance Chart */}
-        <div className="lg:col-span-2 rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 relative overflow-hidden">
+        <div className="lg:col-span-2 rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 relative overflow-hidden flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-base sm:text-lg font-semibold text-foreground">Weekly Attendance</h3>
@@ -308,112 +308,110 @@ export default function Dashboard() {
             </Button>
           </div>
           
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Chart */}
-            <div className="flex-1 min-w-0">
-              {showCharts ? (
-                <ResponsiveContainer width="100%" height={200}>
-                  <AreaChart data={weeklyAttendanceData.length > 0 ? weeklyAttendanceData : [{ day: 'Mon', checkIns: 0 }, { day: 'Tue', checkIns: 0 }, { day: 'Wed', checkIns: 0 }, { day: 'Thu', checkIns: 0 }, { day: 'Fri', checkIns: 0 }, { day: 'Sat', checkIns: 0 }, { day: 'Sun', checkIns: 0 }]}>
-                    <defs>
-                      <linearGradient id="colorAttendance" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--foreground))" stopOpacity={0.15} />
-                        <stop offset="95%" stopColor="hsl(var(--foreground))" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <XAxis
-                      dataKey="day"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
-                      width={30}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                        fontSize: "12px",
-                      }}
-                      formatter={(value: number) => [value, "Check-ins"]}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="checkIns"
-                      stroke="hsl(var(--foreground))"
-                      strokeWidth={2}
-                      fill="url(#colorAttendance)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              ) : (
-                <UpgradeOverlay
-                  feature="Attendance Charts"
-                  description="Visualize attendance trends and patterns with interactive charts"
-                  minHeight="200px"
-                />
-              )}
+          {/* Chart - takes remaining space */}
+          <div className="flex-1 min-h-[180px]">
+            {showCharts ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={weeklyAttendanceData.length > 0 ? weeklyAttendanceData : [{ day: 'Mon', checkIns: 0 }, { day: 'Tue', checkIns: 0 }, { day: 'Wed', checkIns: 0 }, { day: 'Thu', checkIns: 0 }, { day: 'Fri', checkIns: 0 }, { day: 'Sat', checkIns: 0 }, { day: 'Sun', checkIns: 0 }]}>
+                  <defs>
+                    <linearGradient id="colorAttendance" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--foreground))" stopOpacity={0.15} />
+                      <stop offset="95%" stopColor="hsl(var(--foreground))" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis
+                    dataKey="day"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                    width={30}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                    formatter={(value: number) => [value, "Check-ins"]}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="checkIns"
+                    stroke="hsl(var(--foreground))"
+                    strokeWidth={2}
+                    fill="url(#colorAttendance)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <UpgradeOverlay
+                feature="Attendance Charts"
+                description="Visualize attendance trends and patterns with interactive charts"
+                minHeight="180px"
+              />
+            )}
+          </div>
+          
+          {/* Weekly Stats - horizontal row below chart */}
+          <div className="grid grid-cols-4 gap-3 mt-4 pt-4 border-t border-border">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <div className="h-2 w-2 rounded-full bg-md-green" />
+                <span className="text-xs text-muted-foreground">Weekly Total</span>
+              </div>
+              <p className="text-xl font-bold text-foreground">
+                {weeklyAttendanceData.reduce((sum, d) => sum + d.checkIns, 0)}
+              </p>
+              <p className="text-[10px] text-muted-foreground">check-ins</p>
             </div>
             
-            {/* Weekly Stats Sidebar */}
-            <div className="lg:w-44 shrink-0 grid grid-cols-2 lg:grid-cols-1 gap-3">
-              <div className="rounded-lg bg-muted/50 p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="h-2 w-2 rounded-full bg-md-green" />
-                  <span className="text-xs text-muted-foreground">Weekly Total</span>
-                </div>
-                <p className="text-xl font-bold text-foreground">
-                  {weeklyAttendanceData.reduce((sum, d) => sum + d.checkIns, 0)}
-                </p>
-                <p className="text-[10px] text-muted-foreground">check-ins</p>
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <div className="h-2 w-2 rounded-full bg-md-teal" />
+                <span className="text-xs text-muted-foreground">Daily Avg</span>
               </div>
-              
-              <div className="rounded-lg bg-muted/50 p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="h-2 w-2 rounded-full bg-md-teal" />
-                  <span className="text-xs text-muted-foreground">Daily Avg</span>
-                </div>
-                <p className="text-xl font-bold text-foreground">
-                  {weeklyAttendanceData.length > 0 
-                    ? Math.round(weeklyAttendanceData.reduce((sum, d) => sum + d.checkIns, 0) / weeklyAttendanceData.length) 
-                    : 0}
-                </p>
-                <p className="text-[10px] text-muted-foreground">per day</p>
+              <p className="text-xl font-bold text-foreground">
+                {weeklyAttendanceData.length > 0 
+                  ? Math.round(weeklyAttendanceData.reduce((sum, d) => sum + d.checkIns, 0) / weeklyAttendanceData.length) 
+                  : 0}
+              </p>
+              <p className="text-[10px] text-muted-foreground">per day</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <div className="h-2 w-2 rounded-full bg-md-orange" />
+                <span className="text-xs text-muted-foreground">Peak Day</span>
               </div>
-              
-              <div className="rounded-lg bg-muted/50 p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="h-2 w-2 rounded-full bg-md-orange" />
-                  <span className="text-xs text-muted-foreground">Peak Day</span>
-                </div>
-                <p className="text-xl font-bold text-foreground">
-                  {weeklyAttendanceData.length > 0 
-                    ? weeklyAttendanceData.reduce((max, d) => d.checkIns > max.checkIns ? d : max, weeklyAttendanceData[0]).day
-                    : '-'}
-                </p>
-                <p className="text-[10px] text-muted-foreground">
-                  {weeklyAttendanceData.length > 0 
-                    ? `${weeklyAttendanceData.reduce((max, d) => d.checkIns > max.checkIns ? d : max, weeklyAttendanceData[0]).checkIns} visits`
-                    : 'no data'}
-                </p>
+              <p className="text-xl font-bold text-foreground">
+                {weeklyAttendanceData.length > 0 
+                  ? weeklyAttendanceData.reduce((max, d) => d.checkIns > max.checkIns ? d : max, weeklyAttendanceData[0]).day
+                  : '-'}
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                {weeklyAttendanceData.length > 0 
+                  ? `${weeklyAttendanceData.reduce((max, d) => d.checkIns > max.checkIns ? d : max, weeklyAttendanceData[0]).checkIns} visits`
+                  : 'no data'}
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <div className="h-2 w-2 rounded-full bg-primary" />
+                <span className="text-xs text-muted-foreground">Active Rate</span>
               </div>
-              
-              <div className="rounded-lg bg-muted/50 p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="h-2 w-2 rounded-full bg-primary" />
-                  <span className="text-xs text-muted-foreground">Active Rate</span>
-                </div>
-                <p className="text-xl font-bold text-foreground">
-                  {stats?.activeMembers && stats.activeMembers > 0 
-                    ? Math.round((weeklyAttendanceData.reduce((sum, d) => sum + d.checkIns, 0) / stats.activeMembers) * 100 / 7)
-                    : 0}%
-                </p>
-                <p className="text-[10px] text-muted-foreground">of members</p>
-              </div>
+              <p className="text-xl font-bold text-foreground">
+                {stats?.activeMembers && stats.activeMembers > 0 
+                  ? Math.round((weeklyAttendanceData.reduce((sum, d) => sum + d.checkIns, 0) / stats.activeMembers) * 100 / 7)
+                  : 0}%
+              </p>
+              <p className="text-[10px] text-muted-foreground">of members</p>
             </div>
           </div>
         </div>
