@@ -358,60 +358,60 @@ export default function Dashboard() {
             )}
           </div>
           
-          {/* Weekly Stats - horizontal row below chart */}
-          <div className="grid grid-cols-4 gap-3 mt-4 pt-4 border-t border-border">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1.5 mb-1">
-                <div className="h-2 w-2 rounded-full bg-md-green" />
-                <span className="text-xs text-muted-foreground">Weekly Total</span>
+          {/* Weekly Stats - responsive grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-4 pt-4 border-t border-border">
+            <div className="rounded-lg bg-muted/30 p-2 sm:p-3 text-center">
+              <div className="flex items-center justify-center gap-1 sm:gap-1.5 mb-0.5 sm:mb-1">
+                <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-md-green" />
+                <span className="text-[10px] sm:text-xs text-muted-foreground truncate">Weekly Total</span>
               </div>
-              <p className="text-xl font-bold text-foreground">
+              <p className="text-lg sm:text-xl font-bold text-foreground">
                 {weeklyAttendanceData.reduce((sum, d) => sum + d.checkIns, 0)}
               </p>
-              <p className="text-[10px] text-muted-foreground">check-ins</p>
+              <p className="text-[9px] sm:text-[10px] text-muted-foreground">check-ins</p>
             </div>
             
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1.5 mb-1">
-                <div className="h-2 w-2 rounded-full bg-md-teal" />
-                <span className="text-xs text-muted-foreground">Daily Avg</span>
+            <div className="rounded-lg bg-muted/30 p-2 sm:p-3 text-center">
+              <div className="flex items-center justify-center gap-1 sm:gap-1.5 mb-0.5 sm:mb-1">
+                <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-md-teal" />
+                <span className="text-[10px] sm:text-xs text-muted-foreground truncate">Daily Avg</span>
               </div>
-              <p className="text-xl font-bold text-foreground">
+              <p className="text-lg sm:text-xl font-bold text-foreground">
                 {weeklyAttendanceData.length > 0 
                   ? Math.round(weeklyAttendanceData.reduce((sum, d) => sum + d.checkIns, 0) / weeklyAttendanceData.length) 
                   : 0}
               </p>
-              <p className="text-[10px] text-muted-foreground">per day</p>
+              <p className="text-[9px] sm:text-[10px] text-muted-foreground">per day</p>
             </div>
             
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1.5 mb-1">
-                <div className="h-2 w-2 rounded-full bg-md-orange" />
-                <span className="text-xs text-muted-foreground">Peak Day</span>
+            <div className="rounded-lg bg-muted/30 p-2 sm:p-3 text-center">
+              <div className="flex items-center justify-center gap-1 sm:gap-1.5 mb-0.5 sm:mb-1">
+                <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-md-orange" />
+                <span className="text-[10px] sm:text-xs text-muted-foreground truncate">Peak Day</span>
               </div>
-              <p className="text-xl font-bold text-foreground">
+              <p className="text-lg sm:text-xl font-bold text-foreground">
                 {weeklyAttendanceData.length > 0 
                   ? weeklyAttendanceData.reduce((max, d) => d.checkIns > max.checkIns ? d : max, weeklyAttendanceData[0]).day
                   : '-'}
               </p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-[9px] sm:text-[10px] text-muted-foreground">
                 {weeklyAttendanceData.length > 0 
                   ? `${weeklyAttendanceData.reduce((max, d) => d.checkIns > max.checkIns ? d : max, weeklyAttendanceData[0]).checkIns} visits`
                   : 'no data'}
               </p>
             </div>
             
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1.5 mb-1">
-                <div className="h-2 w-2 rounded-full bg-primary" />
-                <span className="text-xs text-muted-foreground">Active Rate</span>
+            <div className="rounded-lg bg-muted/30 p-2 sm:p-3 text-center">
+              <div className="flex items-center justify-center gap-1 sm:gap-1.5 mb-0.5 sm:mb-1">
+                <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-primary" />
+                <span className="text-[10px] sm:text-xs text-muted-foreground truncate">Active Rate</span>
               </div>
-              <p className="text-xl font-bold text-foreground">
+              <p className="text-lg sm:text-xl font-bold text-foreground">
                 {stats?.activeMembers && stats.activeMembers > 0 
                   ? Math.round((weeklyAttendanceData.reduce((sum, d) => sum + d.checkIns, 0) / stats.activeMembers) * 100 / 7)
                   : 0}%
               </p>
-              <p className="text-[10px] text-muted-foreground">of members</p>
+              <p className="text-[9px] sm:text-[10px] text-muted-foreground">of members</p>
             </div>
           </div>
         </div>
