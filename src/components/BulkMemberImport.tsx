@@ -477,13 +477,28 @@ export function BulkMemberImport() {
       setImportProgress(Math.round(((i + 1) / validRows.length) * 100));
     }
 
+    // Log the import
+    const newPlansCreated = detectedPlans.filter(p => p.isNew && !p.existingId).length;
+    const fileExt = file?.name.split('.').pop()?.toLowerCase() || 'csv';
+    
+    await supabase.from("import_logs").insert({
+      gym_id: gymId,
+      file_name: file?.name || 'unknown',
+      file_type: fileExt,
+      total_rows: parsedData.length,
+      success_count: success,
+      failure_count: failed,
+      plans_created: newPlansCreated,
+    });
+
     setImportResults({ success, failed });
     setIsImporting(false);
     setStep("complete");
     queryClient.invalidateQueries({ queryKey: ["members"] });
+    queryClient.invalidateQueries({ queryKey: ["import-logs"] });
   };
 
-  const downloadTemplate = () => {
+  const downloadCSVTemplate = () => {
     const template = `full_name,phone,email,plan_name,start_date,expiry_date,notes
 John Doe,9876543210,john@example.com,Monthly,2025-01-01,2025-02-01,New member
 Jane Smith,8765432109,,Quarterly,2025-01-15,2025-04-15,
@@ -496,6 +511,36 @@ Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,VIP member`;
     a.download = "member_import_template.csv";
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const downloadExcelTemplate = () => {
+    // Create sample data
+    const templateData = [
+      ["full_name", "phone", "email", "plan_name", "start_date", "expiry_date", "notes"],
+      ["John Doe", "9876543210", "john@example.com", "Monthly", "2025-01-01", "2025-02-01", "New member"],
+      ["Jane Smith", "8765432109", "", "Quarterly", "2025-01-15", "2025-04-15", ""],
+      ["Mike Johnson", "7654321098", "mike@test.com", "Annual", "2025-01-01", "2026-01-01", "VIP member"],
+    ];
+
+    // Create workbook and worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(templateData);
+
+    // Set column widths
+    ws["!cols"] = [
+      { wch: 20 }, // full_name
+      { wch: 15 }, // phone
+      { wch: 25 }, // email
+      { wch: 15 }, // plan_name
+      { wch: 12 }, // start_date
+      { wch: 12 }, // expiry_date
+      { wch: 30 }, // notes
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, "Members");
+
+    // Generate and download file
+    XLSX.writeFile(wb, "member_import_template.xlsx");
   };
 
   const reset = () => {
@@ -582,12 +627,18 @@ Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,VIP member`;
                 <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                   <div>
                     <p className="font-medium text-sm">Need a template?</p>
-                    <p className="text-xs text-muted-foreground">Download our CSV template with sample data</p>
+                    <p className="text-xs text-muted-foreground">Download with sample data to get started quickly</p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={downloadTemplate}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Download Template
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={downloadExcelTemplate} className="gap-2">
+                      <Sheet className="h-4 w-4 text-green-600" />
+                      Excel
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={downloadCSVTemplate} className="gap-2">
+                      <FileText className="h-4 w-4 text-blue-600" />
+                      CSV
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="text-sm text-muted-foreground space-y-1">
