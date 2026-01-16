@@ -958,7 +958,7 @@ export default function Analytics() {
       </div>
 
       {/* Attendance Trend - Available for Standard */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
+      <div className={`grid grid-cols-1 ${features?.hasFullAnalytics ? 'lg:grid-cols-2' : ''} gap-4 sm:gap-6 mb-6`}>
         {/* Attendance Trend */}
         <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
           <div className="mb-4">
@@ -1006,7 +1006,7 @@ export default function Analytics() {
         </div>
 
         {/* Peak Hours - Pro Only */}
-        {features?.hasFullAnalytics ? (
+        {features?.hasFullAnalytics && (
           <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-foreground">Peak Hours</h3>
@@ -1046,26 +1046,11 @@ export default function Analytics() {
               </LineChart>
             </ResponsiveContainer>
           </div>
-        ) : (
-          <div className="relative rounded-xl border border-border bg-card p-4 sm:p-5">
-            <UpgradeOverlay
-              feature="Peak Hours Analysis"
-              description="See when your gym is busiest to optimize staffing and equipment availability."
-              recommendedPlan="pro"
-              minHeight="280px"
-            >
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold text-foreground">Peak Hours</h3>
-                <p className="text-sm text-muted-foreground">Estimated visitor distribution</p>
-              </div>
-              <div className="h-[200px] bg-muted/20 rounded-lg" />
-            </UpgradeOverlay>
-          </div>
         )}
       </div>
 
       {/* Expense Breakdown & Payment Modes - Pro Only */}
-      {features?.hasFullAnalytics ? (
+      {features?.hasFullAnalytics && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
           {/* Expense Breakdown */}
           <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
@@ -1175,37 +1160,6 @@ export default function Analytics() {
                 </div>
               </>
             )}
-          </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
-          <div className="relative rounded-xl border border-border bg-card p-4 sm:p-5">
-            <UpgradeOverlay
-              feature="Expense Breakdown"
-              description="Analyze your expenses by category to identify cost-saving opportunities."
-              recommendedPlan="pro"
-              minHeight="280px"
-            >
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold text-foreground">Expense Breakdown</h3>
-                <p className="text-sm text-muted-foreground">By category</p>
-              </div>
-              <div className="h-[200px] bg-muted/20 rounded-lg" />
-            </UpgradeOverlay>
-          </div>
-          <div className="relative rounded-xl border border-border bg-card p-4 sm:p-5">
-            <UpgradeOverlay
-              feature="Payment Methods"
-              description="Track revenue by payment mode to understand member preferences."
-              recommendedPlan="pro"
-              minHeight="280px"
-            >
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold text-foreground">Payment Methods</h3>
-                <p className="text-sm text-muted-foreground">Revenue by payment mode</p>
-              </div>
-              <div className="h-[200px] bg-muted/20 rounded-lg" />
-            </UpgradeOverlay>
           </div>
         </div>
       )}
