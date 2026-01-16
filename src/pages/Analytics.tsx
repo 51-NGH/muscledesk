@@ -18,7 +18,8 @@ import {
   usePayments,
   useExpenses,
 } from "@/hooks/useGymData";
-import { UpgradeRequiredPage } from "@/components/UpgradeOverlay";
+import { UpgradeRequiredPage, UpgradeOverlay } from "@/components/UpgradeOverlay";
+import { ProAnalyticsSection } from "@/components/analytics/ProAnalyticsSection";
 import { useGymPlanFeatures } from "@/hooks/useGymPlanFeatures";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -956,7 +957,7 @@ export default function Analytics() {
         </div>
       </div>
 
-      {/* Attendance Trend & Peak Hours */}
+      {/* Attendance Trend - Available for Standard */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
         {/* Attendance Trend */}
         <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
@@ -1004,160 +1005,215 @@ export default function Analytics() {
           )}
         </div>
 
-        {/* Peak Hours */}
-        <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold text-foreground">Peak Hours</h3>
-            <p className="text-sm text-muted-foreground">Estimated visitor distribution • {getSubtitle()}</p>
+        {/* Peak Hours - Pro Only */}
+        {features?.hasFullAnalytics ? (
+          <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-foreground">Peak Hours</h3>
+              <p className="text-sm text-muted-foreground">Estimated visitor distribution • {getSubtitle()}</p>
+            </div>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={peakHoursData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis
+                  dataKey="hour"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                  width={30}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                    fontSize: "12px",
+                  }}
+                  formatter={(value: number) => [value, "Visitors"]}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="visitors"
+                  stroke="hsl(var(--md-purple))"
+                  strokeWidth={2}
+                  dot={{ fill: "hsl(var(--md-purple))", strokeWidth: 0, r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={peakHoursData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis
-                dataKey="hour"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
-              />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
-                width={30}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                }}
-                formatter={(value: number) => [value, "Visitors"]}
-              />
-              <Line
-                type="monotone"
-                dataKey="visitors"
-                stroke="hsl(var(--md-purple))"
-                strokeWidth={2}
-                dot={{ fill: "hsl(var(--md-purple))", strokeWidth: 0, r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        ) : (
+          <div className="relative rounded-xl border border-border bg-card p-4 sm:p-5">
+            <UpgradeOverlay
+              feature="Peak Hours Analysis"
+              description="See when your gym is busiest to optimize staffing and equipment availability."
+              recommendedPlan="pro"
+              minHeight="280px"
+            >
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-foreground">Peak Hours</h3>
+                <p className="text-sm text-muted-foreground">Estimated visitor distribution</p>
+              </div>
+              <div className="h-[200px] bg-muted/20 rounded-lg" />
+            </UpgradeOverlay>
+          </div>
+        )}
       </div>
 
-      {/* Expense Breakdown & Payment Modes */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* Expense Breakdown */}
-        <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold text-foreground">Expense Breakdown</h3>
-            <p className="text-sm text-muted-foreground">By category • {getSubtitle()}</p>
-          </div>
-          {expenseCategoryData.length === 0 ? (
-            <div className="flex items-center justify-center h-[200px] text-muted-foreground">
-              <p className="text-sm">No expenses recorded</p>
+      {/* Expense Breakdown & Payment Modes - Pro Only */}
+      {features?.hasFullAnalytics ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
+          {/* Expense Breakdown */}
+          <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-foreground">Expense Breakdown</h3>
+              <p className="text-sm text-muted-foreground">By category • {getSubtitle()}</p>
             </div>
-          ) : (
-            <>
-              <ResponsiveContainer width="100%" height={160}>
-                <BarChart data={expenseCategoryData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                  <XAxis
-                    type="number"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
-                    tickFormatter={(value) => value >= 1000 ? `₹${value / 1000}k` : `₹${value}`}
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
-                    width={70}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                      fontSize: "12px",
-                    }}
-                    formatter={(value: number) => [`₹${value.toLocaleString()}`, "Amount"]}
-                  />
-                  <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                    {expenseCategoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-              <div className="mt-3 pt-3 border-t border-border">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Total Expenses</span>
-                  <span className="font-semibold text-foreground">₹{rangeExpenses.toLocaleString()}</span>
-                </div>
+            {expenseCategoryData.length === 0 ? (
+              <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+                <p className="text-sm">No expenses recorded</p>
               </div>
-            </>
-          )}
-        </div>
-
-        {/* Payment Modes */}
-        <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold text-foreground">Payment Methods</h3>
-            <p className="text-sm text-muted-foreground">Revenue by payment mode • {getSubtitle()}</p>
-          </div>
-          {paymentModeData.length === 0 ? (
-            <div className="flex items-center justify-center h-[200px] text-muted-foreground">
-              <p className="text-sm">No payments recorded</p>
-            </div>
-          ) : (
-            <>
-              <ResponsiveContainer width="100%" height={160}>
-                <PieChart>
-                  <Pie
-                    data={paymentModeData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={45}
-                    outerRadius={65}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {paymentModeData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                      fontSize: "12px",
-                    }}
-                    formatter={(value: number, name: string) => [`₹${value.toLocaleString()}`, name]}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {paymentModeData.map((item) => (
-                  <div key={item.name} className="flex items-center gap-2">
-                    <div
-                      className="h-3 w-3 rounded-full shrink-0"
-                      style={{ backgroundColor: item.color }}
+            ) : (
+              <>
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={expenseCategoryData} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                    <XAxis
+                      type="number"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+                      tickFormatter={(value) => value >= 1000 ? `₹${value / 1000}k` : `₹${value}`}
                     />
-                    <span className="text-xs text-muted-foreground truncate">{item.name}</span>
-                    <span className="text-xs font-medium text-foreground ml-auto">₹{item.value.toLocaleString()}</span>
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+                      width={70}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                        fontSize: "12px",
+                      }}
+                      formatter={(value: number) => [`₹${value.toLocaleString()}`, "Amount"]}
+                    />
+                    <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                      {expenseCategoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+                <div className="mt-3 pt-3 border-t border-border">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Total Expenses</span>
+                    <span className="font-semibold text-foreground">₹{rangeExpenses.toLocaleString()}</span>
                   </div>
-                ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Payment Modes */}
+          <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-foreground">Payment Methods</h3>
+              <p className="text-sm text-muted-foreground">Revenue by payment mode • {getSubtitle()}</p>
+            </div>
+            {paymentModeData.length === 0 ? (
+              <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+                <p className="text-sm">No payments recorded</p>
               </div>
-            </>
-          )}
+            ) : (
+              <>
+                <ResponsiveContainer width="100%" height={160}>
+                  <PieChart>
+                    <Pie
+                      data={paymentModeData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={45}
+                      outerRadius={65}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
+                      {paymentModeData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                        fontSize: "12px",
+                      }}
+                      formatter={(value: number, name: string) => [`₹${value.toLocaleString()}`, name]}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  {paymentModeData.map((item) => (
+                    <div key={item.name} className="flex items-center gap-2">
+                      <div
+                        className="h-3 w-3 rounded-full shrink-0"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="text-xs text-muted-foreground truncate">{item.name}</span>
+                      <span className="text-xs font-medium text-foreground ml-auto">₹{item.value.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
+          <div className="relative rounded-xl border border-border bg-card p-4 sm:p-5">
+            <UpgradeOverlay
+              feature="Expense Breakdown"
+              description="Analyze your expenses by category to identify cost-saving opportunities."
+              recommendedPlan="pro"
+              minHeight="280px"
+            >
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-foreground">Expense Breakdown</h3>
+                <p className="text-sm text-muted-foreground">By category</p>
+              </div>
+              <div className="h-[200px] bg-muted/20 rounded-lg" />
+            </UpgradeOverlay>
+          </div>
+          <div className="relative rounded-xl border border-border bg-card p-4 sm:p-5">
+            <UpgradeOverlay
+              feature="Payment Methods"
+              description="Track revenue by payment mode to understand member preferences."
+              recommendedPlan="pro"
+              minHeight="280px"
+            >
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-foreground">Payment Methods</h3>
+                <p className="text-sm text-muted-foreground">Revenue by payment mode</p>
+              </div>
+              <div className="h-[200px] bg-muted/20 rounded-lg" />
+            </UpgradeOverlay>
+          </div>
+        </div>
+      )}
+
+      {/* Pro Analytics Section - Only for Pro plan */}
+      {features?.hasFullAnalytics && (
+        <ProAnalyticsSection activeRange={activeRange} />
+      )}
     </DashboardLayout>
   );
 }
