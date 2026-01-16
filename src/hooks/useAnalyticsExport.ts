@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import html2canvas from "html2canvas";
 
 interface ExportData {
   gymName?: string;
@@ -109,192 +109,100 @@ export function useAnalyticsExport() {
     URL.revokeObjectURL(link.href);
   };
 
-  const exportToPDF = (data: ExportData) => {
+  const exportToPDF = async (_data: ExportData) => {
     const currentDate = format(new Date(), "yyyy-MM-dd");
-    const doc = new jsPDF();
+    
+    // Get the main analytics content container
+    const analyticsContent = document.querySelector("main");
+    if (!analyticsContent) {
+      throw new Error("Could not find analytics content");
+    }
 
-    // Title
-    doc.setFontSize(20);
-    doc.setTextColor(40, 40, 40);
-    doc.text("Analytics Report", 14, 22);
-
-    doc.setFontSize(11);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Period: ${data.activeRange}`, 14, 30);
-    doc.text(`Generated: ${format(new Date(), "PPpp")}`, 14, 36);
-
-    // Summary Stats Table
-    doc.setFontSize(14);
-    doc.setTextColor(40, 40, 40);
-    doc.text("Summary Statistics", 14, 48);
-
-    autoTable(doc, {
-      startY: 52,
-      head: [["Metric", "Value"]],
-      body: [
-        ["Total Revenue", `₹${data.rangeRevenue.toLocaleString()}`],
-        ["Net Profit", `₹${data.rangeProfit.toLocaleString()}`],
-        ["Total Expenses", `₹${data.rangeExpenses.toLocaleString()}`],
-        ["Total Check-ins", data.totalCheckIns.toString()],
-        ["Attendance Rate", `${data.attendanceRate}%`],
-        ["New Members", data.newMembersInPeriod.toString()],
-        ["Active Members", data.activeMembers.toString()],
-        ["Total Members", data.totalMembers.toString()],
-        ["Retention Rate", `${data.retentionRate}%`],
-        ["Avg Transaction", `₹${data.avgTransactionValue.toLocaleString()}`],
-      ],
-      theme: "striped",
-      headStyles: { fillColor: [20, 184, 166] },
-      styles: { fontSize: 10 },
+    // Create a clone to modify for export
+    const clone = analyticsContent.cloneNode(true) as HTMLElement;
+    
+    // Style the clone for better PDF output
+    clone.style.width = "1200px";
+    clone.style.padding = "20px";
+    clone.style.backgroundColor = "#ffffff";
+    clone.style.color = "#1a1a1a";
+    
+    // Force light theme colors on clone
+    clone.querySelectorAll("*").forEach((el) => {
+      const element = el as HTMLElement;
+      const computedStyle = window.getComputedStyle(element);
+      
+      // Convert any dark backgrounds to light
+      if (computedStyle.backgroundColor && computedStyle.backgroundColor !== "rgba(0, 0, 0, 0)") {
+        const bgColor = computedStyle.backgroundColor;
+        if (bgColor.includes("rgb(") || bgColor.includes("rgba(")) {
+          // Keep the background but ensure it's visible
+          element.style.backgroundColor = bgColor;
+        }
+      }
     });
 
-    // Revenue Analysis Table
-    const revenueY = (doc as any).lastAutoTable.finalY + 10;
-    doc.setFontSize(14);
-    doc.text("Revenue Analysis", 14, revenueY);
+    // Temporarily add clone to document for rendering
+    clone.style.position = "absolute";
+    clone.style.left = "-9999px";
+    clone.style.top = "0";
+    document.body.appendChild(clone);
 
-    autoTable(doc, {
-      startY: revenueY + 4,
-      head: [["Period", "Revenue", "Expenses", "Profit"]],
-      body: data.revenueChartData.map((row) => [
-        row.month,
-        `₹${row.revenue.toLocaleString()}`,
-        `₹${row.expenses.toLocaleString()}`,
-        `₹${row.profit.toLocaleString()}`,
-      ]),
-      theme: "striped",
-      headStyles: { fillColor: [20, 184, 166] },
-      styles: { fontSize: 9 },
-    });
+    try {
+      // Capture the clone as canvas
+      const canvas = await html2canvas(clone, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+        width: 1200,
+        windowWidth: 1200,
+      });
 
-    // Membership Plans
-    const membershipY = (doc as any).lastAutoTable.finalY + 10;
-    
-    // Check if we need a new page
-    if (membershipY > 250) {
-      doc.addPage();
-      doc.setFontSize(14);
-      doc.text("Membership Plans", 14, 20);
-      autoTable(doc, {
-        startY: 24,
-        head: [["Plan", "Members"]],
-        body: data.membershipData.map((row) => [row.name, row.value.toString()]),
-        theme: "striped",
-        headStyles: { fillColor: [20, 184, 166] },
-        styles: { fontSize: 10 },
-      });
-    } else {
-      doc.setFontSize(14);
-      doc.text("Membership Plans", 14, membershipY);
-      autoTable(doc, {
-        startY: membershipY + 4,
-        head: [["Plan", "Members"]],
-        body: data.membershipData.map((row) => [row.name, row.value.toString()]),
-        theme: "striped",
-        headStyles: { fillColor: [20, 184, 166] },
-        styles: { fontSize: 10 },
-      });
-    }
-
-    // Member Status
-    const statusY = (doc as any).lastAutoTable.finalY + 10;
-    
-    if (statusY > 250) {
-      doc.addPage();
-      doc.setFontSize(14);
-      doc.text("Member Status", 14, 20);
-      autoTable(doc, {
-        startY: 24,
-        head: [["Status", "Count"]],
-        body: data.memberStatusData.map((row) => [row.name, row.value.toString()]),
-        theme: "striped",
-        headStyles: { fillColor: [20, 184, 166] },
-        styles: { fontSize: 10 },
-      });
-    } else {
-      doc.setFontSize(14);
-      doc.text("Member Status", 14, statusY);
-      autoTable(doc, {
-        startY: statusY + 4,
-        head: [["Status", "Count"]],
-        body: data.memberStatusData.map((row) => [row.name, row.value.toString()]),
-        theme: "striped",
-        headStyles: { fillColor: [20, 184, 166] },
-        styles: { fontSize: 10 },
-      });
-    }
-
-    // Expense Breakdown (if available)
-    if (data.expenseCategoryData.length > 0) {
-      const expenseY = (doc as any).lastAutoTable.finalY + 10;
+      // Calculate PDF dimensions
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
-      if (expenseY > 250) {
-        doc.addPage();
-        doc.setFontSize(14);
-        doc.text("Expense Breakdown", 14, 20);
-        autoTable(doc, {
-          startY: 24,
-          head: [["Category", "Amount"]],
-          body: data.expenseCategoryData.map((row) => [row.name, `₹${row.value.toLocaleString()}`]),
-          theme: "striped",
-          headStyles: { fillColor: [20, 184, 166] },
-          styles: { fontSize: 10 },
-        });
-      } else {
-        doc.setFontSize(14);
-        doc.text("Expense Breakdown", 14, expenseY);
-        autoTable(doc, {
-          startY: expenseY + 4,
-          head: [["Category", "Amount"]],
-          body: data.expenseCategoryData.map((row) => [row.name, `₹${row.value.toLocaleString()}`]),
-          theme: "striped",
-          headStyles: { fillColor: [20, 184, 166] },
-          styles: { fontSize: 10 },
-        });
-      }
-    }
-
-    // Payment Methods (if available)
-    if (data.paymentModeData.length > 0) {
-      const paymentY = (doc as any).lastAutoTable.finalY + 10;
+      const doc = new jsPDF("p", "mm", "a4");
       
-      if (paymentY > 250) {
+      // Add header
+      doc.setFontSize(20);
+      doc.setTextColor(40, 40, 40);
+      doc.text("Analytics Report", 14, 15);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Generated: ${format(new Date(), "PPpp")}`, 14, 22);
+      
+      // Add the screenshot
+      const imgData = canvas.toDataURL("image/png");
+      
+      // Calculate how many pages we need
+      let heightLeft = imgHeight;
+      let position = 30; // Start after header
+      
+      // Add first page
+      const firstPageHeight = pageHeight - position;
+      doc.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= firstPageHeight;
+      
+      // Add subsequent pages if needed
+      while (heightLeft > 0) {
         doc.addPage();
-        doc.setFontSize(14);
-        doc.text("Payment Methods", 14, 20);
-        autoTable(doc, {
-          startY: 24,
-          head: [["Method", "Amount", "Count"]],
-          body: data.paymentModeData.map((row) => [
-            row.name,
-            `₹${row.value.toLocaleString()}`,
-            row.count.toString(),
-          ]),
-          theme: "striped",
-          headStyles: { fillColor: [20, 184, 166] },
-          styles: { fontSize: 10 },
-        });
-      } else {
-        doc.setFontSize(14);
-        doc.text("Payment Methods", 14, paymentY);
-        autoTable(doc, {
-          startY: paymentY + 4,
-          head: [["Method", "Amount", "Count"]],
-          body: data.paymentModeData.map((row) => [
-            row.name,
-            `₹${row.value.toLocaleString()}`,
-            row.count.toString(),
-          ]),
-          theme: "striped",
-          headStyles: { fillColor: [20, 184, 166] },
-          styles: { fontSize: 10 },
-        });
+        position = -(pageHeight - 30 - heightLeft);
+        doc.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
       }
-    }
 
-    // Save PDF
-    doc.save(`analytics-report-${currentDate}.pdf`);
+      doc.save(`analytics-report-${currentDate}.pdf`);
+    } finally {
+      // Clean up
+      document.body.removeChild(clone);
+    }
   };
 
   return { exportToCSV, exportToPDF };
 }
+
