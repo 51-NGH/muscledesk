@@ -93,10 +93,30 @@ export default function Members() {
   const updateMember = useUpdateMember();
   const deleteMember = useDeleteMember();
 
-  // Memoize expensive computations
+  // Helper function to calculate real-time status based on expiry date
+  const getRealTimeStatus = useCallback((member: Member): MemberStatus => {
+    if (member.is_blocked) return "blocked";
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expiryDate = new Date(member.expiry_date);
+    expiryDate.setHours(0, 0, 0, 0);
+    
+    if (expiryDate < today) return "expired";
+    
+    const sevenDaysFromNow = new Date(today);
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+    
+    if (expiryDate <= sevenDaysFromNow) return "expiring_soon";
+    
+    return "active";
+  }, []);
+
+  // Memoize expensive computations with real-time status calculation
   const filteredMembers = useMemo(() => {
     const searchLower = searchQuery.toLowerCase();
-    return members.filter((member) => {
+    
+    const filtered = members.filter((member) => {
       const matchesSearch =
         member.full_name.toLowerCase().includes(searchLower) ||
         member.phone.includes(searchQuery) ||
@@ -104,17 +124,45 @@ export default function Members() {
 
       if (activeFilter === "All") return matchesSearch;
 
+      const realStatus = getRealTimeStatus(member);
       const targetStatus = statusMap[activeFilter];
-      return matchesSearch && member.status === targetStatus;
+      return matchesSearch && realStatus === targetStatus;
     });
-  }, [members, searchQuery, activeFilter]);
+
+    // Sort: Active first, then expiring soon, then expired, then by name
+    return filtered.sort((a, b) => {
+      const statusOrder: Record<MemberStatus, number> = {
+        active: 0,
+        expiring_soon: 1,
+        expired: 2,
+        blocked: 3,
+      };
+      
+      const statusA = getRealTimeStatus(a);
+      const statusB = getRealTimeStatus(b);
+      
+      if (statusOrder[statusA] !== statusOrder[statusB]) {
+        return statusOrder[statusA] - statusOrder[statusB];
+      }
+      
+      // Within same status, sort by expiry date (soonest first for expiring, name for others)
+      if (statusA === "expiring_soon") {
+        return new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime();
+      }
+      
+      return a.full_name.localeCompare(b.full_name);
+    });
+  }, [members, searchQuery, activeFilter, getRealTimeStatus]);
 
   const stats = useMemo(() => ({
     total: members.length,
-    active: members.filter((m) => m.status === "active").length,
-    expiring: members.filter((m) => m.status === "expiring_soon").length,
-    expired: members.filter((m) => m.status === "expired" || m.status === "blocked").length,
-  }), [members]);
+    active: members.filter((m) => getRealTimeStatus(m) === "active").length,
+    expiring: members.filter((m) => getRealTimeStatus(m) === "expiring_soon").length,
+    expired: members.filter((m) => {
+      const status = getRealTimeStatus(m);
+      return status === "expired" || status === "blocked";
+    }).length,
+  }), [members, getRealTimeStatus]);
 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -416,7 +464,7 @@ export default function Members() {
               <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Status</span>
-                  <StatusBadge status={member.is_blocked ? "blocked" : member.status} />
+                  <StatusBadge status={getRealTimeStatus(member)} />
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Plan</span>

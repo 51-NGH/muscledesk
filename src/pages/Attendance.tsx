@@ -128,7 +128,15 @@ export default function Attendance() {
     };
   }, [gymId, queryClient]);
 
-  const activeMembers = members.filter((m) => m.status === "active" || m.status === "expiring_soon");
+  // Calculate real-time active members (not expired based on actual date)
+  const activeMembers = members.filter((m) => {
+    if (m.is_blocked) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expiryDate = new Date(m.expiry_date);
+    expiryDate.setHours(0, 0, 0, 0);
+    return expiryDate >= today; // Only members whose membership hasn't expired
+  });
 
   const filteredAttendance = attendance.filter((a) =>
     a.member?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
