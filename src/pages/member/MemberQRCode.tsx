@@ -49,38 +49,53 @@ export default function MemberQRCode() {
     }, 3000);
   }, [playSound, triggerScanSuccess]);
 
-  // Listen for attendance check-ins in real-time
+  // Track last known attendance to detect new check-ins
+  const lastAttendanceRef = useRef<string | null>(null);
+
+  // Poll for new attendance records (secure approach - uses edge function)
   useEffect(() => {
     if (!member?.id) return;
 
-    console.log('[MemberQR] Setting up check-in listener for member:', member.id);
+    console.log('[MemberQR] Setting up secure polling for member:', member.id);
     
-    // Prepare audio context on mount (needs user interaction first on some browsers)
+    // Prepare audio context on mount
     prepareAudio();
 
-    const channel = supabase
-      .channel(`qr-checkin-animation-${member.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'attendance',
-          filter: `member_id=eq.${member.id}`,
-        },
-        (payload) => {
-          console.log('[MemberQR] Realtime INSERT received!', payload);
-          handleCheckInDetected();
+    const checkForNewAttendance = async () => {
+      try {
+        // Call edge function to get latest attendance (bypasses RLS securely)
+        const { data, error } = await supabase.functions.invoke('get-member-latest-attendance', {
+          body: { member_id: member.id }
+        });
+
+        if (error) {
+          console.error('[MemberQR] Polling error:', error);
+          return;
         }
-      )
-      .subscribe((status, err) => {
-        console.log('[MemberQR] Subscription status:', status);
-        if (err) console.error('[MemberQR] Subscription error:', err);
-      });
+
+        if (data?.attendance_id && data.attendance_id !== lastAttendanceRef.current) {
+          // New check-in detected!
+          if (lastAttendanceRef.current !== null) {
+            // Only trigger feedback if this isn't the first load
+            console.log('[MemberQR] New check-in detected via polling!');
+            handleCheckInDetected();
+          }
+          lastAttendanceRef.current = data.attendance_id;
+        }
+      } catch (err) {
+        console.error('[MemberQR] Polling fetch error:', err);
+      }
+    };
+
+    // Initial check
+    checkForNewAttendance();
+
+    // Poll every 3 seconds
+    const intervalId = setInterval(checkForNewAttendance, 3000);
 
     return () => {
-      console.log('[MemberQR] Cleaning up listener');
-      supabase.removeChannel(channel);
+      console.log('[MemberQR] Cleaning up polling');
+      clearInterval(intervalId);
     };
   }, [member?.id, handleCheckInDetected, prepareAudio]);
 
@@ -115,11 +130,6 @@ export default function MemberQRCode() {
     }
   };
 
-  // Test button for development - simulates check-in feedback
-  const handleTestCheckIn = () => {
-    console.log('[MemberQR] TEST: Manually triggering check-in feedback');
-    handleCheckInDetected();
-  };
 
   const QRContent = ({ size = 200 }: { size?: number }) => (
     <div className="flex flex-col items-center relative">
