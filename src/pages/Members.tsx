@@ -129,28 +129,9 @@ export default function Members() {
       return matchesSearch && realStatus === targetStatus;
     });
 
-    // Sort: Active first, then expiring soon, then expired, then by name
+    // Sort by joining date (newest first)
     return filtered.sort((a, b) => {
-      const statusOrder: Record<MemberStatus, number> = {
-        active: 0,
-        expiring_soon: 1,
-        expired: 2,
-        blocked: 3,
-      };
-      
-      const statusA = getRealTimeStatus(a);
-      const statusB = getRealTimeStatus(b);
-      
-      if (statusOrder[statusA] !== statusOrder[statusB]) {
-        return statusOrder[statusA] - statusOrder[statusB];
-      }
-      
-      // Within same status, sort by expiry date (soonest first for expiring, name for others)
-      if (statusA === "expiring_soon") {
-        return new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime();
-      }
-      
-      return a.full_name.localeCompare(b.full_name);
+      return new Date(b.start_date).getTime() - new Date(a.start_date).getTime();
     });
   }, [members, searchQuery, activeFilter, getRealTimeStatus]);
 
