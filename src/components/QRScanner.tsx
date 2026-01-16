@@ -55,7 +55,7 @@ export function QRScanner({ onScan, isOpen, onClose }: QRScannerProps) {
   
   const { settings } = useSoundSettings();
   const { playSound, prepareAudio } = useAudioFeedback(settings);
-  const { triggerHaptic } = useHapticFeedback();
+  const { triggerHaptic, triggerScanSuccess, triggerScanError, triggerScanWarning } = useHapticFeedback();
 
   // Clean up expired cache entries
   const cleanCache = useCallback(() => {
@@ -152,14 +152,17 @@ export function QRScanner({ onScan, isOpen, onClose }: QRScannerProps) {
       // Play appropriate sound and haptic
       if (scanResult.success) {
         playSound('approve');
-        triggerHaptic('success');
+        triggerScanSuccess(); // Sweet double-tap
         setScanCount(prev => prev + 1);
       } else if (scanResult.type === 'duplicate') {
         playSound('warning');
         triggerHaptic('light');
+      } else if (scanResult.type === 'warning') {
+        playSound('deny');
+        triggerScanWarning(); // Triple pulse for expired
       } else {
         playSound('deny');
-        triggerHaptic('error');
+        triggerScanError(); // Long buzz for errors
       }
       
       setLastResult(scanResult);
