@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, addDays } from "date-fns";
+import * as XLSX from "xlsx";
 import {
   Upload,
   FileSpreadsheet,
@@ -19,6 +20,8 @@ import {
   Loader2,
   Plus,
   Trash2,
+  FileText,
+  Sheet,
 } from "lucide-react";
 import {
   Dialog,
@@ -100,6 +103,96 @@ export function BulkMemberImport() {
     enabled: !!gymId && isOpen,
   });
 
+  const headerMap: Record<string, keyof MemberRow> = {
+    "full_name": "full_name",
+    "name": "full_name",
+    "member_name": "full_name",
+    "phone": "phone",
+    "phone_number": "phone",
+    "mobile": "phone",
+    "contact": "phone",
+    "email": "email",
+    "email_address": "email",
+    "start_date": "start_date",
+    "joining_date": "start_date",
+    "join_date": "start_date",
+    "expiry_date": "expiry_date",
+    "expiry": "expiry_date",
+    "end_date": "expiry_date",
+    "plan_name": "plan_name",
+    "plan": "plan_name",
+    "membership": "plan_name",
+    "notes": "notes",
+    "note": "notes",
+    "remarks": "notes",
+  };
+
+  const normalizeDate = (dateValue: any): string => {
+    if (!dateValue) return "";
+    
+    // Handle Excel serial date numbers
+    if (typeof dateValue === "number") {
+      const excelEpoch = new Date(1899, 11, 30);
+      const date = new Date(excelEpoch.getTime() + dateValue * 86400000);
+      return format(date, "yyyy-MM-dd");
+    }
+    
+    const dateStr = String(dateValue).trim();
+    
+    const formats = [
+      /^(\d{4})-(\d{2})-(\d{2})$/,
+      /^(\d{2})\/(\d{2})\/(\d{4})$/,
+      /^(\d{2})-(\d{2})-(\d{4})$/,
+      /^(\d{4})\/(\d{2})\/(\d{2})$/,
+    ];
+
+    for (const fmt of formats) {
+      const match = dateStr.match(fmt);
+      if (match) {
+        if (fmt === formats[0]) return dateStr;
+        if (fmt === formats[1] || fmt === formats[2]) {
+          return `${match[3]}-${match[2]}-${match[1]}`;
+        }
+        if (fmt === formats[3]) {
+          return `${match[1]}-${match[2]}-${match[3]}`;
+        }
+      }
+    }
+    return dateStr;
+  };
+
+  const parseExcel = useCallback((buffer: ArrayBuffer): Partial<MemberRow>[] => {
+    const workbook = XLSX.read(buffer, { type: "array" });
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][];
+    
+    if (jsonData.length < 2) return [];
+
+    const headers = (jsonData[0] as string[]).map((h) => 
+      String(h || "").trim().toLowerCase().replace(/['"]/g, "").replace(/\s+/g, "_")
+    );
+
+    return jsonData.slice(1).filter(row => row.some(cell => cell)).map((values) => {
+      const row: Partial<MemberRow> = {};
+
+      headers.forEach((header, index) => {
+        const mappedKey = headerMap[header];
+        if (mappedKey && values[index] !== undefined && values[index] !== null && values[index] !== "") {
+          row[mappedKey] = String(values[index]);
+        }
+      });
+
+      // Normalize dates (handles Excel serial numbers)
+      if (row.start_date) row.start_date = normalizeDate(row.start_date);
+      if (row.expiry_date) row.expiry_date = normalizeDate(row.expiry_date);
+      
+      // Clean phone number
+      if (row.phone) row.phone = String(row.phone).replace(/\D/g, "").slice(-10);
+
+      return row;
+    });
+  }, []);
+
   const parseCSV = useCallback((text: string): Partial<MemberRow>[] => {
     const lines = text.trim().split("\n");
     if (lines.length < 2) return [];
@@ -107,30 +200,6 @@ export function BulkMemberImport() {
     const headers = lines[0].split(",").map((h) => 
       h.trim().toLowerCase().replace(/['"]/g, "").replace(/\s+/g, "_")
     );
-
-    const headerMap: Record<string, keyof MemberRow> = {
-      "full_name": "full_name",
-      "name": "full_name",
-      "member_name": "full_name",
-      "phone": "phone",
-      "phone_number": "phone",
-      "mobile": "phone",
-      "contact": "phone",
-      "email": "email",
-      "email_address": "email",
-      "start_date": "start_date",
-      "joining_date": "start_date",
-      "join_date": "start_date",
-      "expiry_date": "expiry_date",
-      "expiry": "expiry_date",
-      "end_date": "expiry_date",
-      "plan_name": "plan_name",
-      "plan": "plan_name",
-      "membership": "plan_name",
-      "notes": "notes",
-      "note": "notes",
-      "remarks": "notes",
-    };
 
     return lines.slice(1).filter(line => line.trim()).map((line) => {
       const values = line.split(",").map((v) => v.trim().replace(/^["']|["']$/g, ""));
@@ -154,40 +223,21 @@ export function BulkMemberImport() {
     });
   }, []);
 
-  const normalizeDate = (dateStr: string): string => {
-    const formats = [
-      /^(\d{4})-(\d{2})-(\d{2})$/,
-      /^(\d{2})\/(\d{2})\/(\d{4})$/,
-      /^(\d{2})-(\d{2})-(\d{4})$/,
-      /^(\d{4})\/(\d{2})\/(\d{2})$/,
-    ];
-
-    for (const fmt of formats) {
-      const match = dateStr.match(fmt);
-      if (match) {
-        if (fmt === formats[0]) return dateStr;
-        if (fmt === formats[1] || fmt === formats[2]) {
-          return `${match[3]}-${match[2]}-${match[1]}`;
-        }
-        if (fmt === formats[3]) {
-          return `${match[1]}-${match[2]}-${match[3]}`;
-        }
-      }
-    }
-    return dateStr;
-  };
-
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
-    if (!selectedFile.name.endsWith(".csv")) {
-      toast.error("Please upload a CSV file");
+    const fileName = selectedFile.name.toLowerCase();
+    const isCSV = fileName.endsWith(".csv");
+    const isExcel = fileName.endsWith(".xlsx") || fileName.endsWith(".xls");
+
+    if (!isCSV && !isExcel) {
+      toast.error("Please upload a CSV or Excel file (.csv, .xlsx, .xls)");
       return;
     }
 
-    if (selectedFile.size > 5 * 1024 * 1024) {
-      toast.error("File size must be less than 5MB");
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      toast.error("File size must be less than 10MB");
       return;
     }
 
@@ -195,9 +245,22 @@ export function BulkMemberImport() {
     setIsParsing(true);
 
     try {
-      const text = await selectedFile.text();
-      const rows = parseCSV(text);
+      let rows: Partial<MemberRow>[];
+
+      if (isExcel) {
+        const buffer = await selectedFile.arrayBuffer();
+        rows = parseExcel(buffer);
+      } else {
+        const text = await selectedFile.text();
+        rows = parseCSV(text);
+      }
       
+      if (rows.length === 0) {
+        toast.error("No data found in file. Please check the format.");
+        setIsParsing(false);
+        return;
+      }
+
       // Basic validation
       const validatedRows: ParsedRow[] = rows.map((data, index) => {
         const errors: string[] = [];
@@ -210,7 +273,7 @@ export function BulkMemberImport() {
 
       setParsedData(validatedRows);
 
-      // Extract unique plan names from CSV
+      // Extract unique plan names
       const planCounts: Record<string, number> = {};
       rows.forEach(row => {
         const planName = row.plan_name?.trim();
@@ -221,7 +284,6 @@ export function BulkMemberImport() {
 
       // Create detected plans with defaults
       const detected: DetectedPlan[] = Object.entries(planCounts).map(([name, count]) => {
-        // Check if this plan already exists
         const existing = existingPlans.find(p => 
           p.name.toLowerCase() === name.toLowerCase()
         );
@@ -236,7 +298,7 @@ export function BulkMemberImport() {
         };
       });
 
-      // If no plans found in CSV, add a default one
+      // If no plans found, add a default one
       if (detected.length === 0) {
         detected.push({
           name: "Monthly",
@@ -248,6 +310,7 @@ export function BulkMemberImport() {
       }
 
       setDetectedPlans(detected);
+      toast.success(`Found ${rows.length} members in ${isExcel ? "Excel" : "CSV"} file`);
       setStep("configure-plans");
     } catch (error: any) {
       toast.error("Failed to parse file: " + error.message);
@@ -469,8 +532,8 @@ Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,VIP member`;
               Bulk Import Members
             </DialogTitle>
             <DialogDescription>
-              {step === "upload" && "Upload a CSV file with member details"}
-              {step === "configure-plans" && "Configure membership plans found in your CSV"}
+              {step === "upload" && "Upload a CSV or Excel file with member details"}
+              {step === "configure-plans" && "Configure membership plans found in your file"}
               {step === "preview" && "Review and confirm import"}
               {step === "importing" && "Importing members..."}
               {step === "complete" && "Import completed!"}
@@ -481,23 +544,31 @@ Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,VIP member`;
             {step === "upload" && (
               <div className="space-y-6">
                 <div className="border-2 border-dashed border-border rounded-xl p-8 text-center">
-                  <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <div className="flex items-center justify-center gap-4 mb-4">
+                    <div className="p-3 rounded-xl bg-green-500/10">
+                      <Sheet className="h-8 w-8 text-green-600" />
+                    </div>
+                    <div className="p-3 rounded-xl bg-blue-500/10">
+                      <FileText className="h-8 w-8 text-blue-600" />
+                    </div>
+                  </div>
                   <div className="space-y-2">
                     <Label
-                      htmlFor="csv-upload"
+                      htmlFor="file-upload"
                       className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
                     >
-                      Choose CSV File
+                      <Upload className="h-4 w-4" />
+                      Choose File
                     </Label>
                     <Input
-                      id="csv-upload"
+                      id="file-upload"
                       type="file"
-                      accept=".csv"
+                      accept=".csv,.xlsx,.xls"
                       onChange={handleFileChange}
                       className="hidden"
                     />
                     <p className="text-sm text-muted-foreground">
-                      or drag and drop your file here
+                      Supports <span className="font-medium text-green-600">Excel (.xlsx, .xls)</span> and <span className="font-medium text-blue-600">CSV</span> files
                     </p>
                   </div>
                   {isParsing && (
@@ -511,7 +582,7 @@ Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,VIP member`;
                 <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                   <div>
                     <p className="font-medium text-sm">Need a template?</p>
-                    <p className="text-xs text-muted-foreground">Download our CSV template with plan names</p>
+                    <p className="text-xs text-muted-foreground">Download our CSV template with sample data</p>
                   </div>
                   <Button variant="outline" size="sm" onClick={downloadTemplate}>
                     <Download className="mr-2 h-4 w-4" />
@@ -522,13 +593,17 @@ Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,VIP member`;
                 <div className="text-sm text-muted-foreground space-y-1">
                   <p className="font-medium text-foreground">Required columns:</p>
                   <ul className="list-disc list-inside space-y-0.5">
-                    <li><code className="bg-muted px-1 rounded">full_name</code>, <code className="bg-muted px-1 rounded">phone</code></li>
+                    <li><code className="bg-muted px-1 rounded">full_name</code> or <code className="bg-muted px-1 rounded">name</code></li>
+                    <li><code className="bg-muted px-1 rounded">phone</code> or <code className="bg-muted px-1 rounded">mobile</code></li>
                   </ul>
                   <p className="font-medium text-foreground mt-2">Optional columns:</p>
                   <ul className="list-disc list-inside space-y-0.5">
-                    <li><code className="bg-muted px-1 rounded">plan_name</code> - We'll detect plans and let you configure them</li>
+                    <li><code className="bg-muted px-1 rounded">plan_name</code> / <code className="bg-muted px-1 rounded">membership</code> - We'll detect & create plans</li>
                     <li><code className="bg-muted px-1 rounded">start_date</code>, <code className="bg-muted px-1 rounded">expiry_date</code>, <code className="bg-muted px-1 rounded">email</code>, <code className="bg-muted px-1 rounded">notes</code></li>
                   </ul>
+                  <p className="text-xs mt-3 text-muted-foreground">
+                    💡 <span className="font-medium">Pro tip:</span> Export your existing member list from any software and upload directly!
+                  </p>
                 </div>
               </div>
             )}
