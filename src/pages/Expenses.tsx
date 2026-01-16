@@ -161,65 +161,61 @@ export default function Expenses() {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <PageHeader
-          title="Expenses"
-          description="Track and manage your gym expenses"
-          className="mb-0"
-        />
-        <div className="flex items-center gap-3">
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-[180px]">
-              <Calendar className="mr-2 h-4 w-4" />
-              <SelectValue placeholder="Select month" />
-            </SelectTrigger>
-            <SelectContent>
-              {monthOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Expense
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Add New Expense</DialogTitle>
-                <DialogDescription>
-                  Record a new expense for your gym
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Select
-                    value={newExpense.category}
-                    onValueChange={(value: ExpenseCategory) =>
-                      setNewExpense({ ...newExpense, category: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(categoryConfig).map(([key, config]) => (
-                        <SelectItem key={key} value={key}>
-                          <div className="flex items-center gap-2">
-                            <config.icon className="h-4 w-4" />
-                            {config.label}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+      <PageHeader title="Expenses" description="Track and manage your gym expenses">
+        <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+          <SelectTrigger className="w-[140px] sm:w-[180px]">
+            <Calendar className="mr-2 h-4 w-4 hidden sm:block" />
+            <SelectValue placeholder="Select month" />
+          </SelectTrigger>
+          <SelectContent>
+            {monthOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm">
+              <Plus className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Add Expense</span>
+              <span className="sm:hidden">Add</span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add New Expense</DialogTitle>
+              <DialogDescription>
+                Record a new expense for your gym
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="category">Category</Label>
+                <Select
+                  value={newExpense.category}
+                  onValueChange={(value: ExpenseCategory) =>
+                    setNewExpense({ ...newExpense, category: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(categoryConfig).map(([key, config]) => (
+                      <SelectItem key={key} value={key}>
+                        <div className="flex items-center gap-2">
+                          <config.icon className="h-4 w-4" />
+                          {config.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
                 <div className="grid gap-2">
                   <Label htmlFor="amount">Amount (₹)</Label>
                   <Input
@@ -243,30 +239,30 @@ export default function Expenses() {
                     }
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="description">Description (Optional)</Label>
-                  <Input
-                    id="description"
-                    placeholder="Enter description"
-                    value={newExpense.description}
-                    onChange={(e) =>
-                      setNewExpense({ ...newExpense, description: e.target.value })
-                    }
-                  />
-                </div>
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleAddExpense} disabled={createExpense.isPending}>
-                  {createExpense.isPending ? "Adding..." : "Add Expense"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description (Optional)</Label>
+                <Input
+                  id="description"
+                  placeholder="Enter description"
+                  value={newExpense.description}
+                  onChange={(e) =>
+                    setNewExpense({ ...newExpense, description: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+            <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
+              <Button variant="outline" size="sm" onClick={() => setIsAddDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={handleAddExpense} disabled={createExpense.isPending}>
+                {createExpense.isPending ? "Adding..." : "Add Expense"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </PageHeader>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
@@ -299,24 +295,24 @@ export default function Expenses() {
       {/* Expense History */}
       <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-foreground">Expense History</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="text-base sm:text-lg font-semibold text-foreground">Expense History</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             All expenses for {format(new Date(selectedMonth + "-01"), "MMMM yyyy")}
           </p>
         </div>
 
         {isLoading ? (
-          <div className="text-center py-12 text-muted-foreground">
+          <div className="text-center py-10 sm:py-12 text-muted-foreground">
             Loading expenses...
           </div>
         ) : filteredExpenses.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <TrendingDown className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-lg font-medium">No expenses recorded</p>
-            <p className="text-sm">Add your first expense to start tracking</p>
+          <div className="text-center py-10 sm:py-12 text-muted-foreground">
+            <TrendingDown className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-base sm:text-lg font-medium">No expenses recorded</p>
+            <p className="text-xs sm:text-sm">Add your first expense to start tracking</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {filteredExpenses.map((expense, index) => {
               const config = categoryConfig[expense.category];
               const CategoryIcon = config.icon;
@@ -324,26 +320,26 @@ export default function Expenses() {
               return (
                 <div
                   key={expense.id}
-                  className="flex items-center justify-between py-3 border-b border-border last:border-0 animate-fade-in"
+                  className="flex items-center justify-between py-2.5 sm:py-3 border-b border-border last:border-0 animate-fade-in"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <div className="flex items-center gap-4">
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${config.className}`}>
-                      <CategoryIcon className="h-5 w-5" />
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg shrink-0 ${config.className}`}>
+                      <CategoryIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
-                    <div>
-                      <p className="font-medium text-foreground">{config.label}</p>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm text-foreground">{config.label}</p>
+                      <p className="text-xs text-muted-foreground truncate max-w-[120px] sm:max-w-none">
                         {expense.description || "No description"}
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-foreground">
+                  <div className="text-right shrink-0">
+                    <p className="font-semibold text-sm text-foreground">
                       ₹{expense.amount.toLocaleString()}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {format(new Date(expense.expense_date), "MMM d, yyyy")}
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">
+                      {format(new Date(expense.expense_date), "MMM d")}
                     </p>
                   </div>
                 </div>
