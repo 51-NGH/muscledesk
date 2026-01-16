@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { MemberLayout } from "@/components/member-portal/MemberLayout";
 import { QRCodeCanvas } from "qrcode.react";
@@ -7,6 +7,7 @@ import { Download, X, AlertTriangle, WifiOff, CheckCircle2 } from "lucide-react"
 import { format, parseISO, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 import { useHapticFeedback } from "@/hooks/useHapticFeedback";
+import { useAudioFeedback } from "@/hooks/useAudioFeedback";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -16,12 +17,46 @@ export default function MemberQRCode() {
   const [showSuccessPulse, setShowSuccessPulse] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
   const { triggerScanSuccess, triggerScanError, triggerScanWarning } = useHapticFeedback();
+  const { playSound, prepareAudio } = useAudioFeedback();
+
+  // Memoized callback for check-in detection
+  const handleCheckInDetected = useCallback(() => {
+    console.log('[MemberQR] Check-in detected! Triggering feedback...');
+    
+    // Trigger success animation
+    setShowSuccessPulse(true);
+    
+    // Play success sound - this should work on all devices
+    console.log('[MemberQR] Playing approval sound...');
+    playSound('approve');
+    
+    // Trigger haptic feedback with slight delay
+    console.log('[MemberQR] Triggering haptic...');
+    setTimeout(() => {
+      const hapticResult = triggerScanSuccess();
+      console.log('[MemberQR] Haptic result:', hapticResult);
+    }, 50);
+    
+    // Show toast
+    toast.success('Check-in successful! 💪', {
+      description: 'Your attendance has been recorded.',
+      duration: 3000,
+    });
+    
+    // Hide animation after 3 seconds
+    setTimeout(() => {
+      setShowSuccessPulse(false);
+    }, 3000);
+  }, [playSound, triggerScanSuccess]);
 
   // Listen for attendance check-ins in real-time
   useEffect(() => {
     if (!member?.id) return;
 
-    console.log('Setting up QR check-in listener for member:', member.id);
+    console.log('[MemberQR] Setting up check-in listener for member:', member.id);
+    
+    // Prepare audio context on mount (needs user interaction first on some browsers)
+    prepareAudio();
 
     const channel = supabase
       .channel(`qr-checkin-animation-${member.id}`)
@@ -34,37 +69,20 @@ export default function MemberQRCode() {
           filter: `member_id=eq.${member.id}`,
         },
         (payload) => {
-          console.log('QR Page: Check-in detected!', payload);
-          
-          // Trigger success animation
-          setShowSuccessPulse(true);
-          
-          // Trigger haptic feedback
-          console.log('Triggering haptic feedback...');
-          triggerScanSuccess();
-          
-          // Show toast
-          toast.success('Check-in successful! 💪', {
-            description: 'Your attendance has been recorded.',
-            duration: 3000,
-          });
-          
-          // Hide animation after 3 seconds
-          setTimeout(() => {
-            setShowSuccessPulse(false);
-          }, 3000);
+          console.log('[MemberQR] Realtime INSERT received!', payload);
+          handleCheckInDetected();
         }
       )
       .subscribe((status, err) => {
-        console.log('QR check-in subscription status:', status);
-        if (err) console.error('QR subscription error:', err);
+        console.log('[MemberQR] Subscription status:', status);
+        if (err) console.error('[MemberQR] Subscription error:', err);
       });
 
     return () => {
-      console.log('Cleaning up QR check-in listener');
+      console.log('[MemberQR] Cleaning up listener');
       supabase.removeChannel(channel);
     };
-  }, [member?.id, triggerScanSuccess]);
+  }, [member?.id, handleCheckInDetected, prepareAudio]);
 
   // Show loading state
   if (loading || memberLoading || !member) {
