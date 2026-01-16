@@ -825,8 +825,8 @@ export default function Analytics() {
         />
       </div>
 
-      {/* Member Growth & Status Distribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
+      {/* Member Growth & Status Distribution - Pro Only */}
+      {features?.hasFullAnalytics && (<div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
         {/* Member Growth */}
         <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
           <div className="mb-4">
@@ -956,9 +956,10 @@ export default function Analytics() {
           )}
         </div>
       </div>
+      )}
 
-      {/* Attendance Trend - Available for Standard */}
-      <div className={`grid grid-cols-1 ${features?.hasFullAnalytics ? 'lg:grid-cols-2' : ''} gap-4 sm:gap-6 mb-6`}>
+      {/* Attendance Trend & Peak Hours - Pro Only */}
+      {features?.hasFullAnalytics && (<div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
         {/* Attendance Trend */}
         <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
           <div className="mb-4">
@@ -1005,49 +1006,48 @@ export default function Analytics() {
           )}
         </div>
 
-        {/* Peak Hours - Pro Only */}
-        {features?.hasFullAnalytics && (
-          <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold text-foreground">Peak Hours</h3>
-              <p className="text-sm text-muted-foreground">Estimated visitor distribution • {getSubtitle()}</p>
-            </div>
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={peakHoursData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis
-                  dataKey="hour"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
-                  width={30}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
-                    fontSize: "12px",
-                  }}
-                  formatter={(value: number) => [value, "Visitors"]}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="visitors"
-                  stroke="hsl(var(--md-purple))"
-                  strokeWidth={2}
-                  dot={{ fill: "hsl(var(--md-purple))", strokeWidth: 0, r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+        {/* Peak Hours */}
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-foreground">Peak Hours</h3>
+            <p className="text-sm text-muted-foreground">Estimated visitor distribution • {getSubtitle()}</p>
           </div>
-        )}
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={peakHoursData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis
+                dataKey="hour"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                width={30}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "hsl(var(--card))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                }}
+                formatter={(value: number) => [value, "Visitors"]}
+              />
+              <Line
+                type="monotone"
+                dataKey="visitors"
+                stroke="hsl(var(--md-purple))"
+                strokeWidth={2}
+                dot={{ fill: "hsl(var(--md-purple))", strokeWidth: 0, r: 4 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
+      )}
 
       {/* Expense Breakdown & Payment Modes - Pro Only */}
       {features?.hasFullAnalytics && (
