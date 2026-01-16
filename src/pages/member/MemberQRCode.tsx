@@ -54,7 +54,10 @@ export default function MemberQRCode() {
 
   // Poll for new attendance records (secure approach - uses edge function)
   useEffect(() => {
-    if (!member?.id) return;
+    if (!member?.id) {
+      console.log('[MemberQR] No member ID, skipping polling');
+      return;
+    }
 
     console.log('[MemberQR] Setting up secure polling for member:', member.id);
     
@@ -62,23 +65,30 @@ export default function MemberQRCode() {
     prepareAudio();
 
     const checkForNewAttendance = async () => {
+      console.log('[MemberQR] Polling for attendance...');
       try {
         // Call edge function to get latest attendance (bypasses RLS securely)
         const { data, error } = await supabase.functions.invoke('get-member-latest-attendance', {
           body: { member_id: member.id }
         });
 
+        console.log('[MemberQR] Polling response:', { data, error });
+
         if (error) {
           console.error('[MemberQR] Polling error:', error);
           return;
         }
 
+        console.log('[MemberQR] Current attendance:', data?.attendance_id, 'Last known:', lastAttendanceRef.current);
+
         if (data?.attendance_id && data.attendance_id !== lastAttendanceRef.current) {
           // New check-in detected!
           if (lastAttendanceRef.current !== null) {
             // Only trigger feedback if this isn't the first load
-            console.log('[MemberQR] New check-in detected via polling!');
+            console.log('[MemberQR] NEW CHECK-IN DETECTED! Triggering feedback...');
             handleCheckInDetected();
+          } else {
+            console.log('[MemberQR] First load, storing attendance ID without feedback');
           }
           lastAttendanceRef.current = data.attendance_id;
         }
@@ -98,6 +108,12 @@ export default function MemberQRCode() {
       clearInterval(intervalId);
     };
   }, [member?.id, handleCheckInDetected, prepareAudio]);
+
+  // DEBUG: Test button for manual trigger
+  const handleTestCheckIn = () => {
+    console.log('[MemberQR] Manual test triggered');
+    handleCheckInDetected();
+  };
 
   // Show loading state
   if (loading || memberLoading || !member) {
@@ -228,6 +244,13 @@ export default function MemberQRCode() {
 
           {/* Download Button */}
           <div className="mt-6">
+            {/* DEBUG: Test button */}
+            <Button
+              className="w-full h-12 rounded-xl mb-2 bg-orange-500 hover:bg-orange-600"
+              onClick={handleTestCheckIn}
+            >
+              🧪 Test Check-in Feedback
+            </Button>
             <Button
               className="w-full h-12 rounded-xl"
               onClick={handleDownload}
