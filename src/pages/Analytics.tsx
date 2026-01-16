@@ -543,7 +543,7 @@ export default function Analytics() {
       </div>
 
       {/* Primary Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
         <StatCard
           title="Total Revenue"
           value={statsLoading ? "..." : `₹${rangeRevenue.toLocaleString()}`}
@@ -571,38 +571,6 @@ export default function Analytics() {
           subtitle={`${attendanceRate}% avg rate`}
           icon={Activity}
           iconVariant="blue"
-        />
-      </div>
-
-      {/* Secondary Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-        <StatCard
-          title="New Members"
-          value={statsLoading ? "..." : newMembersInPeriod}
-          subtitle={getSubtitle()}
-          icon={UserPlus}
-          iconVariant="blue"
-        />
-        <StatCard
-          title="Active Members"
-          value={statsLoading ? "..." : stats?.activeMembers || 0}
-          subtitle={`${stats?.totalMembers || 0} total`}
-          icon={Users}
-          iconVariant="green"
-        />
-        <StatCard
-          title="Retention Rate"
-          value={statsLoading ? "..." : `${retentionRate}%`}
-          subtitle="Active / Total"
-          icon={Percent}
-          iconVariant="teal"
-        />
-        <StatCard
-          title="Avg Transaction"
-          value={statsLoading ? "..." : `₹${avgTransactionValue.toLocaleString()}`}
-          subtitle={`${filteredPayments.length} payments`}
-          icon={TrendingUp}
-          iconVariant="orange"
         />
       </div>
 
@@ -741,6 +709,38 @@ export default function Analytics() {
             </>
           )}
         </div>
+      </div>
+
+      {/* Secondary Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <StatCard
+          title="New Members"
+          value={statsLoading ? "..." : newMembersInPeriod}
+          subtitle={getSubtitle()}
+          icon={UserPlus}
+          iconVariant="blue"
+        />
+        <StatCard
+          title="Active Members"
+          value={statsLoading ? "..." : stats?.activeMembers || 0}
+          subtitle={`${stats?.totalMembers || 0} total`}
+          icon={Users}
+          iconVariant="green"
+        />
+        <StatCard
+          title="Retention Rate"
+          value={statsLoading ? "..." : `${retentionRate}%`}
+          subtitle="Active / Total"
+          icon={Percent}
+          iconVariant="teal"
+        />
+        <StatCard
+          title="Avg Transaction"
+          value={statsLoading ? "..." : `₹${avgTransactionValue.toLocaleString()}`}
+          subtitle={`${filteredPayments.length} payments`}
+          icon={TrendingUp}
+          iconVariant="orange"
+        />
       </div>
 
       {/* Member Growth & Status Distribution */}
