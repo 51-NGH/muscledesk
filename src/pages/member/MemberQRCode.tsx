@@ -21,8 +21,10 @@ export default function MemberQRCode() {
   useEffect(() => {
     if (!member?.id) return;
 
+    console.log('Setting up QR check-in listener for member:', member.id);
+
     const channel = supabase
-      .channel(`qr-checkin-${member.id}`)
+      .channel(`qr-checkin-animation-${member.id}`)
       .on(
         'postgres_changes',
         {
@@ -31,10 +33,21 @@ export default function MemberQRCode() {
           table: 'attendance',
           filter: `member_id=eq.${member.id}`,
         },
-        () => {
+        (payload) => {
+          console.log('QR Page: Check-in detected!', payload);
+          
           // Trigger success animation
           setShowSuccessPulse(true);
+          
+          // Trigger haptic feedback
+          console.log('Triggering haptic feedback...');
           triggerScanSuccess();
+          
+          // Show toast
+          toast.success('Check-in successful! 💪', {
+            description: 'Your attendance has been recorded.',
+            duration: 3000,
+          });
           
           // Hide animation after 3 seconds
           setTimeout(() => {
@@ -42,9 +55,13 @@ export default function MemberQRCode() {
           }, 3000);
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        console.log('QR check-in subscription status:', status);
+        if (err) console.error('QR subscription error:', err);
+      });
 
     return () => {
+      console.log('Cleaning up QR check-in listener');
       supabase.removeChannel(channel);
     };
   }, [member?.id, triggerScanSuccess]);
