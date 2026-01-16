@@ -15,7 +15,7 @@ export default function MemberQRCode() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showSuccessPulse, setShowSuccessPulse] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
-  const { triggerScanSuccess } = useHapticFeedback();
+  const { triggerScanSuccess, triggerScanError, triggerScanWarning } = useHapticFeedback();
 
   // Listen for attendance check-ins in real-time
   useEffect(() => {
@@ -167,7 +167,21 @@ export default function MemberQRCode() {
           <div 
             className="flex flex-col items-center cursor-pointer" 
             ref={qrRef}
-            onClick={() => !isInvalid && setIsFullscreen(true)}
+            onClick={() => {
+              if (isInvalid) {
+                // Trigger error haptic when tapping disabled QR
+                if (isBlocked) {
+                  triggerScanError();
+                } else {
+                  triggerScanWarning();
+                }
+                toast.error(isBlocked ? "Account blocked" : "Membership expired", {
+                  description: "Please contact your gym to resolve this."
+                });
+              } else {
+                setIsFullscreen(true);
+              }
+            }}
           >
             <QRContent size={Math.min(220, window.innerWidth - 120)} />
             <div className="mt-4 text-center">

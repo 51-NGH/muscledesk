@@ -7,12 +7,12 @@ type HapticType = 'success' | 'warning' | 'error' | 'light' | 'medium' | 'heavy'
 
 // Vibration patterns in milliseconds
 const hapticPatterns: Record<HapticType, number | number[]> = {
-  light: 10,
-  medium: 25,
-  heavy: 50,
-  success: [50, 50, 100], // Short, pause, longer
-  warning: [100, 50, 100], // Medium, pause, medium
-  error: [50, 30, 50, 30, 100], // Rapid pattern ending with longer
+  light: 15,
+  medium: 30,
+  heavy: 60,
+  success: [40, 80, 40], // Sweet double-tap
+  warning: [80, 60, 80, 60, 80], // Triple pulse warning
+  error: [120, 80, 200], // Long buzz for error/invalid
 };
 
 export function useHapticFeedback() {
@@ -35,13 +35,41 @@ export function useHapticFeedback() {
     }
   };
 
-  // Special method for QR scan success - strong haptic
+  // Sweet double-tap for successful check-in
   const triggerScanSuccess = () => {
     if (!isSupported) return false;
     
     try {
-      // Strong double vibration for clear feedback
-      navigator.vibrate([100, 80, 150]);
+      // Two quick, satisfying taps
+      navigator.vibrate([50, 100, 50]);
+      return true;
+    } catch (error) {
+      console.warn('Haptic feedback failed:', error);
+      return false;
+    }
+  };
+
+  // Strong buzz for invalid/expired QR
+  const triggerScanError = () => {
+    if (!isSupported) return false;
+    
+    try {
+      // Longer, more noticeable error vibration
+      navigator.vibrate([150, 100, 250]);
+      return true;
+    } catch (error) {
+      console.warn('Haptic feedback failed:', error);
+      return false;
+    }
+  };
+
+  // Warning pattern for expired/blocked
+  const triggerScanWarning = () => {
+    if (!isSupported) return false;
+    
+    try {
+      // Triple short pulses
+      navigator.vibrate([60, 50, 60, 50, 60]);
       return true;
     } catch (error) {
       console.warn('Haptic feedback failed:', error);
@@ -52,6 +80,8 @@ export function useHapticFeedback() {
   return { 
     triggerHaptic, 
     triggerScanSuccess,
+    triggerScanError,
+    triggerScanWarning,
     isSupported 
   };
 }
