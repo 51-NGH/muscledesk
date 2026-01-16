@@ -837,6 +837,17 @@ export type Database = {
           total_revenue: number
         }[]
       }
+      get_retention_stats: {
+        Args: { _gym_id: string }
+        Returns: {
+          active_members: number
+          avg_membership_duration: number
+          members_churned_this_month: number
+          members_renewed_this_month: number
+          retention_rate: number
+          total_members: number
+        }[]
+      }
       get_user_gym_id: { Args: { _user_id: string }; Returns: string }
       has_gym_access: {
         Args: { _gym_id: string; _user_id: string }
