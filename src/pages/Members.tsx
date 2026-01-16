@@ -511,15 +511,17 @@ export default function Members() {
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label>Email (Optional)</Label>
-              <Input
-                type="email"
-                value={newMember.email}
-                onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
-                placeholder="john@example.com"
-              />
-            </div>
+            {!isLitePlan && (
+              <div className="space-y-2">
+                <Label>Email (Optional)</Label>
+                <Input
+                  type="email"
+                  value={newMember.email}
+                  onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
+                  placeholder="john@example.com"
+                />
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Membership Plan</Label>
               <Select value={newMember.plan_id} onValueChange={handlePlanSelect}>
@@ -655,14 +657,16 @@ export default function Members() {
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input
-                type="email"
-                value={newMember.email}
-                onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
-              />
-            </div>
+            {!isLitePlan && (
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={newMember.email}
+                  onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
+                />
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Membership Plan</Label>
               <Select value={newMember.plan_id} onValueChange={(v) => setNewMember({ ...newMember, plan_id: v })}>
