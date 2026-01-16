@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
+import { useGymPlanFeatures } from "@/hooks/useGymPlanFeatures";
 import { useMembers, useCreateMember, useUpdateMember, useDeleteMember, useMembershipPlans, MemberStatus, Member } from "@/hooks/useGymData";
 import { MemberProfile } from "@/components/MemberProfile";
 import { format } from "date-fns";
@@ -27,6 +28,7 @@ import {
   Edit,
   Trash2,
   Eye,
+  Lock,
 } from "lucide-react";
 import {
   Dialog,
@@ -71,6 +73,8 @@ const statusMap: Record<string, MemberStatus> = {
 
 export default function Members() {
   const { gymId } = useAuth();
+  const { data: features } = useGymPlanFeatures();
+  const isLitePlan = features?.plan === 'lite';
   const [activeFilter, setActiveFilter] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -551,14 +555,33 @@ export default function Members() {
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Notes</Label>
-              <Textarea
-                value={newMember.notes}
-                onChange={(e) => setNewMember({ ...newMember, notes: e.target.value })}
-                placeholder="Any additional notes..."
-                rows={2}
-              />
+            <div className="space-y-2 relative">
+              <Label className="flex items-center gap-2">
+                Notes
+                {isLitePlan && <Lock className="h-3 w-3 text-muted-foreground" />}
+              </Label>
+              {isLitePlan ? (
+                <div className="relative">
+                  <Textarea
+                    disabled
+                    placeholder="Upgrade to Standard to add notes..."
+                    rows={2}
+                    className="opacity-50 cursor-not-allowed"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/40 rounded-md">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Lock className="h-3 w-3" /> Standard feature
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <Textarea
+                  value={newMember.notes}
+                  onChange={(e) => setNewMember({ ...newMember, notes: e.target.value })}
+                  placeholder="Any additional notes..."
+                  rows={2}
+                />
+              )}
             </div>
             <div className="flex justify-end gap-3 pt-2">
               <Button 
@@ -664,13 +687,32 @@ export default function Members() {
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label>Notes</Label>
-              <Textarea
-                value={newMember.notes}
-                onChange={(e) => setNewMember({ ...newMember, notes: e.target.value })}
-                rows={2}
-              />
+            <div className="space-y-2 relative">
+              <Label className="flex items-center gap-2">
+                Notes
+                {isLitePlan && <Lock className="h-3 w-3 text-muted-foreground" />}
+              </Label>
+              {isLitePlan ? (
+                <div className="relative">
+                  <Textarea
+                    disabled
+                    placeholder="Upgrade to Standard to add notes..."
+                    rows={2}
+                    className="opacity-50 cursor-not-allowed"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/40 rounded-md">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Lock className="h-3 w-3" /> Standard feature
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <Textarea
+                  value={newMember.notes}
+                  onChange={(e) => setNewMember({ ...newMember, notes: e.target.value })}
+                  rows={2}
+                />
+              )}
             </div>
             <div className="flex justify-end gap-3 pt-2">
               <Button 
