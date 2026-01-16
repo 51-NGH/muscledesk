@@ -155,6 +155,26 @@ export default function Payments() {
     }
   };
 
+  const handleMemberSelect = (memberId: string) => {
+    const member = members.find((m) => m.id === memberId);
+    if (member && member.plan_id) {
+      const plan = plans.find((p) => p.id === member.plan_id);
+      setNewPayment({
+        ...newPayment,
+        member_id: memberId,
+        plan_id: member.plan_id,
+        amount: plan ? plan.price.toString() : newPayment.amount,
+      });
+    } else {
+      setNewPayment({
+        ...newPayment,
+        member_id: memberId,
+        plan_id: "",
+        amount: "",
+      });
+    }
+  };
+
   const handlePlanSelect = (planId: string) => {
     const plan = plans.find((p) => p.id === planId);
     setNewPayment({
@@ -434,7 +454,7 @@ export default function Payments() {
           <form onSubmit={handleAddPayment} className="space-y-4">
             <div className="space-y-2">
               <Label>Member *</Label>
-              <Select value={newPayment.member_id} onValueChange={(v) => setNewPayment({ ...newPayment, member_id: v })}>
+              <Select value={newPayment.member_id} onValueChange={handleMemberSelect}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select member..." />
                 </SelectTrigger>
