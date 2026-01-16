@@ -225,8 +225,37 @@ export default function Dashboard() {
     attendance: "activity-icon-attendance",
   };
 
+  // Check if Lite plan
+  const isLitePlan = features?.plan === 'lite';
+
   return (
     <DashboardLayout>
+      {/* Lite Plan Upgrade Banner */}
+      {isLitePlan && (
+        <div className="mb-6 rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-purple-500/5 to-primary/5 p-4 sm:p-5 animate-fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center shrink-0">
+                <TrendingUp className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">Unlock More Features</h3>
+                <p className="text-sm text-muted-foreground">
+                  Upgrade to Standard for QR attendance, payments, analytics, charts & member portal
+                </p>
+              </div>
+            </div>
+            <Button 
+              onClick={() => navigate("/settings")} 
+              className="gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shrink-0"
+            >
+              Upgrade Now
+              <ArrowUpRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Header with Greeting */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 lg:mb-8">
         <div className="animate-fade-in">
@@ -480,7 +509,7 @@ export default function Dashboard() {
       {/* Recent Members & Payments */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Recent Members */}
-        <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 relative overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-base sm:text-lg font-semibold text-foreground">Recent Members</h3>
@@ -491,72 +520,88 @@ export default function Dashboard() {
               <ArrowUpRight className="ml-1 h-4 w-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </Button>
           </div>
-          {recentMembers.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
-              <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No members yet</p>
-              <Button variant="link" size="sm" onClick={() => navigate("/members")}>
-                <UserPlus className="mr-1 h-4 w-4" />
-                Add Members
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-2 sm:space-y-3">
-              {recentMembers.map((member, index) => (
-                <div 
-                  key={member.id} 
-                  className="flex items-center justify-between py-2 animate-fade-in cursor-pointer rounded-lg px-2 -mx-2 hover:bg-muted/50 transition-colors" 
-                  style={{ animationDelay: `${index * 50}ms` }}
-                  onClick={() => {
-                    setSelectedMember(member);
-                    setIsProfileOpen(true);
-                  }}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <MemberAvatar name={member.full_name} size="sm" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{member.full_name}</p>
-                      <p className="text-xs text-muted-foreground">{member.phone}</p>
+          
+          {/* Content with blur for Lite plan */}
+          <div className={isLitePlan ? "blur-sm pointer-events-none select-none" : ""}>
+            {recentMembers.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No members yet</p>
+                <Button variant="link" size="sm" onClick={() => navigate("/members")}>
+                  <UserPlus className="mr-1 h-4 w-4" />
+                  Add Members
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2 sm:space-y-3">
+                {recentMembers.map((member, index) => (
+                  <div 
+                    key={member.id} 
+                    className="flex items-center justify-between py-2 animate-fade-in cursor-pointer rounded-lg px-2 -mx-2 hover:bg-muted/50 transition-colors" 
+                    style={{ animationDelay: `${index * 50}ms` }}
+                    onClick={() => {
+                      setSelectedMember(member);
+                      setIsProfileOpen(true);
+                    }}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <MemberAvatar name={member.full_name} size="sm" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{member.full_name}</p>
+                        <p className="text-xs text-muted-foreground">{member.phone}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <StatusBadge status={member.status} />
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <StatusBadge status={member.status} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          
-          {/* Quick Stats */}
-          <div className="border-t border-border pt-4 mt-4">
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <button 
-                onClick={() => navigate("/members?filter=active")}
-                className="rounded-lg bg-muted/30 p-2 hover:bg-muted/50 transition-colors"
-              >
-                <p className="text-base sm:text-lg font-bold text-md-green">{stats?.activeMembers || 0}</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Active</p>
-              </button>
-              <button 
-                onClick={() => navigate("/members?filter=expiring")}
-                className="rounded-lg bg-muted/30 p-2 hover:bg-muted/50 transition-colors"
-              >
-                <p className="text-base sm:text-lg font-bold text-md-orange">{stats?.expiringMembers || 0}</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Expiring</p>
-              </button>
-              <button 
-                onClick={() => navigate("/members?filter=expired")}
-                className="rounded-lg bg-muted/30 p-2 hover:bg-muted/50 transition-colors"
-              >
-                <p className="text-base sm:text-lg font-bold text-md-red">{stats?.expiredMembers || 0}</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Expired</p>
-              </button>
+                ))}
+              </div>
+            )}
+            
+            {/* Quick Stats */}
+            <div className="border-t border-border pt-4 mt-4">
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <button 
+                  onClick={() => navigate("/members?filter=active")}
+                  className="rounded-lg bg-muted/30 p-2 hover:bg-muted/50 transition-colors"
+                >
+                  <p className="text-base sm:text-lg font-bold text-md-green">{stats?.activeMembers || 0}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Active</p>
+                </button>
+                <button 
+                  onClick={() => navigate("/members?filter=expiring")}
+                  className="rounded-lg bg-muted/30 p-2 hover:bg-muted/50 transition-colors"
+                >
+                  <p className="text-base sm:text-lg font-bold text-md-orange">{stats?.expiringMembers || 0}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Expiring</p>
+                </button>
+                <button 
+                  onClick={() => navigate("/members?filter=expired")}
+                  className="rounded-lg bg-muted/30 p-2 hover:bg-muted/50 transition-colors"
+                >
+                  <p className="text-base sm:text-lg font-bold text-md-red">{stats?.expiredMembers || 0}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Expired</p>
+                </button>
+              </div>
             </div>
           </div>
+          
+          {/* Upgrade overlay for Lite plan */}
+          {isLitePlan && (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/40 backdrop-blur-[1px]">
+              <div className="text-center px-4">
+                <div className="h-10 w-10 mx-auto rounded-lg bg-muted/80 border border-border flex items-center justify-center mb-2">
+                  <Users className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <p className="text-sm font-medium text-foreground">Upgrade to view details</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Recent Payments */}
-        <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 relative overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-base sm:text-lg font-semibold text-foreground">Recent Payments</h3>
@@ -567,68 +612,84 @@ export default function Dashboard() {
               <ArrowUpRight className="ml-1 h-4 w-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </Button>
           </div>
-          {recentPayments.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
-              <DollarSign className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No payments yet</p>
-              <Button variant="link" size="sm" onClick={() => navigate("/payments")}>
-                Record payment
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-2 sm:space-y-3">
-              {recentPayments.map((payment, index) => (
-                <div key={payment.id} className="flex items-center justify-between py-2 animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <MemberAvatar name={payment.member?.full_name || "Unknown"} size="sm" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{payment.member?.full_name || "Unknown"}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {payment.plan_name || "Payment"} • <span className="uppercase">{payment.payment_mode}</span>
-                      </p>
+          
+          {/* Content with blur for Lite plan */}
+          <div className={isLitePlan ? "blur-sm pointer-events-none select-none" : ""}>
+            {recentPayments.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <DollarSign className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No payments yet</p>
+                <Button variant="link" size="sm" onClick={() => navigate("/payments")}>
+                  Record payment
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2 sm:space-y-3">
+                {recentPayments.map((payment, index) => (
+                  <div key={payment.id} className="flex items-center justify-between py-2 animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <MemberAvatar name={payment.member?.full_name || "Unknown"} size="sm" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{payment.member?.full_name || "Unknown"}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {payment.plan_name || "Payment"} • <span className="uppercase">{payment.payment_mode}</span>
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-bold text-md-green">₹{payment.amount.toLocaleString()}</p>
+                      <p className="text-[10px] text-muted-foreground">{format(new Date(payment.created_at), "MMM d, h:mm a")}</p>
                     </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-sm font-bold text-md-green">₹{payment.amount.toLocaleString()}</p>
-                    <p className="text-[10px] text-muted-foreground">{format(new Date(payment.created_at), "MMM d, h:mm a")}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          
-          {/* Quick Stats */}
-          <div className="border-t border-border pt-4 mt-4">
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <button 
-                onClick={() => navigate("/payments?filter=completed")}
-                className="rounded-lg bg-muted/30 p-2 hover:bg-muted/50 transition-colors"
-              >
-                <p className="text-base sm:text-lg font-bold text-md-green">
-                  ₹{((stats?.monthlyRevenue || 0) / 1000).toFixed(0)}k
-                </p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Revenue</p>
-              </button>
-              <button 
-                onClick={() => navigate("/payments?filter=pending")}
-                className="rounded-lg bg-muted/30 p-2 hover:bg-muted/50 transition-colors"
-              >
-                <p className="text-base sm:text-lg font-bold text-md-orange">
-                  {payments.filter(p => p.status === 'pending').length}
-                </p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Pending</p>
-              </button>
-              <button 
-                onClick={() => navigate("/payments")}
-                className="rounded-lg bg-muted/30 p-2 hover:bg-muted/50 transition-colors"
-              >
-                <p className="text-base sm:text-lg font-bold text-foreground">
-                  {payments.length}
-                </p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Total</p>
-              </button>
+                ))}
+              </div>
+            )}
+            
+            {/* Quick Stats */}
+            <div className="border-t border-border pt-4 mt-4">
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <button 
+                  onClick={() => navigate("/payments?filter=completed")}
+                  className="rounded-lg bg-muted/30 p-2 hover:bg-muted/50 transition-colors"
+                >
+                  <p className="text-base sm:text-lg font-bold text-md-green">
+                    ₹{((stats?.monthlyRevenue || 0) / 1000).toFixed(0)}k
+                  </p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Revenue</p>
+                </button>
+                <button 
+                  onClick={() => navigate("/payments?filter=pending")}
+                  className="rounded-lg bg-muted/30 p-2 hover:bg-muted/50 transition-colors"
+                >
+                  <p className="text-base sm:text-lg font-bold text-md-orange">
+                    {payments.filter(p => p.status === 'pending').length}
+                  </p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Pending</p>
+                </button>
+                <button 
+                  onClick={() => navigate("/payments")}
+                  className="rounded-lg bg-muted/30 p-2 hover:bg-muted/50 transition-colors"
+                >
+                  <p className="text-base sm:text-lg font-bold text-foreground">
+                    {payments.length}
+                  </p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Total</p>
+                </button>
+              </div>
             </div>
           </div>
+          
+          {/* Upgrade overlay for Lite plan */}
+          {isLitePlan && (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/40 backdrop-blur-[1px]">
+              <div className="text-center px-4">
+                <div className="h-10 w-10 mx-auto rounded-lg bg-muted/80 border border-border flex items-center justify-center mb-2">
+                  <DollarSign className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <p className="text-sm font-medium text-foreground">Upgrade to view details</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

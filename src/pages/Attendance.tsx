@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGymPlanFeatures } from "@/hooks/useGymPlanFeatures";
+import { UpgradeRequiredPage } from "@/components/UpgradeOverlay";
 import { useAttendance, useMembers, useDashboardStats } from "@/hooks/useGymData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -224,6 +225,9 @@ export default function Attendance() {
 
   const isToday = selectedDate === new Date().toISOString().split("T")[0];
 
+  // Check if Lite plan - block attendance page
+  const isLitePlan = features?.plan === 'lite';
+
   if (!gymId) {
     return (
       <DashboardLayout>
@@ -233,6 +237,26 @@ export default function Attendance() {
             <p className="text-muted-foreground">Please wait for your gym to be assigned.</p>
           </div>
         </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Block attendance page for Lite plan
+  if (isLitePlan) {
+    return (
+      <DashboardLayout>
+        <UpgradeRequiredPage
+          feature="Attendance Tracking"
+          description="Track member check-ins with QR codes and manual entry. Get insights into attendance patterns."
+          benefits={[
+            "QR code check-in scanning",
+            "Manual attendance recording",
+            "Daily attendance history",
+            "Real-time attendance stats",
+            "Attendance rate analytics",
+            "Member visit tracking"
+          ]}
+        />
       </DashboardLayout>
     );
   }
