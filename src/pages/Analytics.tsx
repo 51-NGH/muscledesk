@@ -22,6 +22,12 @@ import {
   TrendingUp,
   Calendar,
   Download,
+  UserPlus,
+  Percent,
+  CreditCard,
+  ArrowUpRight,
+  ArrowDownRight,
+  Activity,
 } from "lucide-react";
 import {
   Area,
@@ -208,6 +214,180 @@ export default function Analytics() {
     }));
   }, [members]);
 
+  // Member status distribution
+  const memberStatusData = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    let active = 0, expiring = 0, expired = 0, blocked = 0;
+    
+    members.forEach((member) => {
+      if (member.is_blocked) {
+        blocked++;
+        return;
+      }
+      const expiryDate = new Date(member.expiry_date);
+      expiryDate.setHours(0, 0, 0, 0);
+      
+      if (expiryDate < today) {
+        expired++;
+      } else {
+        const sevenDaysFromNow = new Date(today);
+        sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+        if (expiryDate <= sevenDaysFromNow) {
+          expiring++;
+        } else {
+          active++;
+        }
+      }
+    });
+    
+    return [
+      { name: "Active", value: active, color: "hsl(var(--md-green))" },
+      { name: "Expiring", value: expiring, color: "hsl(var(--md-yellow))" },
+      { name: "Expired", value: expired, color: "hsl(var(--md-red))" },
+      { name: "Blocked", value: blocked, color: "hsl(var(--muted-foreground))" },
+    ].filter(item => item.value > 0);
+  }, [members]);
+
+  // Expense breakdown by category
+  const expenseCategoryData = useMemo(() => {
+    const categoryTotals: Record<string, number> = {};
+    
+    filteredExpenses.forEach((expense: any) => {
+      const category = expense.category || "Other";
+      categoryTotals[category] = (categoryTotals[category] || 0) + Number(expense.amount || 0);
+    });
+    
+    const colors: Record<string, string> = {
+      rent: "hsl(var(--md-blue))",
+      utilities: "hsl(var(--md-yellow))",
+      salaries: "hsl(var(--md-purple))",
+      equipment: "hsl(var(--md-teal))",
+      maintenance: "hsl(var(--md-orange))",
+      marketing: "hsl(var(--md-pink))",
+      supplies: "hsl(var(--md-green))",
+      other: "hsl(var(--muted-foreground))",
+    };
+    
+    return Object.entries(categoryTotals)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, value]) => ({
+        name: name.charAt(0).toUpperCase() + name.slice(1),
+        value,
+        color: colors[name.toLowerCase()] || colors.other,
+      }));
+  }, [filteredExpenses]);
+
+  // Payment mode breakdown
+  const paymentModeData = useMemo(() => {
+    const modeTotals: Record<string, { count: number; amount: number }> = {};
+    
+    filteredPayments.forEach((payment: any) => {
+      const mode = payment.payment_mode || "cash";
+      if (!modeTotals[mode]) {
+        modeTotals[mode] = { count: 0, amount: 0 };
+      }
+      modeTotals[mode].count++;
+      modeTotals[mode].amount += Number(payment.amount || 0);
+    });
+    
+    const colors: Record<string, string> = {
+      cash: "hsl(var(--md-green))",
+      upi: "hsl(var(--md-purple))",
+      card: "hsl(var(--md-blue))",
+      bank_transfer: "hsl(var(--md-teal))",
+      other: "hsl(var(--muted-foreground))",
+    };
+    
+    const labels: Record<string, string> = {
+      cash: "Cash",
+      upi: "UPI",
+      card: "Card",
+      bank_transfer: "Bank Transfer",
+      other: "Other",
+    };
+    
+    return Object.entries(modeTotals)
+      .sort((a, b) => b[1].amount - a[1].amount)
+      .map(([mode, data]) => ({
+        name: labels[mode] || mode,
+        value: data.amount,
+        count: data.count,
+        color: colors[mode] || colors.other,
+      }));
+  }, [filteredPayments]);
+
+  // Member growth over time
+  const memberGrowthData = useMemo(() => {
+    if (daysBack <= 30) {
+      // Daily data for short ranges
+      const dailyData: Record<string, number> = {};
+      
+      for (let i = daysBack - 1; i >= 0; i--) {
+        const date = subDays(new Date(), i);
+        const dateKey = format(date, "yyyy-MM-dd");
+        dailyData[dateKey] = 0;
+      }
+      
+      members.forEach((member) => {
+        const joinDate = format(parseISO(member.start_date), "yyyy-MM-dd");
+        if (dailyData[joinDate] !== undefined) {
+          dailyData[joinDate]++;
+        }
+      });
+      
+      // Calculate cumulative
+      let cumulative = members.filter((m) => {
+        const joinDate = parseISO(m.start_date);
+        return joinDate < rangeStartDate;
+      }).length;
+      
+      return Object.entries(dailyData)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([date, newMembers]) => {
+          cumulative += newMembers;
+          return {
+            date: format(parseISO(date), daysBack <= 7 ? "EEE" : "MMM d"),
+            newMembers,
+            totalMembers: cumulative,
+          };
+        });
+    } else {
+      // Monthly data for longer ranges
+      const monthlyData: Record<string, number> = {};
+      
+      for (let i = monthsBack - 1; i >= 0; i--) {
+        const monthDate = subMonths(new Date(), i);
+        const monthKey = format(monthDate, "yyyy-MM");
+        monthlyData[monthKey] = 0;
+      }
+      
+      members.forEach((member) => {
+        const joinMonth = format(parseISO(member.start_date), "yyyy-MM");
+        if (monthlyData[joinMonth] !== undefined) {
+          monthlyData[joinMonth]++;
+        }
+      });
+      
+      let cumulative = members.filter((m) => {
+        const joinDate = parseISO(m.start_date);
+        return joinDate < subMonths(new Date(), monthsBack);
+      }).length;
+      
+      return Object.entries(monthlyData)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([month, newMembers]) => {
+          cumulative += newMembers;
+          return {
+            date: format(new Date(month + "-01"), "MMM"),
+            newMembers,
+            totalMembers: cumulative,
+          };
+        });
+    }
+  }, [members, daysBack, monthsBack, rangeStartDate]);
+
   // Attendance trend data - adjusted to show appropriate number of days
   const attendanceChartData = useMemo(() => {
     if (dailyAttendance.length === 0) return [];
@@ -255,6 +435,34 @@ export default function Analytics() {
   const totalCheckIns = useMemo(() => {
     return dailyAttendance.reduce((sum: number, d: any) => sum + Number(d.check_ins || 0), 0);
   }, [dailyAttendance]);
+
+  // Revenue per member
+  const revenuePerMember = useMemo(() => {
+    const activeCount = stats?.activeMembers || 0;
+    if (activeCount === 0) return 0;
+    return Math.round(rangeRevenue / activeCount);
+  }, [rangeRevenue, stats]);
+
+  // Average transaction value
+  const avgTransactionValue = useMemo(() => {
+    if (filteredPayments.length === 0) return 0;
+    return Math.round(rangeRevenue / filteredPayments.length);
+  }, [rangeRevenue, filteredPayments]);
+
+  // New members in period
+  const newMembersInPeriod = useMemo(() => {
+    return members.filter((m) => {
+      const joinDate = parseISO(m.start_date);
+      return isAfter(joinDate, rangeStartDate);
+    }).length;
+  }, [members, rangeStartDate]);
+
+  // Retention rate (active / total)
+  const retentionRate = useMemo(() => {
+    if (members.length === 0) return 0;
+    const activeCount = memberStatusData.find(d => d.name === "Active")?.value || 0;
+    return Math.round((activeCount / members.length) * 100);
+  }, [members, memberStatusData]);
 
   // Get subtitle based on active range
   const getSubtitle = () => {
@@ -334,14 +542,46 @@ export default function Analytics() {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      {/* Primary Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
         <StatCard
           title="Total Revenue"
           value={statsLoading ? "..." : `₹${rangeRevenue.toLocaleString()}`}
           subtitle={getSubtitle()}
           icon={DollarSign}
           iconVariant="teal"
+        />
+        <StatCard
+          title="Net Profit"
+          value={statsLoading ? "..." : `₹${rangeProfit.toLocaleString()}`}
+          subtitle={rangeProfit >= 0 ? "Profitable" : "Loss"}
+          icon={rangeProfit >= 0 ? ArrowUpRight : ArrowDownRight}
+          iconVariant={rangeProfit >= 0 ? "green" : "red"}
+        />
+        <StatCard
+          title="Total Expenses"
+          value={statsLoading ? "..." : `₹${rangeExpenses.toLocaleString()}`}
+          subtitle={`${filteredExpenses.length} transactions`}
+          icon={CreditCard}
+          iconVariant="orange"
+        />
+        <StatCard
+          title="Total Check-ins"
+          value={statsLoading ? "..." : totalCheckIns.toLocaleString()}
+          subtitle={`${attendanceRate}% avg rate`}
+          icon={Activity}
+          iconVariant="blue"
+        />
+      </div>
+
+      {/* Secondary Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <StatCard
+          title="New Members"
+          value={statsLoading ? "..." : newMembersInPeriod}
+          subtitle={getSubtitle()}
+          icon={UserPlus}
+          iconVariant="blue"
         />
         <StatCard
           title="Active Members"
@@ -351,18 +591,18 @@ export default function Analytics() {
           iconVariant="green"
         />
         <StatCard
-          title="Total Check-ins"
-          value={statsLoading ? "..." : totalCheckIns.toLocaleString()}
-          subtitle={`${attendanceRate}% avg rate`}
-          icon={TrendingUp}
-          iconVariant="orange"
+          title="Retention Rate"
+          value={statsLoading ? "..." : `${retentionRate}%`}
+          subtitle="Active / Total"
+          icon={Percent}
+          iconVariant="teal"
         />
         <StatCard
-          title="Net Profit"
-          value={statsLoading ? "..." : `₹${rangeProfit.toLocaleString()}`}
-          subtitle={getSubtitle()}
-          icon={Calendar}
-          iconVariant="blue"
+          title="Avg Transaction"
+          value={statsLoading ? "..." : `₹${avgTransactionValue.toLocaleString()}`}
+          subtitle={`${filteredPayments.length} payments`}
+          icon={TrendingUp}
+          iconVariant="orange"
         />
       </div>
 
@@ -503,8 +743,140 @@ export default function Analytics() {
         </div>
       </div>
 
+      {/* Member Growth & Status Distribution */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
+        {/* Member Growth */}
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-foreground">Member Growth</h3>
+            <p className="text-sm text-muted-foreground">New members & total growth • {getSubtitle()}</p>
+          </div>
+          {memberGrowthData.length === 0 ? (
+            <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+              <p className="text-sm">No member data</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <ComposedChart data={memberGrowthData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis
+                  dataKey="date"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+                  interval={daysBack <= 7 ? 0 : "preserveStartEnd"}
+                />
+                <YAxis
+                  yAxisId="left"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                  width={30}
+                />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                  width={35}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                    fontSize: "12px",
+                  }}
+                />
+                <Bar
+                  yAxisId="left"
+                  dataKey="newMembers"
+                  fill="hsl(var(--md-blue))"
+                  radius={[4, 4, 0, 0]}
+                  name="New Members"
+                />
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="totalMembers"
+                  stroke="hsl(var(--md-teal))"
+                  strokeWidth={2}
+                  dot={false}
+                  name="Total Members"
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          )}
+          <div className="flex items-center justify-center gap-6 mt-3">
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 rounded bg-md-blue" />
+              <span className="text-xs text-muted-foreground">New</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 rounded-full bg-md-teal" />
+              <span className="text-xs text-muted-foreground">Total</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Member Status Distribution */}
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-foreground">Member Status</h3>
+            <p className="text-sm text-muted-foreground">Distribution by membership status</p>
+          </div>
+          {memberStatusData.length === 0 ? (
+            <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+              <p className="text-sm">No members yet</p>
+            </div>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={160}>
+                <PieChart>
+                  <Pie
+                    data={memberStatusData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={45}
+                    outerRadius={65}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {memberStatusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                    formatter={(value: number, name: string) => [value, name]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {memberStatusData.map((item) => (
+                  <div key={item.name} className="flex items-center gap-2">
+                    <div
+                      className="h-3 w-3 rounded-full shrink-0"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="text-xs text-muted-foreground">{item.name}</span>
+                    <span className="text-xs font-medium text-foreground ml-auto">{item.value}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
       {/* Attendance Trend & Peak Hours */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
         {/* Attendance Trend */}
         <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
           <div className="mb-4">
@@ -590,6 +962,119 @@ export default function Analytics() {
               />
             </LineChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Expense Breakdown & Payment Modes */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Expense Breakdown */}
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-foreground">Expense Breakdown</h3>
+            <p className="text-sm text-muted-foreground">By category • {getSubtitle()}</p>
+          </div>
+          {expenseCategoryData.length === 0 ? (
+            <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+              <p className="text-sm">No expenses recorded</p>
+            </div>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={160}>
+                <BarChart data={expenseCategoryData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                  <XAxis
+                    type="number"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+                    tickFormatter={(value) => value >= 1000 ? `₹${value / 1000}k` : `₹${value}`}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+                    width={70}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                    formatter={(value: number) => [`₹${value.toLocaleString()}`, "Amount"]}
+                  />
+                  <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                    {expenseCategoryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+              <div className="mt-3 pt-3 border-t border-border">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Total Expenses</span>
+                  <span className="font-semibold text-foreground">₹{rangeExpenses.toLocaleString()}</span>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Payment Modes */}
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg transition-shadow duration-300">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-foreground">Payment Methods</h3>
+            <p className="text-sm text-muted-foreground">Revenue by payment mode • {getSubtitle()}</p>
+          </div>
+          {paymentModeData.length === 0 ? (
+            <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+              <p className="text-sm">No payments recorded</p>
+            </div>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={160}>
+                <PieChart>
+                  <Pie
+                    data={paymentModeData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={45}
+                    outerRadius={65}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {paymentModeData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                    formatter={(value: number, name: string) => [`₹${value.toLocaleString()}`, name]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {paymentModeData.map((item) => (
+                  <div key={item.name} className="flex items-center gap-2">
+                    <div
+                      className="h-3 w-3 rounded-full shrink-0"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="text-xs text-muted-foreground truncate">{item.name}</span>
+                    <span className="text-xs font-medium text-foreground ml-auto">₹{item.value.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </DashboardLayout>
