@@ -114,10 +114,11 @@ export default function Attendance() {
           filter: `gym_id=eq.${gymId}`,
         },
         () => {
-          // Instantly invalidate attendance queries
-          queryClient.invalidateQueries({ queryKey: ['attendance'] });
-          queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-          queryClient.invalidateQueries({ queryKey: ['daily-attendance'] });
+          console.log('Attendance page: Real-time update detected, refetching...');
+          // Force immediate refetch with refetchType: 'all'
+          queryClient.invalidateQueries({ queryKey: ['attendance'], refetchType: 'all' });
+          queryClient.invalidateQueries({ queryKey: ['dashboard-stats'], refetchType: 'all' });
+          queryClient.invalidateQueries({ queryKey: ['daily-attendance'], refetchType: 'all' });
         }
       )
       .subscribe();
