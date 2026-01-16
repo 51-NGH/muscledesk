@@ -3,6 +3,7 @@ import { Html5Qrcode } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
 import { Camera, CameraOff, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAudioFeedback } from "@/hooks/useAudioFeedback";
 
 interface QRScannerProps {
   onScan: (qrToken: string) => Promise<{
@@ -28,6 +29,9 @@ export function QRScanner({ onScan, isOpen, onClose }: QRScannerProps) {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const lastScannedRef = useRef<string | null>(null);
   const processingRef = useRef(false);
+  
+  // Audio feedback for scan results
+  const { playSound, prepareAudio } = useAudioFeedback();
 
   useEffect(() => {
     if (isOpen && !isScanning) {
@@ -43,6 +47,9 @@ export function QRScanner({ onScan, isOpen, onClose }: QRScannerProps) {
     try {
       setError(null);
       setLastResult(null);
+      
+      // Prepare audio context on scanner start (requires user interaction)
+      prepareAudio();
       
       const html5QrCode = new Html5Qrcode("qr-reader");
       scannerRef.current = html5QrCode;
@@ -64,6 +71,9 @@ export function QRScanner({ onScan, isOpen, onClose }: QRScannerProps) {
 
           try {
             const result = await onScan(decodedText);
+            
+            // Play audio feedback based on result
+            playSound(result.success ? 'approve' : 'deny');
             
             setLastResult({
               success: result.success,
