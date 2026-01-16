@@ -37,42 +37,51 @@ export function useHapticFeedback() {
 
   // Sweet double-tap for successful check-in
   const triggerScanSuccess = () => {
-    if (!isSupported) return false;
+    console.log('[Haptic] triggerScanSuccess called, isSupported:', isSupported);
+    if (!isSupported) {
+      console.log('[Haptic] Vibration API not supported');
+      return false;
+    }
     
     try {
       // Two quick, satisfying taps
-      navigator.vibrate([50, 100, 50]);
-      return true;
+      const pattern = [50, 100, 50];
+      console.log('[Haptic] Calling navigator.vibrate with pattern:', pattern);
+      const result = navigator.vibrate(pattern);
+      console.log('[Haptic] navigator.vibrate returned:', result);
+      return result;
     } catch (error) {
-      console.warn('Haptic feedback failed:', error);
+      console.warn('[Haptic] Haptic feedback failed:', error);
       return false;
     }
   };
 
   // Strong buzz for invalid/expired QR
   const triggerScanError = () => {
+    console.log('[Haptic] triggerScanError called, isSupported:', isSupported);
     if (!isSupported) return false;
     
     try {
-      // Longer, more noticeable error vibration
-      navigator.vibrate([150, 100, 250]);
-      return true;
+      const pattern = [150, 100, 250];
+      console.log('[Haptic] Error pattern:', pattern);
+      return navigator.vibrate(pattern);
     } catch (error) {
-      console.warn('Haptic feedback failed:', error);
+      console.warn('[Haptic] Error haptic failed:', error);
       return false;
     }
   };
 
   // Warning pattern for expired/blocked
   const triggerScanWarning = () => {
+    console.log('[Haptic] triggerScanWarning called, isSupported:', isSupported);
     if (!isSupported) return false;
     
     try {
-      // Triple short pulses
-      navigator.vibrate([60, 50, 60, 50, 60]);
-      return true;
+      const pattern = [60, 50, 60, 50, 60];
+      console.log('[Haptic] Warning pattern:', pattern);
+      return navigator.vibrate(pattern);
     } catch (error) {
-      console.warn('Haptic feedback failed:', error);
+      console.warn('[Haptic] Warning haptic failed:', error);
       return false;
     }
   };
