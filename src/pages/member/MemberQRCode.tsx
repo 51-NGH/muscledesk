@@ -216,8 +216,8 @@ export default function MemberQRCode() {
             </div>
           </div>
 
-          {/* Buttons */}
-          <div className="mt-6 space-y-3">
+          {/* Download Button */}
+          <div className="mt-6">
             <Button
               className="w-full h-12 rounded-xl"
               onClick={handleDownload}
@@ -225,16 +225,6 @@ export default function MemberQRCode() {
             >
               <Download className="h-4 w-4 mr-2" />
               Download QR Code
-            </Button>
-            
-            {/* Test button - tap to simulate check-in feedback */}
-            <Button
-              variant="outline"
-              className="w-full h-12 rounded-xl border-dashed border-primary/50"
-              onClick={handleTestCheckIn}
-            >
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              Test Check-in Feedback
             </Button>
           </div>
         </div>
