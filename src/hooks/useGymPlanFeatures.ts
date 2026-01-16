@@ -20,6 +20,8 @@ export interface PlanFeatures {
   hasMemberPortal: boolean;
   hasCharts: boolean;
   maxPlans: number;
+  // Brand info for multi-branch
+  brandId: string | null;
 }
 
 const DEFAULT_FEATURES: PlanFeatures = {
@@ -37,6 +39,7 @@ const DEFAULT_FEATURES: PlanFeatures = {
   hasMemberPortal: false,
   hasCharts: false,
   maxPlans: 3,
+  brandId: null,
 };
 
 export function useGymPlanFeatures() {
@@ -47,10 +50,10 @@ export function useGymPlanFeatures() {
     queryFn: async (): Promise<PlanFeatures> => {
       if (!gymId) return DEFAULT_FEATURES;
 
-      // Get gym plan
+      // Get gym plan and brand_id
       const { data: gym, error: gymError } = await supabase
         .from("gyms")
-        .select("plan")
+        .select("plan, brand_id")
         .eq("id", gymId)
         .single();
 
@@ -60,6 +63,7 @@ export function useGymPlanFeatures() {
       }
 
       const currentPlan = gym.plan as GymPlan;
+      const brandId = gym.brand_id as string | null;
 
       // Get plan limits
       const { data: planLimits, error: limitsError } = await supabase
@@ -70,7 +74,7 @@ export function useGymPlanFeatures() {
 
       if (limitsError || !planLimits) {
         console.error("Error fetching plan limits:", limitsError);
-        return { ...DEFAULT_FEATURES, plan: currentPlan };
+        return { ...DEFAULT_FEATURES, plan: currentPlan, brandId };
       }
 
       // Derive features based on plan
@@ -94,6 +98,7 @@ export function useGymPlanFeatures() {
         hasMemberPortal: isStandardOrAbove, // No member app/emails for lite
         hasCharts: isStandardOrAbove, // No charts in dashboard for lite
         maxPlans: isLite ? 3 : (isPro ? 999 : 10), // Lite: 3, Standard: 10, Pro: unlimited
+        brandId,
       };
     },
     enabled: !!gymId,
