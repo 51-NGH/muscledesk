@@ -46,6 +46,25 @@ export function MemberProfile({
   const memberPayments = allPayments.filter((p) => p.member_id === member.id);
   const totalPaid = memberPayments.reduce((sum, p) => sum + Number(p.amount), 0);
 
+  // Calculate real-time status based on expiry date
+  const getRealTimeStatus = () => {
+    if (member.is_blocked) return "blocked";
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expiryDate = new Date(member.expiry_date);
+    expiryDate.setHours(0, 0, 0, 0);
+    
+    if (expiryDate < today) return "expired";
+    
+    const sevenDaysFromNow = new Date(today);
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+    
+    if (expiryDate <= sevenDaysFromNow) return "expiring_soon";
+    
+    return "active";
+  };
+
   const handleDownloadQR = () => {
     if (!qrRef.current) return;
     
@@ -97,7 +116,7 @@ export function MemberProfile({
                   <h3 className="mt-4 text-xl font-semibold text-foreground">{member.full_name}</h3>
                   <p className="text-sm text-muted-foreground font-mono">ID: {member.member_id}</p>
                   <div className="mt-2">
-                    <StatusBadge status={member.is_blocked ? "blocked" : member.status} />
+                    <StatusBadge status={getRealTimeStatus()} />
                   </div>
                 </div>
 
