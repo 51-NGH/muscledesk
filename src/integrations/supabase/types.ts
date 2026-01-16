@@ -106,6 +106,36 @@ export type Database = {
           },
         ]
       }
+      brands: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       expenses: {
         Row: {
           amount: number
@@ -182,6 +212,7 @@ export type Database = {
       gyms: {
         Row: {
           address: string | null
+          brand_id: string | null
           city: string | null
           created_at: string
           deleted_at: string | null
@@ -199,6 +230,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          brand_id?: string | null
           city?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -216,6 +248,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          brand_id?: string | null
           city?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -231,7 +264,15 @@ export type Database = {
           plan?: Database["public"]["Enums"]["gym_plan"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "gyms_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       members: {
         Row: {
@@ -659,6 +700,56 @@ export type Database = {
       generate_member_id: { Args: { _gym_id: string }; Returns: string }
       generate_portal_token: { Args: never; Returns: string }
       generate_qr_token: { Args: never; Returns: string }
+      get_brand_analytics: {
+        Args: { _brand_id: string }
+        Returns: {
+          active_members: number
+          monthly_revenue: number
+          today_attendance: number
+          total_gyms: number
+          total_members: number
+          total_revenue: number
+        }[]
+      }
+      get_brand_branch_stats: {
+        Args: { _brand_id: string }
+        Returns: {
+          active_members: number
+          city: string
+          gym_id: string
+          gym_name: string
+          monthly_revenue: number
+          today_attendance: number
+          total_members: number
+        }[]
+      }
+      get_brand_gyms: {
+        Args: { _brand_id: string }
+        Returns: {
+          address: string | null
+          brand_id: string | null
+          city: string | null
+          created_at: string
+          deleted_at: string | null
+          email: string | null
+          features_locked: Json | null
+          id: string
+          is_active: boolean
+          logo_url: string | null
+          member_limit: number
+          name: string
+          owner_id: string
+          phone: string | null
+          plan: Database["public"]["Enums"]["gym_plan"]
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "gyms"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_daily_attendance: {
         Args: { _days_back?: number; _gym_id: string }
         Returns: {
