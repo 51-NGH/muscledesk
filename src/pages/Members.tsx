@@ -31,6 +31,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -467,10 +468,20 @@ export default function Members() {
       )}
 
       {/* Add Member Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+      <Dialog 
+        open={isAddDialogOpen} 
+        onOpenChange={(open) => {
+          // Only triggered by X button (not Cancel)
+          // Keep data when closing via X
+          setIsAddDialogOpen(open);
+        }}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Add New Member</DialogTitle>
+            <DialogDescription>
+              Fill in the details below to add a new gym member.
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleAddMember} className="space-y-4">
             <div className="space-y-2">
@@ -486,9 +497,12 @@ export default function Members() {
               <Label>Phone Number *</Label>
               <Input
                 type="tel"
-                maxDigits={10}
+                maxLength={10}
                 value={newMember.phone}
-                onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                  setNewMember({ ...newMember, phone: value });
+                }}
                 placeholder="9876543210"
                 required
               />
@@ -547,7 +561,14 @@ export default function Members() {
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  resetNewMember();
+                  setIsAddDialogOpen(false);
+                }}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={createMember.isPending}>
@@ -575,10 +596,19 @@ export default function Members() {
       )}
 
       {/* Edit Member Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog 
+        open={isEditDialogOpen} 
+        onOpenChange={(open) => {
+          // Only triggered by X button - keep data
+          setIsEditDialogOpen(open);
+        }}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Member</DialogTitle>
+            <DialogDescription>
+              Update the member's information below.
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleEditMember} className="space-y-4">
             <div className="space-y-2">
@@ -593,9 +623,12 @@ export default function Members() {
               <Label>Phone Number *</Label>
               <Input
                 type="tel"
-                maxDigits={10}
+                maxLength={10}
                 value={newMember.phone}
-                onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                  setNewMember({ ...newMember, phone: value });
+                }}
                 required
               />
             </div>
@@ -640,7 +673,15 @@ export default function Members() {
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  resetNewMember();
+                  setSelectedMember(null);
+                  setIsEditDialogOpen(false);
+                }}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={updateMember.isPending}>
