@@ -20,21 +20,31 @@ export default function MemberQRCode() {
   const { triggerScanSuccess, triggerScanError, triggerScanWarning } = useHapticFeedback();
   const { playSound, prepareAudio } = useAudioFeedback();
 
-  // Memoized callback for check-in detection
+  // Store functions in refs to avoid dependency issues
+  const playSuccessSoundRef = useRef(() => playSound('approve'));
+  const triggerHapticRef = useRef(triggerScanSuccess);
+  
+  // Update refs when functions change
+  useEffect(() => {
+    playSuccessSoundRef.current = () => playSound('approve');
+    triggerHapticRef.current = triggerScanSuccess;
+  }, [playSound, triggerScanSuccess]);
+
+  // Memoized callback for check-in detection - stable reference
   const handleCheckInDetected = useCallback(() => {
     console.log('[MemberQR] Check-in detected! Triggering feedback...');
     
     // Trigger success animation
     setShowSuccessPulse(true);
     
-    // Play success sound - this should work on all devices
+    // Play success sound
     console.log('[MemberQR] Playing approval sound...');
-    playSound('approve');
+    playSuccessSoundRef.current();
     
     // Trigger haptic feedback with slight delay
     console.log('[MemberQR] Triggering haptic...');
     setTimeout(() => {
-      const hapticResult = triggerScanSuccess();
+      const hapticResult = triggerHapticRef.current();
       console.log('[MemberQR] Haptic result:', hapticResult);
     }, 50);
     
@@ -48,7 +58,7 @@ export default function MemberQRCode() {
     setTimeout(() => {
       setShowSuccessPulse(false);
     }, 3000);
-  }, [playSound, triggerScanSuccess]);
+  }, []); // No dependencies - uses refs
 
   // Track last known attendance to detect new check-ins
   const lastAttendanceRef = useRef<string | null>(null);
@@ -61,8 +71,9 @@ export default function MemberQRCode() {
       return;
     }
 
-    console.log('[MemberQR] Setting up secure polling for member:', member.id);
-    setPollingStatus(`Polling for ${member.id.slice(0,8)}...`);
+    const memberId = member.id;
+    console.log('[MemberQR] Setting up secure polling for member:', memberId);
+    setPollingStatus(`Polling for ${memberId.slice(0,8)}...`);
     
     // Prepare audio context on mount
     prepareAudio();
@@ -72,7 +83,7 @@ export default function MemberQRCode() {
       try {
         // Call edge function to get latest attendance (bypasses RLS securely)
         const { data, error } = await supabase.functions.invoke('get-member-latest-attendance', {
-          body: { member_id: member.id }
+          body: { member_id: memberId }
         });
 
         console.log('[MemberQR] Polling response:', { data, error });
@@ -113,7 +124,7 @@ export default function MemberQRCode() {
       console.log('[MemberQR] Cleaning up polling');
       clearInterval(intervalId);
     };
-  }, [member?.id, handleCheckInDetected, prepareAudio]);
+  }, [member?.id]); // Only depend on member ID - other functions use refs
 
   // DEBUG: Test button for manual trigger
   const handleTestCheckIn = () => {
