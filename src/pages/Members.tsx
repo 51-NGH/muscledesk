@@ -32,6 +32,7 @@ import {
   Upload,
 } from "lucide-react";
 import { BulkMemberImport } from "@/components/BulkMemberImport";
+import { ImportHistoryLog } from "@/components/ImportHistoryLog";
 import {
   Dialog,
   DialogContent,
@@ -329,7 +330,12 @@ export default function Members() {
   return (
     <DashboardLayout>
       <PageHeader title="Members" description="Manage your gym members and memberships">
-        {features?.hasBulkImport && <BulkMemberImport />}
+        {features?.hasBulkImport && (
+          <>
+            <ImportHistoryLog />
+            <BulkMemberImport />
+          </>
+        )}
         <Button variant="outline" size="sm" onClick={handleExport} className="hidden sm:flex">
           <Download className="mr-2 h-4 w-4" />
           Export

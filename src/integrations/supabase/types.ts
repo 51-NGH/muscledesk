@@ -274,6 +274,56 @@ export type Database = {
           },
         ]
       }
+      import_logs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          error_details: Json | null
+          failure_count: number
+          file_name: string
+          file_type: string
+          gym_id: string
+          id: string
+          plans_created: number
+          success_count: number
+          total_rows: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          error_details?: Json | null
+          failure_count?: number
+          file_name: string
+          file_type?: string
+          gym_id: string
+          id?: string
+          plans_created?: number
+          success_count?: number
+          total_rows?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          error_details?: Json | null
+          failure_count?: number
+          file_name?: string
+          file_type?: string
+          gym_id?: string
+          id?: string
+          plans_created?: number
+          success_count?: number
+          total_rows?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_logs_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       members: {
         Row: {
           auth_user_id: string | null
