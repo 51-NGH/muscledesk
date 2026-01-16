@@ -34,22 +34,29 @@ import MemberQRCode from "./pages/member/MemberQRCode";
 import MemberAttendance from "./pages/member/MemberAttendance";
 import MemberPayments from "./pages/member/MemberPayments";
 
-// Optimized QueryClient with real-time updates support
+// Ultra-fast QueryClient - zero stale time for instant real-time updates
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Data is always stale - realtime invalidation triggers immediate refetch
+      // CRITICAL: Zero stale time - any invalidation triggers immediate refetch
       staleTime: 0,
-      // Keep unused data in cache for 5 minutes
-      gcTime: 5 * 60 * 1000,
-      // Retry failed requests once
+      // Keep data in cache for quick display while refetching
+      gcTime: 2 * 60 * 1000, // 2 minutes
+      // Single retry on failure
       retry: 1,
-      // Don't refetch on window focus - realtime handles updates
+      // Don't refetch on window focus - realtime subscriptions handle this
       refetchOnWindowFocus: false,
-      // Always refetch on mount
+      // Always refetch fresh data on mount
       refetchOnMount: 'always',
-      // Don't refetch on reconnect - realtime will catch up
-      refetchOnReconnect: false,
+      // Refetch when network reconnects to sync any missed updates
+      refetchOnReconnect: true,
+      // Always attempt network requests
+      networkMode: 'always',
+    },
+    mutations: {
+      // Single retry for mutations
+      retry: 1,
+      networkMode: 'always',
     },
   },
 });

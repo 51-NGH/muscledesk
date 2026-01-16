@@ -125,8 +125,7 @@ export function useMembers() {
       return (data || []) as Member[];
     },
     enabled: !!gymId,
-    staleTime: 1000 * 60 * 2, // 2 minutes - data stays fresh
-    gcTime: 1000 * 60 * 10, // 10 minutes cache
+    // No staleTime - realtime handles freshness
   });
 }
 
@@ -213,8 +212,10 @@ export function useCreateMember() {
       return data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["members", gymId] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard_stats", gymId] });
+      // Immediately invalidate and refetch all related queries
+      queryClient.invalidateQueries({ queryKey: ["members"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["expiring-members"], refetchType: 'all' });
       if (variables.email) {
         toast.success("Member added! Welcome email sent.");
       } else {
@@ -249,8 +250,9 @@ export function useUpdateMember() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["members", gymId] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard_stats", gymId] });
+      queryClient.invalidateQueries({ queryKey: ["members"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["expiring-members"], refetchType: 'all' });
       toast.success("Member updated successfully!");
     },
     onError: (error: Error) => {
@@ -316,8 +318,11 @@ export function useDeleteMember() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["members", gymId] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard_stats", gymId] });
+      queryClient.invalidateQueries({ queryKey: ["members"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["expiring-members"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["attendance"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["payments"], refetchType: 'all' });
       toast.success("Member permanently deleted!");
     },
     onError: (error: Error) => {
@@ -340,14 +345,13 @@ export function usePayments() {
         .select("*, member:members(full_name, member_id)")
         .eq("gym_id", gymId)
         .order("created_at", { ascending: false })
-        .limit(200); // Limit for faster loading
+        .limit(200);
 
       if (error) throw error;
       return (data || []) as unknown as PaymentWithMember[];
     },
     enabled: !!gymId,
-    staleTime: 1000 * 60 * 2, // 2 minutes fresh
-    gcTime: 1000 * 60 * 10, // 10 minutes cache
+    // No staleTime - realtime handles freshness
   });
 }
 
@@ -402,9 +406,11 @@ export function useCreatePayment() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["payments", gymId] });
-      queryClient.invalidateQueries({ queryKey: ["members", gymId] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard_stats", gymId] });
+      queryClient.invalidateQueries({ queryKey: ["payments"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["members"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["monthly-revenue"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["expiring-members"], refetchType: 'all' });
       toast.success("Payment recorded successfully!");
     },
     onError: (error: Error) => {
@@ -465,8 +471,9 @@ export function useCreateExpense() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["expenses", gymId] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard_stats", gymId] });
+      queryClient.invalidateQueries({ queryKey: ["expenses"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["monthly-expenses"], refetchType: 'all' });
       toast.success("Expense recorded successfully!");
     },
     onError: (error: Error) => {
@@ -525,8 +532,10 @@ export function useRecordAttendance() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["attendance", gymId] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard_stats", gymId] });
+      queryClient.invalidateQueries({ queryKey: ["attendance"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["daily-attendance"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["members"], refetchType: 'all' });
       toast.success("Attendance recorded!");
     },
     onError: (error: Error) => {
@@ -540,7 +549,7 @@ export function useMembershipPlans() {
   const { gymId } = useAuth();
 
   return useQuery({
-    queryKey: ["membership_plans", gymId],
+    queryKey: ["membership-plans", gymId],
     queryFn: async () => {
       if (!gymId) return [];
 
@@ -555,8 +564,7 @@ export function useMembershipPlans() {
       return (data || []) as MembershipPlan[];
     },
     enabled: !!gymId,
-    staleTime: 1000 * 60 * 5, // 5 minutes - plans don't change often
-    gcTime: 1000 * 60 * 15, // 15 minutes cache
+    // No staleTime - realtime handles freshness
   });
 }
 
@@ -589,7 +597,7 @@ export function useCreatePlan() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["membership_plans", gymId] });
+      queryClient.invalidateQueries({ queryKey: ["membership-plans"], refetchType: 'all' });
       toast.success("Plan created successfully!");
     },
     onError: (error: Error) => {
@@ -616,7 +624,7 @@ export function useUpdatePlan() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["membership_plans", gymId] });
+      queryClient.invalidateQueries({ queryKey: ["membership-plans"], refetchType: 'all' });
       toast.success("Plan updated successfully!");
     },
     onError: (error: Error) => {
@@ -641,7 +649,7 @@ export function useDeletePlan() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["membership_plans", gymId] });
+      queryClient.invalidateQueries({ queryKey: ["membership-plans"], refetchType: 'all' });
       toast.success("Plan deleted successfully!");
     },
     onError: (error: Error) => {
@@ -655,7 +663,7 @@ export function useDashboardStats() {
   const { gymId } = useAuth();
 
   return useQuery({
-    queryKey: ["dashboard_stats", gymId],
+    queryKey: ["dashboard-stats", gymId],
     queryFn: async () => {
       if (!gymId) return null;
 
@@ -732,9 +740,7 @@ export function useDashboardStats() {
       };
     },
     enabled: !!gymId,
-    staleTime: 1000 * 60, // 1 minute fresh
-    gcTime: 1000 * 60 * 5, // 5 minutes cache
-    refetchInterval: 60000, // Refresh every 60 seconds (was 30)
+    // No staleTime or refetchInterval - realtime handles updates
   });
 }
 
@@ -743,7 +749,7 @@ export function useExpiringMembers(daysAhead: number = 7) {
   const { gymId } = useAuth();
 
   return useQuery({
-    queryKey: ["expiring_members", gymId, daysAhead],
+    queryKey: ["expiring-members", gymId, daysAhead],
     queryFn: async () => {
       if (!gymId) return [];
 
@@ -756,8 +762,7 @@ export function useExpiringMembers(daysAhead: number = 7) {
       return data || [];
     },
     enabled: !!gymId,
-    staleTime: 1000 * 60 * 2, // 2 minutes fresh
-    gcTime: 1000 * 60 * 10, // 10 minutes cache
+    // No staleTime - realtime handles freshness
   });
 }
 
@@ -766,7 +771,7 @@ export function useMonthlyRevenue(monthsBack: number = 6) {
   const { gymId } = useAuth();
 
   return useQuery({
-    queryKey: ["monthly_revenue", gymId, monthsBack],
+    queryKey: ["monthly-revenue", gymId, monthsBack],
     queryFn: async () => {
       if (!gymId) return [];
 
@@ -779,6 +784,7 @@ export function useMonthlyRevenue(monthsBack: number = 6) {
       return data || [];
     },
     enabled: !!gymId,
+    // No staleTime - realtime handles freshness
   });
 }
 
@@ -787,7 +793,7 @@ export function useMonthlyExpenses(monthsBack: number = 6) {
   const { gymId } = useAuth();
 
   return useQuery({
-    queryKey: ["monthly_expenses", gymId, monthsBack],
+    queryKey: ["monthly-expenses", gymId, monthsBack],
     queryFn: async () => {
       if (!gymId) return [];
 
@@ -800,6 +806,7 @@ export function useMonthlyExpenses(monthsBack: number = 6) {
       return data || [];
     },
     enabled: !!gymId,
+    // No staleTime - realtime handles freshness
   });
 }
 
@@ -808,7 +815,7 @@ export function useDailyAttendance(daysBack: number = 7) {
   const { gymId } = useAuth();
 
   return useQuery({
-    queryKey: ["daily_attendance", gymId, daysBack],
+    queryKey: ["daily-attendance", gymId, daysBack],
     queryFn: async () => {
       if (!gymId) return [];
 
@@ -821,5 +828,6 @@ export function useDailyAttendance(daysBack: number = 7) {
       return data || [];
     },
     enabled: !!gymId,
+    // No staleTime - realtime handles freshness
   });
 }
