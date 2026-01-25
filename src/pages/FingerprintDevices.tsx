@@ -16,10 +16,14 @@ import { DeviceRegistrationDialog } from "@/components/fingerprint/DeviceRegistr
 import { FingerprintEnrollmentDialog } from "@/components/fingerprint/FingerprintEnrollmentDialog";
 import { EnrolledMembersTable } from "@/components/fingerprint/EnrolledMembersTable";
 import { RecentFingerprintAttendance } from "@/components/fingerprint/RecentFingerprintAttendance";
+import { useFingerprintRealtimeSubscription } from "@/hooks/useFingerprintRealtimeSubscription";
 
 export default function FingerprintDevices() {
   const [showRegisterDialog, setShowRegisterDialog] = useState(false);
   const [showEnrollDialog, setShowEnrollDialog] = useState(false);
+  
+  // Enable real-time updates for fingerprint attendance
+  useFingerprintRealtimeSubscription();
   
   return (
     <DashboardLayout>
