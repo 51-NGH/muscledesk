@@ -180,6 +180,102 @@ export type Database = {
           },
         ]
       }
+      fingerprint_devices: {
+        Row: {
+          api_key: string
+          created_at: string
+          device_ip: string | null
+          device_name: string
+          device_serial: string
+          gym_id: string
+          id: string
+          is_active: boolean
+          last_seen_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          api_key?: string
+          created_at?: string
+          device_ip?: string | null
+          device_name: string
+          device_serial: string
+          gym_id: string
+          id?: string
+          is_active?: boolean
+          last_seen_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          api_key?: string
+          created_at?: string
+          device_ip?: string | null
+          device_name?: string
+          device_serial?: string
+          gym_id?: string
+          id?: string
+          is_active?: boolean
+          last_seen_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fingerprint_devices_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fingerprint_templates: {
+        Row: {
+          created_at: string
+          device_id: string | null
+          fingerprint_uid: string
+          gym_id: string
+          id: string
+          member_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id?: string | null
+          fingerprint_uid: string
+          gym_id: string
+          id?: string
+          member_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string | null
+          fingerprint_uid?: string
+          gym_id?: string
+          id?: string
+          member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fingerprint_templates_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "fingerprint_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fingerprint_templates_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fingerprint_templates_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gym_staff: {
         Row: {
           created_at: string
@@ -914,6 +1010,10 @@ export type Database = {
         Args: { _gym_id?: string; _qr_token: string }
         Returns: Json
       }
+      ingest_fingerprint_attendance: {
+        Args: { _api_key: string; _fingerprint_uid: string }
+        Returns: Json
+      }
       is_gym_staff: {
         Args: { _gym_id: string; _user_id: string }
         Returns: boolean
@@ -922,6 +1022,14 @@ export type Database = {
       owns_gym: {
         Args: { _gym_id: string; _user_id: string }
         Returns: boolean
+      }
+      register_fingerprint_template: {
+        Args: {
+          _device_id?: string
+          _fingerprint_uid: string
+          _member_id: string
+        }
+        Returns: Json
       }
       renew_membership: {
         Args: {
@@ -943,7 +1051,7 @@ export type Database = {
     }
     Enums: {
       app_role: "super_admin" | "gym_owner" | "staff"
-      attendance_source: "qr" | "manual"
+      attendance_source: "qr" | "manual" | "fingerprint"
       expense_category:
         | "rent"
         | "salary"
@@ -1082,7 +1190,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["super_admin", "gym_owner", "staff"],
-      attendance_source: ["qr", "manual"],
+      attendance_source: ["qr", "manual", "fingerprint"],
       expense_category: [
         "rent",
         "salary",
