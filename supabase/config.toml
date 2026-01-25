@@ -1,1 +1,10 @@
 project_id = "thjckvsuymxwyjsviokj"
+
+[functions.fingerprint-attendance]
+verify_jwt = false
+
+[functions.register-device]
+verify_jwt = false
+
+[functions.device-heartbeat]
+verify_jwt = false
