@@ -27,6 +27,7 @@ import Reminders from "./pages/Reminders";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Equipment from "./pages/Equipment";
+import FingerprintDevices from "./pages/FingerprintDevices";
 
 // Member portal pages
 import MemberLogin from "./pages/member/MemberLogin";
@@ -103,6 +104,7 @@ const App = () => (
                   <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
                   <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
                   <Route path="/reminders" element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
+                  <Route path="/fingerprint-devices" element={<ProtectedRoute><FingerprintDevices /></ProtectedRoute>} />
                   <Route path="/super-admin" element={<ProtectedRoute requireRole="super_admin"><SuperAdmin /></ProtectedRoute>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

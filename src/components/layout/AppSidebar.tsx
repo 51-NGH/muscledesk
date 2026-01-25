@@ -11,6 +11,7 @@ import {
   Receipt,
   Shield,
   Bell,
+  Fingerprint,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,6 +24,7 @@ const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Members", url: "/members", icon: Users },
   { title: "Attendance", url: "/attendance", icon: Calendar },
+  { title: "Fingerprint", url: "/fingerprint-devices", icon: Fingerprint },
   { title: "Plans", url: "/plans", icon: CreditCard },
   { title: "Payments", url: "/payments", icon: DollarSign },
   { title: "Expenses", url: "/expenses", icon: Receipt },
