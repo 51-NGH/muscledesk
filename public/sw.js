@@ -1,7 +1,7 @@
 // MuscleDesk Service Worker for Push Notifications and Offline Support
 // Version is updated on each publish to force cache refresh
 
-const CACHE_VERSION = 'v2-' + Date.now(); // Forces new cache on each deploy
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = 'muscledesk-' + CACHE_VERSION;
 const OFFLINE_URLS = [
   '/member/qr',
