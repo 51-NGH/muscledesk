@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import muscledeskMembersDark from "@/assets/muscledesk-members-dark.png";
 import muscledeskMembersLight from "@/assets/muscledesk-members-light.png";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
 
 interface MemberLayoutProps {
@@ -58,7 +58,7 @@ export function MemberLayout({ children, title, showBack, containerRef }: Member
   const { signOut, isOffline, member } = useMemberAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { resolvedTheme } = useTheme();
+  const { actualTheme } = useTheme();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   
@@ -68,7 +68,7 @@ export function MemberLayout({ children, title, showBack, containerRef }: Member
   // Subscribe to real-time updates for member data
   useMemberRealtimeSubscription();
   
-  const memberLogo = resolvedTheme === "dark" ? muscledeskMembersDark : muscledeskMembersLight;
+  const memberLogo = actualTheme === "dark" ? muscledeskMembersDark : muscledeskMembersLight;
 
   // Fetch unread message count
   const fetchUnreadCount = useCallback(async () => {
@@ -78,13 +78,13 @@ export function MemberLayout({ children, title, showBack, containerRef }: Member
       const { data, error } = await supabase.functions.invoke('member-portal-data', {
         body: { 
           action: 'get-unread-count',
-          memberId: member.id,
-          gymId: member.gym_id
+          member_id: member.id,
+          gym_id: member.gym_id
         }
       });
       
-      if (!error && data?.count !== undefined) {
-        setUnreadCount(data.count);
+      if (!error && data?.unread_count !== undefined) {
+        setUnreadCount(data.unread_count);
       }
     } catch (err) {
       console.error('Failed to fetch unread count:', err);
