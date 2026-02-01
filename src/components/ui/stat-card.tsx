@@ -1,30 +1,18 @@
-import { forwardRef } from "react";
+import * as React from "react";
 import { cn } from "@/lib/utils";
 import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
 
-interface StatCardProps {
+interface StatCardProps extends React.HTMLAttributes<HTMLDivElement> {
   title: string;
   value: string | number;
   subtitle?: string;
   icon: LucideIcon;
   iconVariant?: "teal" | "green" | "orange" | "red" | "blue";
   change?: number;
-  className?: string;
 }
 
-export const StatCard = forwardRef<HTMLDivElement, StatCardProps>(
-  function StatCard(
-    {
-      title,
-      value,
-      subtitle,
-      icon: Icon,
-      iconVariant = "teal",
-      change,
-      className,
-    },
-    ref
-  ) {
+export const StatCard = React.forwardRef<HTMLDivElement, StatCardProps>(
+  ({ title, value, subtitle, icon: Icon, iconVariant = "teal", change, className, ...props }, ref) => {
     const iconVariants = {
       teal: "stat-icon-teal",
       green: "stat-icon-green",
@@ -49,6 +37,7 @@ export const StatCard = forwardRef<HTMLDivElement, StatCardProps>(
           glowVariants[iconVariant],
           className
         )}
+        {...props}
       >
         <div className="flex items-start justify-between">
           <div
@@ -89,3 +78,5 @@ export const StatCard = forwardRef<HTMLDivElement, StatCardProps>(
     );
   }
 );
+
+StatCard.displayName = "StatCard";
