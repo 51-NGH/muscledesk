@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-
+import { mapDatabaseError } from "@/lib/errorMapper";
 interface ClassSchedule {
   id: string;
   scheduled_at: string;
@@ -68,7 +68,7 @@ export default function MemberClasses() {
       toast.success("Class booked! 🎉");
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(mapDatabaseError(error));
     }
   });
 

@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { mapDatabaseError } from "@/lib/errorMapper";
 
 interface SupportMessage {
   id: string;
@@ -77,7 +78,7 @@ export default function MemberSupport() {
       toast.success("Message sent! 📩");
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(mapDatabaseError(error));
     }
   });
 

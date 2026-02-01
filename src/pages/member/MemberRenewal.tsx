@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { mapDatabaseError } from "@/lib/errorMapper";
 
 interface MembershipPlan {
   id: string;
@@ -97,7 +98,7 @@ export default function MemberRenewal() {
       toast.success("Renewal request submitted! 📩");
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(mapDatabaseError(error));
     }
   });
 

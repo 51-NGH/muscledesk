@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { mapDatabaseError } from "@/lib/errorMapper";
 
 interface GoalProgress {
   weekly_visits: number;
@@ -57,7 +58,7 @@ export default function MemberGoals() {
       toast.success("Goal set! 🎯");
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(mapDatabaseError(error));
     }
   });
 

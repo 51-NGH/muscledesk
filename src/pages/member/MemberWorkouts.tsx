@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { mapDatabaseError } from "@/lib/errorMapper";
 
 interface Exercise {
   id: string;
@@ -97,7 +98,7 @@ export default function MemberWorkouts() {
       toast.success("Workout logged! 💪");
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(mapDatabaseError(error));
     }
   });
 

@@ -9,6 +9,7 @@ import { Dumbbell, Lock, Mail, Loader2, Activity, Calendar, QrCode, Trophy, Wifi
 import muscledeskMembersDark from "@/assets/muscledesk-members-dark.png";
 import muscledeskMembersLight from "@/assets/muscledesk-members-light.png";
 import { useTheme } from "next-themes";
+import { mapAuthError } from "@/lib/errorMapper";
 
 export default function MemberLogin() {
   const [email, setEmail] = useState("");
@@ -51,7 +52,7 @@ export default function MemberLogin() {
     const { error } = await signIn(email, pin);
 
     if (error) {
-      toast.error(error.message);
+      toast.error(mapAuthError(error));
       setIsLoading(false);
       return;
     }
