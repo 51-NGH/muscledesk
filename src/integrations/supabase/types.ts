@@ -250,6 +250,42 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_read_receipts: {
+        Row: {
+          id: string
+          member_id: string
+          message_id: string
+          read_at: string
+        }
+        Insert: {
+          id?: string
+          member_id: string
+          message_id: string
+          read_at?: string
+        }
+        Update: {
+          id?: string
+          member_id?: string
+          message_id?: string
+          read_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_read_receipts_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_read_receipts_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "gym_chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_bookings: {
         Row: {
           booked_at: string
@@ -530,6 +566,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "gym_announcements_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gym_chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          gym_id: string
+          id: string
+          is_pinned: boolean
+          message_type: string
+          metadata: Json | null
+          sender_id: string
+          sender_name: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          gym_id: string
+          id?: string
+          is_pinned?: boolean
+          message_type?: string
+          metadata?: Json | null
+          sender_id: string
+          sender_name: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          gym_id?: string
+          id?: string
+          is_pinned?: boolean
+          message_type?: string
+          metadata?: Json | null
+          sender_id?: string
+          sender_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_chat_messages_gym_id_fkey"
             columns: ["gym_id"]
             isOneToOne: false
             referencedRelation: "gyms"

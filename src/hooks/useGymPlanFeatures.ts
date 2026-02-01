@@ -27,6 +27,7 @@ export interface PlanFeatures {
   hasAuditLogs: boolean;
   hasBulkImport: boolean;
   hasWhiteLabel: boolean; // Custom gym logo on member portal
+  hasRcsChat: boolean; // RCS-style chat for Pro gyms
   // Brand info for multi-branch
   brandId: string | null;
 }
@@ -52,6 +53,7 @@ const DEFAULT_FEATURES: PlanFeatures = {
   hasAuditLogs: false,
   hasBulkImport: false,
   hasWhiteLabel: false,
+  hasRcsChat: false,
   brandId: null,
 };
 
@@ -118,6 +120,7 @@ export function useGymPlanFeatures() {
         hasAuditLogs: isPro,
         hasBulkImport: isPro,
         hasWhiteLabel: isPro,
+        hasRcsChat: isPro,
         brandId,
       };
     },
