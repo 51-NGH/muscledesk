@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Lock, Eye, EyeOff, Loader2, User, TrendingUp, Users, Calendar, ChartBar } from "lucide-react";
 import { toast } from "sonner";
+import { mapAuthError } from "@/lib/errorMapper";
 import muscleDeskLogo from "@/assets/muscledesk-logo.png";
 
 export default function Login() {
@@ -26,7 +27,7 @@ export default function Login() {
       if (isSignUp) {
         const { error } = await signUp(email, password, fullName);
         if (error) {
-          toast.error(error.message);
+          toast.error(mapAuthError(error));
         } else {
           toast.success("Account created successfully! You can now log in.");
           setIsSignUp(false);
@@ -34,14 +35,14 @@ export default function Login() {
       } else {
         const { error } = await signIn(email, password);
         if (error) {
-          toast.error(error.message);
+          toast.error(mapAuthError(error));
         } else {
           toast.success("Welcome back!");
           navigate("/");
         }
       }
     } catch (error) {
-      toast.error("An unexpected error occurred");
+      toast.error(mapAuthError(error));
     } finally {
       setIsLoading(false);
     }
