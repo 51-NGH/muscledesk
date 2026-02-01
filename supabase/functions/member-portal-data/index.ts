@@ -473,6 +473,94 @@ serve(async (req) => {
       });
     }
 
+    // =================== RCS CHAT (Pro Feature - Read Only for Members) ===================
+    if (action === "get-chat-messages") {
+      const { data: messages, error } = await supabaseAdmin
+        .from("gym_chat_messages")
+        .select("*")
+        .eq("gym_id", memberGymId)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+
+      // Get read receipts for this member
+      const messageIds = messages?.map(m => m.id) || [];
+      const { data: readReceipts } = await supabaseAdmin
+        .from("chat_read_receipts")
+        .select("message_id")
+        .eq("member_id", member_id)
+        .in("message_id", messageIds);
+
+      const readMessageIds = new Set(readReceipts?.map(r => r.message_id) || []);
+      
+      // Enrich messages with read status
+      const enrichedMessages = messages?.map(m => ({
+        ...m,
+        is_read: readMessageIds.has(m.id)
+      })) || [];
+
+      // Count unread messages
+      const unreadCount = enrichedMessages.filter(m => !m.is_read).length;
+
+      return new Response(JSON.stringify({ 
+        messages: enrichedMessages.reverse(), // Oldest first for chat display
+        unread_count: unreadCount 
+      }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    if (action === "mark-messages-read") {
+      const { message_ids } = data as { message_ids: string[] };
+      
+      if (message_ids && message_ids.length > 0) {
+        // Insert read receipts (ignore conflicts)
+        const receipts = message_ids.map(id => ({
+          message_id: id,
+          member_id
+        }));
+
+        await supabaseAdmin
+          .from("chat_read_receipts")
+          .upsert(receipts, { onConflict: "message_id,member_id", ignoreDuplicates: true });
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    if (action === "get-unread-count") {
+      // Get all message IDs for this gym
+      const { data: messages } = await supabaseAdmin
+        .from("gym_chat_messages")
+        .select("id")
+        .eq("gym_id", memberGymId);
+
+      const messageIds = messages?.map(m => m.id) || [];
+
+      if (messageIds.length === 0) {
+        return new Response(JSON.stringify({ unread_count: 0 }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      // Get read receipts
+      const { data: readReceipts } = await supabaseAdmin
+        .from("chat_read_receipts")
+        .select("message_id")
+        .eq("member_id", member_id)
+        .in("message_id", messageIds);
+
+      const readCount = readReceipts?.length || 0;
+      const unreadCount = messageIds.length - readCount;
+
+      return new Response(JSON.stringify({ unread_count: unreadCount }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
     return new Response(JSON.stringify({ error: "Invalid action" }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
     });

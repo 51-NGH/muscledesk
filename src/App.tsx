@@ -28,7 +28,7 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Equipment from "./pages/Equipment";
 import FingerprintDevices from "./pages/FingerprintDevices";
-
+import GymChat from "./pages/GymChat";
 // Member portal pages
 import MemberLogin from "./pages/member/MemberLogin";
 import MemberSetupPin from "./pages/member/MemberSetupPin";
@@ -44,6 +44,7 @@ import MemberGoals from "./pages/member/MemberGoals";
 import MemberClasses from "./pages/member/MemberClasses";
 import MemberRenewal from "./pages/member/MemberRenewal";
 import MemberSupport from "./pages/member/MemberSupport";
+import MemberChat from "./pages/member/MemberChat";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -130,6 +131,11 @@ const App = () => (
                 <MemberProtectedRoute><MemberSupport /></MemberProtectedRoute>
               </MemberAuthProvider>
             } />
+            <Route path="/member/chat" element={
+              <MemberAuthProvider>
+                <MemberProtectedRoute><MemberChat /></MemberProtectedRoute>
+              </MemberAuthProvider>
+            } />
 
             {/* Admin Routes - wrapped in AuthProvider */}
             <Route path="/*" element={
@@ -147,6 +153,7 @@ const App = () => (
                   <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
                   <Route path="/reminders" element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
                   <Route path="/fingerprint-devices" element={<ProtectedRoute><FingerprintDevices /></ProtectedRoute>} />
+                  <Route path="/chat" element={<ProtectedRoute><GymChat /></ProtectedRoute>} />
                   <Route path="/super-admin" element={<ProtectedRoute requireRole="super_admin"><SuperAdmin /></ProtectedRoute>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
