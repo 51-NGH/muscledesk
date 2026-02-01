@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { mapDatabaseError } from "@/lib/errorMapper";
 
 // Types
 export type MemberStatus = "active" | "expiring_soon" | "expired" | "blocked";
@@ -238,13 +239,7 @@ export function useCreateMember() {
       }
     },
     onError: (error: Error) => {
-      if (error.message.includes("members_gym_phone_unique") || error.message.includes("idx_members_phone_gym_unique")) {
-        toast.error("A member with this phone number already exists");
-      } else if (error.message.includes("email already exists")) {
-        toast.error("A member with this email already exists");
-      } else {
-        toast.error(error.message);
-      }
+      toast.error(mapDatabaseError(error));
     },
   });
 }
@@ -292,13 +287,7 @@ export function useUpdateMember() {
       toast.success("Member updated successfully!");
     },
     onError: (error: Error) => {
-      if (error.message.includes("idx_members_phone_gym_unique")) {
-        toast.error("A member with this phone number already exists");
-      } else if (error.message.includes("email already exists")) {
-        toast.error("A member with this email already exists");
-      } else {
-        toast.error(error.message);
-      }
+      toast.error(mapDatabaseError(error));
     },
   });
 }
@@ -368,7 +357,7 @@ export function useDeleteMember() {
       toast.success("Member permanently deleted!");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      toast.error(mapDatabaseError(error));
     },
   });
 }
@@ -456,7 +445,7 @@ export function useCreatePayment() {
       toast.success("Payment recorded successfully!");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      toast.error(mapDatabaseError(error));
     },
   });
 }
@@ -519,7 +508,7 @@ export function useCreateExpense() {
       toast.success("Expense recorded successfully!");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      toast.error(mapDatabaseError(error));
     },
   });
 }
