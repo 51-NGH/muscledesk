@@ -37,6 +37,13 @@ import MemberQRCode from "./pages/member/MemberQRCode";
 import MemberAttendance from "./pages/member/MemberAttendance";
 import MemberPayments from "./pages/member/MemberPayments";
 import MemberSettings from "./pages/member/MemberSettings";
+import MemberWorkouts from "./pages/member/MemberWorkouts";
+import MemberMeasurements from "./pages/member/MemberMeasurements";
+import MemberAnnouncements from "./pages/member/MemberAnnouncements";
+import MemberGoals from "./pages/member/MemberGoals";
+import MemberClasses from "./pages/member/MemberClasses";
+import MemberRenewal from "./pages/member/MemberRenewal";
+import MemberSupport from "./pages/member/MemberSupport";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -86,6 +93,41 @@ const App = () => (
             <Route path="/member/settings" element={
               <MemberAuthProvider>
                 <MemberProtectedRoute><MemberSettings /></MemberProtectedRoute>
+              </MemberAuthProvider>
+            } />
+            <Route path="/member/workouts" element={
+              <MemberAuthProvider>
+                <MemberProtectedRoute><MemberWorkouts /></MemberProtectedRoute>
+              </MemberAuthProvider>
+            } />
+            <Route path="/member/measurements" element={
+              <MemberAuthProvider>
+                <MemberProtectedRoute><MemberMeasurements /></MemberProtectedRoute>
+              </MemberAuthProvider>
+            } />
+            <Route path="/member/announcements" element={
+              <MemberAuthProvider>
+                <MemberProtectedRoute><MemberAnnouncements /></MemberProtectedRoute>
+              </MemberAuthProvider>
+            } />
+            <Route path="/member/goals" element={
+              <MemberAuthProvider>
+                <MemberProtectedRoute><MemberGoals /></MemberProtectedRoute>
+              </MemberAuthProvider>
+            } />
+            <Route path="/member/classes" element={
+              <MemberAuthProvider>
+                <MemberProtectedRoute><MemberClasses /></MemberProtectedRoute>
+              </MemberAuthProvider>
+            } />
+            <Route path="/member/renewal" element={
+              <MemberAuthProvider>
+                <MemberProtectedRoute><MemberRenewal /></MemberProtectedRoute>
+              </MemberAuthProvider>
+            } />
+            <Route path="/member/support" element={
+              <MemberAuthProvider>
+                <MemberProtectedRoute><MemberSupport /></MemberProtectedRoute>
               </MemberAuthProvider>
             } />
 
