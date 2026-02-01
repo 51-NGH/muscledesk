@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { mapDatabaseError } from "@/lib/errorMapper";
 
 interface Measurement {
   id: string;
@@ -91,7 +92,7 @@ export default function MemberMeasurements() {
       toast.success("Measurement recorded! 📏");
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(mapDatabaseError(error));
     }
   });
 
