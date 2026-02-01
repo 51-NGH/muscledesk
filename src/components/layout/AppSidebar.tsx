@@ -13,6 +13,7 @@ import {
   Bell,
   Fingerprint,
   MessageCircle,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,6 +30,7 @@ const navItems = [
   { title: "Plans", url: "/plans", icon: CreditCard },
   { title: "Payments", url: "/payments", icon: DollarSign },
   { title: "Expenses", url: "/expenses", icon: Receipt },
+  { title: "Renewals", url: "/renewal-requests", icon: RefreshCw },
   { title: "Reminders", url: "/reminders", icon: Bell },
   { title: "Chat", url: "/chat", icon: MessageCircle, proOnly: true },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
