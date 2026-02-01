@@ -48,8 +48,6 @@ const moreMenuItems = [
   { icon: Ruler, label: "Body Stats", path: "/member/measurements", description: "Track weight, BMI & measurements" },
   { icon: Target, label: "Goals", path: "/member/goals", description: "Set attendance targets" },
   { icon: Calendar, label: "Classes", path: "/member/classes", description: "Book gym classes" },
-  { icon: Megaphone, label: "Announcements", path: "/member/announcements", description: "Gym updates & news" },
-  { icon: MessageCircle, label: "Chat", path: "/member/chat", description: "Messages from your gym", badge: "Pro" },
   { icon: RefreshCw, label: "Renew", path: "/member/renewal", description: "Request membership renewal" },
   { icon: Settings, label: "Settings", path: "/member/settings", description: "App preferences" },
 ];

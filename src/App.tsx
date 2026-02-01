@@ -29,6 +29,7 @@ import NotFound from "./pages/NotFound";
 import Equipment from "./pages/Equipment";
 import FingerprintDevices from "./pages/FingerprintDevices";
 import GymChat from "./pages/GymChat";
+import RenewalRequests from "./pages/RenewalRequests";
 // Member portal pages
 import MemberLogin from "./pages/member/MemberLogin";
 import MemberSetupPin from "./pages/member/MemberSetupPin";
@@ -154,6 +155,7 @@ const App = () => (
                   <Route path="/reminders" element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
                   <Route path="/fingerprint-devices" element={<ProtectedRoute><FingerprintDevices /></ProtectedRoute>} />
                   <Route path="/chat" element={<ProtectedRoute><GymChat /></ProtectedRoute>} />
+                  <Route path="/renewal-requests" element={<ProtectedRoute><RenewalRequests /></ProtectedRoute>} />
                   <Route path="/super-admin" element={<ProtectedRoute requireRole="super_admin"><SuperAdmin /></ProtectedRoute>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
