@@ -22,7 +22,8 @@ import {
   X,
   Settings,
   ChevronRight,
-  Bell
+  Bell,
+  CreditCard
 } from "lucide-react";
 import muscledeskMembersDark from "@/assets/muscledesk-members-dark.png";
 import muscledeskMembersLight from "@/assets/muscledesk-members-light.png";
@@ -45,6 +46,7 @@ const mainNavItems = [
 ];
 
 const moreMenuItems = [
+  { icon: CreditCard, label: "Payments", path: "/member/payments", description: "View your payment history" },
   { icon: Ruler, label: "Body Stats", path: "/member/measurements", description: "Track weight, BMI & measurements" },
   { icon: Target, label: "Goals", path: "/member/goals", description: "Set attendance targets" },
   { icon: Calendar, label: "Classes", path: "/member/classes", description: "Book gym classes" },
