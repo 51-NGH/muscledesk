@@ -15,13 +15,13 @@ import {
   Sun
 } from "lucide-react";
 import { toast } from "sonner";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
 
 export default function MemberSettings() {
   const { triggerHaptic, triggerScanSuccess, triggerScanError, triggerScanWarning, isSupported } = useHapticFeedback();
   const [lastTested, setLastTested] = useState<string | null>(null);
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, actualTheme } = useTheme();
 
   const hapticTests = [
     {
@@ -155,7 +155,7 @@ export default function MemberSettings() {
         <Card className="p-5">
           <div className="flex items-center gap-3 mb-4">
             <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              {theme === 'dark' ? (
+              {actualTheme === 'dark' ? (
                 <Moon className="h-5 w-5 text-primary" />
               ) : (
                 <Sun className="h-5 w-5 text-primary" />
