@@ -1,9 +1,10 @@
-import { ReactNode, RefObject, useState } from "react";
+import { ReactNode, RefObject, useState, useEffect, useCallback } from "react";
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { OfflineIndicator } from "@/components/offline/OfflineIndicator";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
 import { useMemberRealtimeSubscription } from "@/hooks/useMemberRealtimeSubscription";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Home, 
   QrCode, 
@@ -20,7 +21,8 @@ import {
   MessageCircle,
   X,
   Settings,
-  ChevronRight
+  ChevronRight,
+  Bell
 } from "lucide-react";
 import muscledeskMembersDark from "@/assets/muscledesk-members-dark.png";
 import muscledeskMembersLight from "@/assets/muscledesk-members-light.png";
@@ -53,11 +55,12 @@ const moreMenuItems = [
 ];
 
 export function MemberLayout({ children, title, showBack, containerRef }: MemberLayoutProps) {
-  const { signOut, isOffline } = useMemberAuth();
+  const { signOut, isOffline, member } = useMemberAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { resolvedTheme } = useTheme();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   
   // Listen for service worker updates and auto-refresh
   useServiceWorkerUpdate();
@@ -66,6 +69,58 @@ export function MemberLayout({ children, title, showBack, containerRef }: Member
   useMemberRealtimeSubscription();
   
   const memberLogo = resolvedTheme === "dark" ? muscledeskMembersDark : muscledeskMembersLight;
+
+  // Fetch unread message count
+  const fetchUnreadCount = useCallback(async () => {
+    if (!member?.id || !member?.gym_id) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('member-portal-data', {
+        body: { 
+          action: 'get-unread-count',
+          memberId: member.id,
+          gymId: member.gym_id
+        }
+      });
+      
+      if (!error && data?.count !== undefined) {
+        setUnreadCount(data.count);
+      }
+    } catch (err) {
+      console.error('Failed to fetch unread count:', err);
+    }
+  }, [member?.id, member?.gym_id]);
+
+  // Fetch unread count on mount and when location changes
+  useEffect(() => {
+    fetchUnreadCount();
+  }, [fetchUnreadCount, location.pathname]);
+
+  // Subscribe to realtime chat messages for instant badge updates
+  useEffect(() => {
+    if (!member?.gym_id) return;
+
+    const channel = supabase
+      .channel('member-chat-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'gym_chat_messages',
+          filter: `gym_id=eq.${member.gym_id}`
+        },
+        () => {
+          // Refresh unread count when new message arrives
+          fetchUnreadCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [member?.gym_id, fetchUnreadCount]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -99,12 +154,26 @@ export function MemberLayout({ children, title, showBack, containerRef }: Member
               </span>
             )}
           </div>
-          <button 
-            onClick={handleSignOut}
-            className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-colors touch-target"
-          >
-            <LogOut className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Notification Bell */}
+            <button 
+              onClick={() => navigate('/member/chat')}
+              className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-colors touch-target relative"
+            >
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 h-5 min-w-5 px-1 rounded-full bg-destructive text-destructive-foreground text-xs font-bold flex items-center justify-center animate-pulse">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
+            <button 
+              onClick={handleSignOut}
+              className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-colors touch-target"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </header>
 
