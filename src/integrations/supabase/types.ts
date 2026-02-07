@@ -1325,6 +1325,84 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          gym_id: string
+          id: string
+          member_id: string
+          payload: Json | null
+          phone: string | null
+          response_body: Json | null
+          response_status: number | null
+          status: string
+          template_name: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          gym_id: string
+          id?: string
+          member_id: string
+          payload?: Json | null
+          phone?: string | null
+          response_body?: Json | null
+          response_status?: number | null
+          status?: string
+          template_name: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          gym_id?: string
+          id?: string
+          member_id?: string
+          payload?: Json | null
+          phone?: string | null
+          response_body?: Json | null
+          response_status?: number | null
+          status?: string
+          template_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_logs_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_logs_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_rate_limits: {
+        Row: {
+          date: string
+          gym_id: string
+          id: string
+          message_count: number
+        }
+        Insert: {
+          date?: string
+          gym_id: string
+          id?: string
+          message_count?: number
+        }
+        Update: {
+          date?: string
+          gym_id?: string
+          id?: string
+          message_count?: number
+        }
+        Relationships: []
+      }
       workout_exercises: {
         Row: {
           created_at: string

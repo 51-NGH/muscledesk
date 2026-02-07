@@ -8,3 +8,12 @@ verify_jwt = false
 
 [functions.device-heartbeat]
 verify_jwt = false
+
+[functions.send-whatsapp]
+verify_jwt = false
+
+[functions.send-manual-whatsapp]
+verify_jwt = false
+
+[functions.whatsapp-payment-hook]
+verify_jwt = false

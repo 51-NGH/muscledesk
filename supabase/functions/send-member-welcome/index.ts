@@ -222,6 +222,24 @@ serve(async (req) => {
 
     console.log("Welcome email sent:", emailResult);
 
+    // Send WhatsApp welcome (fire-and-forget, never blocks email)
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${serviceRoleKey}`,
+        },
+        body: JSON.stringify({
+          member_id,
+          template_name: 'member_welcome',
+          gym_id: member.gym_id,
+        }),
+      });
+    } catch (waErr) {
+      console.error('WhatsApp welcome failed (non-blocking):', waErr);
+    }
+
     return new Response(JSON.stringify({ success: true, message: "Welcome email sent successfully" }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" }
     });

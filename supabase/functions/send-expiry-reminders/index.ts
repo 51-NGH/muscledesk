@@ -16,47 +16,75 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get members expiring in 7, 3, and 1 days
     const today = new Date();
-    const reminderDays = [7, 3, 1];
+    const reminderDays = [7, 3, 1, -1]; // -1 = expired yesterday
     
-    let totalSent = 0;
+    let totalPushSent = 0;
+    let totalWhatsAppSent = 0;
 
     for (const days of reminderDays) {
       const targetDate = new Date(today);
       targetDate.setDate(targetDate.getDate() + days);
       const targetDateStr = targetDate.toISOString().split('T')[0];
 
-      // Find members with subscriptions expiring on target date
-      const { data: expiringMembers, error } = await supabase
+      // Fetch all members expiring/expired on target date (no push_subscriptions join requirement)
+      const { data: members, error } = await supabase
         .from('members')
         .select(`
           id,
           full_name,
+          phone,
           expiry_date,
           gym_id,
-          push_subscriptions!inner(id, is_active)
+          push_subscriptions(id, is_active)
         `)
         .eq('expiry_date', targetDateStr)
-        .is('deleted_at', null)
-        .eq('push_subscriptions.is_active', true);
+        .is('deleted_at', null);
 
       if (error) {
-        console.error('Error fetching expiring members:', error);
+        console.error(`Error fetching members for day ${days}:`, error);
         continue;
       }
 
-      if (!expiringMembers || expiringMembers.length === 0) {
-        continue;
-      }
+      if (!members || members.length === 0) continue;
 
-      // Send notifications
-      for (const member of expiringMembers) {
-        const urgency = days === 1 ? '⚠️ URGENT: ' : days === 3 ? '⏰ ' : '📅 ';
-        const dayText = days === 1 ? 'tomorrow' : `in ${days} days`;
+      for (const member of members) {
+        const isExpired = days < 0;
+        const templateName = isExpired ? 'membership_expired' : 'membership_expiry_reminder';
 
+        // Push notification (only for members with active subscriptions, only for reminders not expired)
+        if (!isExpired) {
+          const activeSubs = (member.push_subscriptions || []).filter(
+            (s: { is_active: boolean }) => s.is_active
+          );
+          if (activeSubs.length > 0) {
+            const urgency = days === 1 ? '⚠️ URGENT: ' : days === 3 ? '⏰ ' : '📅 ';
+            const dayText = days === 1 ? 'tomorrow' : `in ${days} days`;
+            try {
+              await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${supabaseKey}`,
+                },
+                body: JSON.stringify({
+                  member_id: member.id,
+                  notification_type: 'expiry_reminder',
+                  title: `${urgency}Membership Expiring ${dayText}`,
+                  body: `Hey ${member.full_name.split(' ')[0]}, your gym membership expires ${dayText}. Renew now to keep your access!`,
+                  data: { url: '/member/payments', days_remaining: days.toString() },
+                }),
+              });
+              totalPushSent++;
+            } catch (pushError) {
+              console.error('Push failed for member:', member.id, pushError);
+            }
+          }
+        }
+
+        // WhatsApp message (plan check happens inside send-whatsapp)
         try {
-          await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+          const waRes = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -64,27 +92,24 @@ serve(async (req) => {
             },
             body: JSON.stringify({
               member_id: member.id,
-              notification_type: 'expiry_reminder',
-              title: `${urgency}Membership Expiring ${dayText}`,
-              body: `Hey ${member.full_name.split(' ')[0]}, your gym membership expires ${dayText}. Renew now to keep your access!`,
-              data: { 
-                url: '/member/payments',
-                days_remaining: days.toString()
-              }
+              template_name: templateName,
+              gym_id: member.gym_id,
             }),
           });
-          totalSent++;
-        } catch (pushError) {
-          console.error('Failed to send push for member:', member.id, pushError);
+          const waResult = await waRes.json();
+          if (waResult.status === 'sent') totalWhatsAppSent++;
+        } catch (waError) {
+          console.error('WhatsApp failed for member:', member.id, waError);
         }
       }
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: `Sent ${totalSent} expiry reminders`,
-        sent: totalSent
+      JSON.stringify({
+        success: true,
+        message: `Sent ${totalPushSent} push + ${totalWhatsAppSent} WhatsApp reminders`,
+        push_sent: totalPushSent,
+        whatsapp_sent: totalWhatsAppSent,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
