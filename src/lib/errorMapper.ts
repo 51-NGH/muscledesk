@@ -11,7 +11,7 @@ export const mapDatabaseError = (error: Error | unknown): string => {
 
   // Duplicate/unique constraint violations
   if (msg.includes('unique') || msg.includes('duplicate') || msg.includes('already exists')) {
-    if (msg.includes('phone')) return 'A member with this phone number already exists';
+    if (msg.includes('phone') || msg.includes('gym_id_phone')) return 'A member with this phone number already exists in your gym';
     if (msg.includes('email')) return 'A member with this email already exists';
     if (msg.includes('member_id')) return 'This member ID is already in use';
     return 'This record already exists';
