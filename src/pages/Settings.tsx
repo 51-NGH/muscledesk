@@ -2,7 +2,7 @@ import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { useAuth } from "@/contexts/AuthContext";
-import { Building2, Shield, AlertTriangle, CheckCircle2, Volume2, VolumeX, Bell, BellOff, Lock, ClipboardList, Crown } from "lucide-react";
+import { Building2, Shield, AlertTriangle, CheckCircle2, Volume2, VolumeX, Bell, BellOff, Lock, ClipboardList, Crown, Mail, User, MapPin, Phone, CreditCard, Users, Play, Gauge } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSoundSettings } from "@/hooks/useSoundSettings";
@@ -12,12 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useAudioFeedback } from "@/hooks/useAudioFeedback";
 import { useGymPlanFeatures } from "@/hooks/useGymPlanFeatures";
 import { AuditLogsViewer } from "@/components/AuditLogsViewer";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 export default function Settings() {
   const { user, gymId, role, isSuperAdmin } = useAuth();
@@ -26,11 +21,9 @@ export default function Settings() {
   const { data: features } = useGymPlanFeatures();
   const [isAuditLogsOpen, setIsAuditLogsOpen] = useState(false);
 
-  // Check if QR sounds should be available (Standard+ only)
   const hasQRSounds = features?.hasQRAttendance ?? false;
   const hasAuditLogs = features?.hasAuditLogs ?? false;
 
-  // Fetch gym details if gymId exists
   const { data: gym } = useQuery({
     queryKey: ["gym", gymId],
     queryFn: async () => {
@@ -46,17 +39,25 @@ export default function Settings() {
     enabled: !!gymId,
   });
 
+  const infoItems = [
+    { icon: Mail, label: "Email", value: user?.email },
+    { icon: User, label: "Role", value: role?.replace("_", " "), capitalize: true },
+    { icon: CreditCard, label: "Plan", value: gym?.plan || "lite", capitalize: true },
+    { icon: Users, label: "Member Limit", value: gym?.member_limit || 100 },
+    ...(gym?.phone ? [{ icon: Phone, label: "Phone", value: gym.phone }] : []),
+    ...(gym?.address ? [{ icon: MapPin, label: "Address", value: gym.address }] : []),
+  ];
+
   return (
     <DashboardLayout>
       <PageHeader title="Settings" description="Manage your gym settings" />
 
-      <div className="max-w-2xl space-y-6">
+      <div className="max-w-2xl space-y-5">
         {!gymId ? (
-          // No Gym Assigned - Contact SuperAdmin
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-6">
+          <div className="rounded-2xl border border-[hsl(var(--md-orange))]/30 bg-[hsl(var(--md-orange))]/5 p-6 animate-fade-in">
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/20">
-                <AlertTriangle className="h-6 w-6 text-amber-500" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[hsl(var(--md-orange))]/15 shadow-sm">
+                <AlertTriangle className="h-6 w-6 text-[hsl(var(--md-orange))]" />
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-foreground">No Gym Assigned</h2>
@@ -64,103 +65,97 @@ export default function Settings() {
               </div>
             </div>
             <div className="space-y-3 text-sm text-muted-foreground">
-              <p>
-                Gym creation is managed by the MuscleDesk SuperAdmin for security and billing purposes.
-              </p>
-              <p>
-                <strong>To get started:</strong> Contact the MuscleDesk support team with your registered email 
-                (<span className="font-mono text-foreground">{user?.email}</span>) to have your gym created and assigned.
-              </p>
-              <div className="mt-4 p-3 rounded-lg bg-muted/50">
-                <p className="text-xs">
-                  📧 Once your gym is created, refresh this page to access all features.
-                </p>
+              <p>Contact the MuscleDesk support team with your registered email (<span className="font-mono text-foreground">{user?.email}</span>) to have your gym created and assigned.</p>
+              <div className="mt-4 p-3 rounded-xl bg-muted/50 text-xs">
+                📧 Once your gym is created, refresh this page to access all features.
               </div>
             </div>
           </div>
         ) : (
-          // Gym Settings
           <>
-            {/* Gym Info Card */}
-            <div className="rounded-xl border border-border bg-card p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Building2 className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-foreground">Gym Information</h2>
-                  <p className="text-sm text-muted-foreground">{gym?.name || "Your gym"}</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Email</span>
-                  <p className="font-medium text-foreground">{user?.email}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Role</span>
-                  <p className="font-medium text-foreground capitalize">{role?.replace("_", " ")}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Plan</span>
-                  <p className="font-medium text-foreground capitalize">{gym?.plan || "lite"}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Member Limit</span>
-                  <p className="font-medium text-foreground">{gym?.member_limit || 100}</p>
-                </div>
-                {gym?.phone && (
-                  <div>
-                    <span className="text-muted-foreground">Phone</span>
-                    <p className="font-medium text-foreground">{gym.phone}</p>
+            {/* Gym Info Card - Premium Design */}
+            <div className="rounded-2xl border border-border bg-card overflow-hidden animate-fade-in">
+              {/* Card Header with gradient accent */}
+              <div className="relative px-6 pt-6 pb-4">
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-primary/70 to-primary/40" />
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 shadow-sm border border-primary/10">
+                    <Building2 className="h-5 w-5 text-primary" />
                   </div>
-                )}
-                {gym?.address && (
                   <div>
-                    <span className="text-muted-foreground">Address</span>
-                    <p className="font-medium text-foreground">{gym.address}</p>
+                    <h2 className="font-semibold text-foreground">{gym?.name || "Your Gym"}</h2>
+                    <p className="text-xs text-muted-foreground">Gym Information</p>
                   </div>
-                )}
+                </div>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-border">
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  <span className="text-muted-foreground">Gym is active and operational</span>
+              {/* Info Grid */}
+              <div className="px-6 pb-2">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-0">
+                  {infoItems.map((item, i) => (
+                    <div
+                      key={item.label}
+                      className={cn(
+                        "flex items-center gap-3 py-3",
+                        i < infoItems.length - (infoItems.length % 2 === 0 ? 2 : 1) && "border-b border-border/50"
+                      )}
+                    >
+                      <item.icon className="h-4 w-4 text-muted-foreground/60 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-[11px] text-muted-foreground uppercase tracking-wider">{item.label}</p>
+                        <p className={cn("text-sm font-medium text-foreground truncate", item.capitalize && "capitalize")}>
+                          {String(item.value)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Status Footer */}
+              <div className="px-6 py-3 bg-muted/30 border-t border-border/50">
+                <div className="flex items-center gap-2">
+                  <div className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[hsl(var(--md-green))] opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[hsl(var(--md-green))]" />
+                  </div>
+                  <span className="text-xs text-muted-foreground">Gym is active and operational</span>
                 </div>
               </div>
             </div>
 
-            {/* Sound Settings Section - Only for Standard+ */}
+            {/* QR Scanner Sounds - Premium Design */}
             {hasQRSounds ? (
-              <div className="rounded-xl border border-border bg-card p-6">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-md-teal/20">
-                    {settings.enabled ? (
-                      <Volume2 className="h-5 w-5 text-md-teal" />
-                    ) : (
-                      <VolumeX className="h-5 w-5 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div>
-                    <h2 className="font-semibold text-foreground">QR Scanner Sounds</h2>
-                    <p className="text-sm text-muted-foreground">Customize audio feedback for QR scans</p>
+              <div className="rounded-2xl border border-border bg-card overflow-hidden animate-fade-in" style={{ animationDelay: '100ms' }}>
+                <div className="relative px-6 pt-6 pb-4">
+                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-md-teal via-md-teal/70 to-md-teal/40" />
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-md-teal/15 to-md-teal/5 shadow-sm border border-md-teal/10">
+                      {settings.enabled ? (
+                        <Volume2 className="h-5 w-5 text-md-teal" />
+                      ) : (
+                        <VolumeX className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div>
+                      <h2 className="font-semibold text-foreground">QR Scanner Sounds</h2>
+                      <p className="text-xs text-muted-foreground">Audio feedback for scans</p>
+                    </div>
                   </div>
                 </div>
-                
-                <div className="space-y-5">
+
+                <div className="px-6 pb-6 space-y-5">
                   {/* Master Toggle */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-muted/40 border border-border/50">
                     <div className="flex items-center gap-3">
                       {settings.enabled ? (
-                        <Bell className="h-4 w-4 text-muted-foreground" />
+                        <Bell className="h-4 w-4 text-md-teal" />
                       ) : (
                         <BellOff className="h-4 w-4 text-muted-foreground" />
                       )}
                       <div>
                         <p className="text-sm font-medium">Enable Sounds</p>
-                        <p className="text-xs text-muted-foreground">Turn all scanner sounds on/off</p>
+                        <p className="text-[11px] text-muted-foreground">Master audio toggle</p>
                       </div>
                     </div>
                     <Switch checked={settings.enabled} onCheckedChange={toggleSound} />
@@ -168,11 +163,16 @@ export default function Settings() {
 
                   {settings.enabled && (
                     <>
-                      {/* Volume Slider */}
+                      {/* Volume */}
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium">Volume</p>
-                          <span className="text-sm text-muted-foreground">{settings.volume}%</span>
+                          <div className="flex items-center gap-2">
+                            <Gauge className="h-4 w-4 text-muted-foreground" />
+                            <p className="text-sm font-medium">Volume</p>
+                          </div>
+                          <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                            {settings.volume}%
+                          </span>
                         </div>
                         <Slider
                           value={[settings.volume]}
@@ -184,36 +184,54 @@ export default function Settings() {
                         />
                       </div>
 
-                      {/* Individual Sound Toggles */}
-                      <div className="pt-3 border-t border-border space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-md-green">Approval Sound</p>
-                            <p className="text-xs text-muted-foreground">Plays when QR scan is successful</p>
-                          </div>
+                      {/* Sound Toggles */}
+                      <div className="space-y-3">
+                        {/* Approval Sound */}
+                        <div className="flex items-center justify-between p-3 rounded-xl border border-border/50 transition-colors hover:bg-muted/30">
                           <div className="flex items-center gap-3">
-                            <button
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[hsl(var(--md-green))]/10">
+                              <CheckCircle2 className="h-4 w-4 text-[hsl(var(--md-green))]" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">Approval Sound</p>
+                              <p className="text-[11px] text-muted-foreground">Successful scan feedback</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
                               onClick={() => playSound('approve')}
-                              className="text-xs text-primary hover:underline"
                             >
+                              <Play className="h-3 w-3 mr-1" />
                               Test
-                            </button>
+                            </Button>
                             <Switch checked={settings.approveSound} onCheckedChange={toggleApproveSound} />
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-destructive">Denial Sound</p>
-                            <p className="text-xs text-muted-foreground">Plays when QR scan fails</p>
-                          </div>
+                        {/* Denial Sound */}
+                        <div className="flex items-center justify-between p-3 rounded-xl border border-border/50 transition-colors hover:bg-muted/30">
                           <div className="flex items-center gap-3">
-                            <button
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-destructive/10">
+                              <AlertTriangle className="h-4 w-4 text-destructive" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">Denial Sound</p>
+                              <p className="text-[11px] text-muted-foreground">Failed scan feedback</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
                               onClick={() => playSound('deny')}
-                              className="text-xs text-primary hover:underline"
                             >
+                              <Play className="h-3 w-3 mr-1" />
                               Test
-                            </button>
+                            </Button>
                             <Switch checked={settings.denySound} onCheckedChange={toggleDenySound} />
                           </div>
                         </div>
@@ -223,79 +241,96 @@ export default function Settings() {
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl border border-border bg-card p-6 relative overflow-hidden">
-                <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center">
-                  <Lock className="h-8 w-8 text-muted-foreground mb-2" />
+              <div className="rounded-2xl border border-border bg-card overflow-hidden relative animate-fade-in" style={{ animationDelay: '100ms' }}>
+                <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center rounded-2xl">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted mb-3">
+                    <Lock className="h-6 w-6 text-muted-foreground" />
+                  </div>
                   <p className="font-semibold text-foreground">QR Scanner Sounds</p>
-                  <p className="text-sm text-muted-foreground">Upgrade to Standard plan to unlock</p>
+                  <p className="text-xs text-muted-foreground mt-1">Upgrade to Standard plan to unlock</p>
                 </div>
-                <div className="opacity-30">
-                  <div className="flex items-center gap-3 mb-5">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-md-teal/20">
+                <div className="opacity-20 px-6 py-8">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-md-teal/15">
                       <Volume2 className="h-5 w-5 text-md-teal" />
                     </div>
                     <div>
-                      <h2 className="font-semibold text-foreground">QR Scanner Sounds</h2>
-                      <p className="text-sm text-muted-foreground">Customize audio feedback for QR scans</p>
+                      <h2 className="font-semibold">QR Scanner Sounds</h2>
+                      <p className="text-sm text-muted-foreground">Customize audio feedback</p>
                     </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Audit Logs Section - Pro only */}
+            {/* Audit Logs - Premium Design */}
             {hasAuditLogs && (
-              <div className="rounded-xl border border-border bg-card p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-md-purple/20">
-                    <ClipboardList className="h-5 w-5 text-md-purple" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h2 className="font-semibold text-foreground">Audit Logs</h2>
-                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-md-purple/10 text-md-purple text-xs font-medium">
-                        <Crown className="h-3 w-3" />
-                        Pro
-                      </span>
+              <div className="rounded-2xl border border-border bg-card overflow-hidden animate-fade-in" style={{ animationDelay: '200ms' }}>
+                <div className="relative px-6 py-5">
+                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-md-purple via-md-purple/70 to-md-purple/40" />
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-md-purple/15 to-md-purple/5 shadow-sm border border-md-purple/10">
+                      <ClipboardList className="h-5 w-5 text-md-purple" />
                     </div>
-                    <p className="text-sm text-muted-foreground">Track all admin actions and changes</p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h2 className="font-semibold text-foreground">Audit Logs</h2>
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-md-purple/10 text-md-purple text-[10px] font-bold uppercase tracking-wider">
+                          <Crown className="h-2.5 w-2.5" />
+                          Pro
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">Track all admin actions and changes</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl border-md-purple/20 hover:bg-md-purple/5 hover:border-md-purple/30 transition-all"
+                      onClick={() => setIsAuditLogsOpen(true)}
+                    >
+                      <ClipboardList className="h-3.5 w-3.5 mr-1.5" />
+                      View Logs
+                    </Button>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => setIsAuditLogsOpen(true)}>
-                    View Logs
-                  </Button>
                 </div>
               </div>
             )}
           </>
         )}
 
-        {/* SuperAdmin Panel */}
+        {/* SuperAdmin Panel - Premium Design */}
         {isSuperAdmin && (
-          <div className="rounded-xl border border-border bg-card p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-md-orange/20">
-                <Shield className="h-5 w-5 text-md-orange" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-foreground">Super Admin Panel</h2>
-                <p className="text-sm text-muted-foreground">Platform management tools</p>
+          <div className="rounded-2xl border border-border bg-card overflow-hidden animate-fade-in" style={{ animationDelay: '300ms' }}>
+            <div className="relative px-6 pt-6 pb-4">
+              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[hsl(var(--md-orange))] via-[hsl(var(--md-orange))]/70 to-[hsl(var(--md-orange))]/40" />
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[hsl(var(--md-orange))]/15 to-[hsl(var(--md-orange))]/5 shadow-sm border border-[hsl(var(--md-orange))]/10">
+                  <Shield className="h-5 w-5 text-[hsl(var(--md-orange))]" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-foreground">Super Admin Panel</h2>
+                  <p className="text-xs text-muted-foreground">Platform management tools</p>
+                </div>
               </div>
             </div>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>Use the following SQL RPC functions to manage the platform:</p>
-              <ul className="list-disc list-inside space-y-1 mt-2 font-mono text-xs">
-                <li><code>admin_create_gym(name, owner_email, plan, city, phone, address)</code></li>
-                <li><code>admin_assign_role(user_id, role)</code></li>
-              </ul>
-              <p className="mt-3">
-                Gym owners must sign up first, then you assign them a gym using their email.
-              </p>
+            <div className="px-6 pb-6">
+              <div className="p-4 rounded-xl bg-muted/40 border border-border/50 space-y-3 text-sm text-muted-foreground">
+                <p>Use the following SQL RPC functions to manage the platform:</p>
+                <div className="space-y-1.5 font-mono text-xs">
+                  <div className="p-2 rounded-lg bg-background border border-border/50">
+                    <code>admin_create_gym(name, owner_email, plan, city, phone, address)</code>
+                  </div>
+                  <div className="p-2 rounded-lg bg-background border border-border/50">
+                    <code>admin_assign_role(user_id, role)</code>
+                  </div>
+                </div>
+                <p className="text-xs">Gym owners must sign up first, then you assign them a gym using their email.</p>
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Audit Logs Dialog */}
       <AuditLogsViewer isOpen={isAuditLogsOpen} onClose={() => setIsAuditLogsOpen(false)} />
     </DashboardLayout>
   );
