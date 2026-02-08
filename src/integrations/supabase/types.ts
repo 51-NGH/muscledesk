@@ -771,7 +771,11 @@ export type Database = {
           file_type: string
           gym_id: string
           id: string
+          imported_attendance_ids: string[] | null
+          imported_member_ids: string[] | null
+          imported_payment_ids: string[] | null
           plans_created: number
+          reverted_at: string | null
           success_count: number
           total_rows: number
         }
@@ -784,7 +788,11 @@ export type Database = {
           file_type?: string
           gym_id: string
           id?: string
+          imported_attendance_ids?: string[] | null
+          imported_member_ids?: string[] | null
+          imported_payment_ids?: string[] | null
           plans_created?: number
+          reverted_at?: string | null
           success_count?: number
           total_rows?: number
         }
@@ -797,7 +805,11 @@ export type Database = {
           file_type?: string
           gym_id?: string
           id?: string
+          imported_attendance_ids?: string[] | null
+          imported_member_ids?: string[] | null
+          imported_payment_ids?: string[] | null
           plans_created?: number
+          reverted_at?: string | null
           success_count?: number
           total_rows?: number
         }
