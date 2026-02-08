@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { MemberProfile } from "@/components/MemberProfile";
+import { DashboardSearch } from "@/components/dashboard/DashboardSearch";
 import { UpgradeOverlay } from "@/components/UpgradeOverlay";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGymPlanFeatures } from "@/hooks/useGymPlanFeatures";
@@ -266,18 +267,13 @@ export default function Dashboard() {
           <p className="text-muted-foreground mt-1">Here's what's happening at your gym today</p>
         </div>
         <div className="flex items-center gap-2 sm:gap-4 animate-slide-in-right">
-          <div className="relative flex-1 sm:flex-none">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search members..."
-              className="w-full sm:w-[280px] pl-10 transition-all duration-300 focus:ring-2 focus:ring-primary/20"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  navigate(`/members?search=${(e.target as HTMLInputElement).value}`);
-                }
-              }}
-            />
-          </div>
+          <DashboardSearch
+            members={members}
+            onMemberClick={(member) => {
+              setSelectedMember(member);
+              setIsProfileOpen(true);
+            }}
+          />
           <NotificationCenter />
         </div>
       </div>
