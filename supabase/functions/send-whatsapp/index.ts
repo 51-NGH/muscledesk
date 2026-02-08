@@ -8,17 +8,16 @@ const corsHeaders = {
 
 // Template variable definitions (named lowercase)
 const TEMPLATE_VARIABLES: Record<string, string[]> = {
-  member_welcome: ['member_name', 'gym_name'],
+  welcome_emai: ['member_name', 'gym_name'],
   payment_received: ['member_name', 'amount', 'gym_name'],
   membership_expiry_reminder: ['member_name', 'expiry_date', 'gym_name'],
-  membership_expired: ['member_name', 'gym_name'],
 };
 
 // Plan access rules
 const PLAN_ALLOWED_TEMPLATES: Record<string, string[]> = {
   lite: [],
   standard: ['membership_expiry_reminder'],
-  pro: ['member_welcome', 'payment_received', 'membership_expiry_reminder', 'membership_expired'],
+  pro: ['welcome_emai', 'payment_received', 'membership_expiry_reminder'],
 };
 
 const PLAN_RATE_LIMITS: Record<string, number> = {

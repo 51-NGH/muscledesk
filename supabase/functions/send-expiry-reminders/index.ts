@@ -50,7 +50,7 @@ serve(async (req) => {
 
       for (const member of members) {
         const isExpired = days < 0;
-        const templateName = isExpired ? 'membership_expired' : 'membership_expiry_reminder';
+        const templateName = 'membership_expiry_reminder'; // use same template for both (no membership_expired template yet)
 
         // Push notification (only for members with active subscriptions, only for reminders not expired)
         if (!isExpired) {
