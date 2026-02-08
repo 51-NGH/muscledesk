@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { MemberAvatar } from "@/components/ui/member-avatar";
@@ -16,9 +17,32 @@ export function DashboardSearch({ members, onMemberClick }: DashboardSearchProps
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState(-1);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Update dropdown position when input is focused or window resizes
+  useEffect(() => {
+    const updatePosition = () => {
+      if (inputRef.current && isFocused) {
+        const rect = inputRef.current.getBoundingClientRect();
+        setDropdownPosition({
+          top: rect.bottom + 8,
+          left: rect.left,
+          width: Math.max(rect.width, 380),
+        });
+      }
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [isFocused, query]);
 
   const filtered = useMemo(() => {
     if (!query.trim()) return [];
@@ -107,9 +131,18 @@ export function DashboardSearch({ members, onMemberClick }: DashboardSearchProps
         className="w-full sm:w-[280px] pl-10 transition-all duration-300 focus:ring-2 focus:ring-primary/20 focus:sm:w-[340px]"
       />
 
-      {/* Dropdown */}
-      {isOpen && (
-        <div className="absolute top-full left-0 right-0 sm:w-[380px] mt-2 rounded-xl border border-border bg-card shadow-2xl shadow-black/30 z-[100] overflow-hidden animate-fade-in" style={{ backgroundColor: 'hsl(var(--card))' }}>
+      {/* Dropdown - rendered via portal to escape stacking context */}
+      {isOpen && createPortal(
+        <div 
+          className="fixed rounded-xl border border-border bg-card shadow-2xl shadow-black/40 overflow-hidden animate-fade-in"
+          style={{ 
+            top: dropdownPosition.top,
+            left: dropdownPosition.left,
+            width: dropdownPosition.width,
+            zIndex: 9999,
+            backgroundColor: 'hsl(var(--card))',
+          }}
+        >
           {filtered.length === 0 ? (
             <div className="px-4 py-8 text-center">
               <Search className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
@@ -171,7 +204,8 @@ export function DashboardSearch({ members, onMemberClick }: DashboardSearchProps
               </button>
             </>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
