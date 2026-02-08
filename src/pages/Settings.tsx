@@ -2,7 +2,7 @@ import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { useAuth } from "@/contexts/AuthContext";
-import { Building2, Shield, AlertTriangle, CheckCircle2, Volume2, VolumeX, Bell, BellOff, Lock, ClipboardList, Crown, Mail, User, MapPin, Phone, CreditCard, Users, Play, Gauge } from "lucide-react";
+import { Building2, Shield, AlertTriangle, CheckCircle2, Volume2, VolumeX, Bell, BellOff, Lock, ClipboardList, Crown, Mail, User, MapPin, Phone, CreditCard, Users, Play, Gauge, Settings as SettingsIcon, Sparkles } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSoundSettings } from "@/hooks/useSoundSettings";
@@ -39,21 +39,12 @@ export default function Settings() {
     enabled: !!gymId,
   });
 
-  const infoItems = [
-    { icon: Mail, label: "Email", value: user?.email },
-    { icon: User, label: "Role", value: role?.replace("_", " "), capitalize: true },
-    { icon: CreditCard, label: "Plan", value: gym?.plan || "lite", capitalize: true },
-    { icon: Users, label: "Member Limit", value: gym?.member_limit || 100 },
-    ...(gym?.phone ? [{ icon: Phone, label: "Phone", value: gym.phone }] : []),
-    ...(gym?.address ? [{ icon: MapPin, label: "Address", value: gym.address }] : []),
-  ];
-
   return (
     <DashboardLayout>
       <PageHeader title="Settings" description="Manage your gym settings" />
 
-      <div className="max-w-2xl space-y-5">
-        {!gymId ? (
+      {!gymId ? (
+        <div className="max-w-xl mx-auto">
           <div className="rounded-2xl border border-[hsl(var(--md-orange))]/30 bg-[hsl(var(--md-orange))]/5 p-6 animate-fade-in">
             <div className="flex items-center gap-3 mb-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[hsl(var(--md-orange))]/15 shadow-sm">
@@ -71,49 +62,38 @@ export default function Settings() {
               </div>
             </div>
           </div>
-        ) : (
-          <>
-            {/* Gym Info Card - Premium Design */}
-            <div className="rounded-2xl border border-border bg-card overflow-hidden animate-fade-in">
-              {/* Card Header with gradient accent */}
-              <div className="relative px-6 pt-6 pb-4">
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 animate-fade-in">
+          {/* LEFT COLUMN — Gym Profile */}
+          <div className="lg:col-span-5 space-y-5">
+            {/* Gym Info Card */}
+            <div className="rounded-2xl border border-border bg-card overflow-hidden h-fit">
+              <div className="relative px-6 pt-6 pb-5">
                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-primary/70 to-primary/40" />
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 shadow-sm border border-primary/10">
-                    <Building2 className="h-5 w-5 text-primary" />
+                <div className="flex items-center gap-3.5 mb-5">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 shadow-sm border border-primary/10">
+                    <Building2 className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <h2 className="font-semibold text-foreground">{gym?.name || "Your Gym"}</h2>
-                    <p className="text-xs text-muted-foreground">Gym Information</p>
+                    <h2 className="text-lg font-bold text-foreground">{gym?.name || "Your Gym"}</h2>
+                    <p className="text-xs text-muted-foreground">Gym Profile & Information</p>
                   </div>
                 </div>
-              </div>
 
-              {/* Info Grid */}
-              <div className="px-6 pb-2">
-                <div className="grid grid-cols-2 gap-x-6 gap-y-0">
-                  {infoItems.map((item, i) => (
-                    <div
-                      key={item.label}
-                      className={cn(
-                        "flex items-center gap-3 py-3",
-                        i < infoItems.length - (infoItems.length % 2 === 0 ? 2 : 1) && "border-b border-border/50"
-                      )}
-                    >
-                      <item.icon className="h-4 w-4 text-muted-foreground/60 shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-[11px] text-muted-foreground uppercase tracking-wider">{item.label}</p>
-                        <p className={cn("text-sm font-medium text-foreground truncate", item.capitalize && "capitalize")}>
-                          {String(item.value)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                {/* Info rows */}
+                <div className="space-y-0">
+                  <InfoRow icon={Mail} label="Email" value={user?.email || "—"} />
+                  <InfoRow icon={User} label="Role" value={role?.replace("_", " ") || "—"} capitalize />
+                  <InfoRow icon={CreditCard} label="Plan" value={gym?.plan || "lite"} capitalize badge />
+                  <InfoRow icon={Users} label="Member Limit" value={String(gym?.member_limit || 100)} />
+                  {gym?.phone && <InfoRow icon={Phone} label="Phone" value={gym.phone} />}
+                  {gym?.address && <InfoRow icon={MapPin} label="Address" value={gym.address} />}
                 </div>
               </div>
 
               {/* Status Footer */}
-              <div className="px-6 py-3 bg-muted/30 border-t border-border/50">
+              <div className="px-6 py-3.5 bg-muted/30 border-t border-border/50">
                 <div className="flex items-center gap-2">
                   <div className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[hsl(var(--md-green))] opacity-75" />
@@ -124,148 +104,9 @@ export default function Settings() {
               </div>
             </div>
 
-            {/* QR Scanner Sounds - Premium Design */}
-            {hasQRSounds ? (
-              <div className="rounded-2xl border border-border bg-card overflow-hidden animate-fade-in" style={{ animationDelay: '100ms' }}>
-                <div className="relative px-6 pt-6 pb-4">
-                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-md-teal via-md-teal/70 to-md-teal/40" />
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-md-teal/15 to-md-teal/5 shadow-sm border border-md-teal/10">
-                      {settings.enabled ? (
-                        <Volume2 className="h-5 w-5 text-md-teal" />
-                      ) : (
-                        <VolumeX className="h-5 w-5 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div>
-                      <h2 className="font-semibold text-foreground">QR Scanner Sounds</h2>
-                      <p className="text-xs text-muted-foreground">Audio feedback for scans</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="px-6 pb-6 space-y-5">
-                  {/* Master Toggle */}
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-muted/40 border border-border/50">
-                    <div className="flex items-center gap-3">
-                      {settings.enabled ? (
-                        <Bell className="h-4 w-4 text-md-teal" />
-                      ) : (
-                        <BellOff className="h-4 w-4 text-muted-foreground" />
-                      )}
-                      <div>
-                        <p className="text-sm font-medium">Enable Sounds</p>
-                        <p className="text-[11px] text-muted-foreground">Master audio toggle</p>
-                      </div>
-                    </div>
-                    <Switch checked={settings.enabled} onCheckedChange={toggleSound} />
-                  </div>
-
-                  {settings.enabled && (
-                    <>
-                      {/* Volume */}
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Gauge className="h-4 w-4 text-muted-foreground" />
-                            <p className="text-sm font-medium">Volume</p>
-                          </div>
-                          <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
-                            {settings.volume}%
-                          </span>
-                        </div>
-                        <Slider
-                          value={[settings.volume]}
-                          onValueChange={([value]) => setVolume(value)}
-                          max={100}
-                          min={10}
-                          step={10}
-                          className="w-full"
-                        />
-                      </div>
-
-                      {/* Sound Toggles */}
-                      <div className="space-y-3">
-                        {/* Approval Sound */}
-                        <div className="flex items-center justify-between p-3 rounded-xl border border-border/50 transition-colors hover:bg-muted/30">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[hsl(var(--md-green))]/10">
-                              <CheckCircle2 className="h-4 w-4 text-[hsl(var(--md-green))]" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium">Approval Sound</p>
-                              <p className="text-[11px] text-muted-foreground">Successful scan feedback</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                              onClick={() => playSound('approve')}
-                            >
-                              <Play className="h-3 w-3 mr-1" />
-                              Test
-                            </Button>
-                            <Switch checked={settings.approveSound} onCheckedChange={toggleApproveSound} />
-                          </div>
-                        </div>
-
-                        {/* Denial Sound */}
-                        <div className="flex items-center justify-between p-3 rounded-xl border border-border/50 transition-colors hover:bg-muted/30">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-destructive/10">
-                              <AlertTriangle className="h-4 w-4 text-destructive" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium">Denial Sound</p>
-                              <p className="text-[11px] text-muted-foreground">Failed scan feedback</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                              onClick={() => playSound('deny')}
-                            >
-                              <Play className="h-3 w-3 mr-1" />
-                              Test
-                            </Button>
-                            <Switch checked={settings.denySound} onCheckedChange={toggleDenySound} />
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-border bg-card overflow-hidden relative animate-fade-in" style={{ animationDelay: '100ms' }}>
-                <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center rounded-2xl">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted mb-3">
-                    <Lock className="h-6 w-6 text-muted-foreground" />
-                  </div>
-                  <p className="font-semibold text-foreground">QR Scanner Sounds</p>
-                  <p className="text-xs text-muted-foreground mt-1">Upgrade to Standard plan to unlock</p>
-                </div>
-                <div className="opacity-20 px-6 py-8">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-md-teal/15">
-                      <Volume2 className="h-5 w-5 text-md-teal" />
-                    </div>
-                    <div>
-                      <h2 className="font-semibold">QR Scanner Sounds</h2>
-                      <p className="text-sm text-muted-foreground">Customize audio feedback</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Audit Logs - Premium Design */}
+            {/* Audit Logs */}
             {hasAuditLogs && (
-              <div className="rounded-2xl border border-border bg-card overflow-hidden animate-fade-in" style={{ animationDelay: '200ms' }}>
+              <div className="rounded-2xl border border-border bg-card overflow-hidden">
                 <div className="relative px-6 py-5">
                   <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-md-purple via-md-purple/70 to-md-purple/40" />
                   <div className="flex items-center gap-3">
@@ -295,43 +136,207 @@ export default function Settings() {
                 </div>
               </div>
             )}
-          </>
-        )}
 
-        {/* SuperAdmin Panel - Premium Design */}
-        {isSuperAdmin && (
-          <div className="rounded-2xl border border-border bg-card overflow-hidden animate-fade-in" style={{ animationDelay: '300ms' }}>
-            <div className="relative px-6 pt-6 pb-4">
-              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[hsl(var(--md-orange))] via-[hsl(var(--md-orange))]/70 to-[hsl(var(--md-orange))]/40" />
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[hsl(var(--md-orange))]/15 to-[hsl(var(--md-orange))]/5 shadow-sm border border-[hsl(var(--md-orange))]/10">
-                  <Shield className="h-5 w-5 text-[hsl(var(--md-orange))]" />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-foreground">Super Admin Panel</h2>
-                  <p className="text-xs text-muted-foreground">Platform management tools</p>
-                </div>
-              </div>
-            </div>
-            <div className="px-6 pb-6">
-              <div className="p-4 rounded-xl bg-muted/40 border border-border/50 space-y-3 text-sm text-muted-foreground">
-                <p>Use the following SQL RPC functions to manage the platform:</p>
-                <div className="space-y-1.5 font-mono text-xs">
-                  <div className="p-2 rounded-lg bg-background border border-border/50">
-                    <code>admin_create_gym(name, owner_email, plan, city, phone, address)</code>
-                  </div>
-                  <div className="p-2 rounded-lg bg-background border border-border/50">
-                    <code>admin_assign_role(user_id, role)</code>
+            {/* SuperAdmin Panel */}
+            {isSuperAdmin && (
+              <div className="rounded-2xl border border-border bg-card overflow-hidden">
+                <div className="relative px-6 pt-6 pb-4">
+                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[hsl(var(--md-orange))] via-[hsl(var(--md-orange))]/70 to-[hsl(var(--md-orange))]/40" />
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[hsl(var(--md-orange))]/15 to-[hsl(var(--md-orange))]/5 shadow-sm border border-[hsl(var(--md-orange))]/10">
+                      <Shield className="h-5 w-5 text-[hsl(var(--md-orange))]" />
+                    </div>
+                    <div>
+                      <h2 className="font-semibold text-foreground">Super Admin Panel</h2>
+                      <p className="text-xs text-muted-foreground">Platform management tools</p>
+                    </div>
                   </div>
                 </div>
-                <p className="text-xs">Gym owners must sign up first, then you assign them a gym using their email.</p>
+                <div className="px-6 pb-6">
+                  <div className="p-4 rounded-xl bg-muted/40 border border-border/50 space-y-3 text-sm text-muted-foreground">
+                    <p>Use the following SQL RPC functions:</p>
+                    <div className="space-y-1.5 font-mono text-xs">
+                      <div className="p-2 rounded-lg bg-background border border-border/50">
+                        <code>admin_create_gym(name, owner_email, plan, city, phone, address)</code>
+                      </div>
+                      <div className="p-2 rounded-lg bg-background border border-border/50">
+                        <code>admin_assign_role(user_id, role)</code>
+                      </div>
+                    </div>
+                    <p className="text-xs">Gym owners must sign up first, then assign them a gym.</p>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
-        )}
-      </div>
+
+          {/* RIGHT COLUMN — Preferences */}
+          <div className="lg:col-span-7 space-y-5">
+            {/* QR Scanner Sounds */}
+            {hasQRSounds ? (
+              <div className="rounded-2xl border border-border bg-card overflow-hidden">
+                <div className="relative px-6 pt-6 pb-4">
+                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-md-teal via-md-teal/70 to-md-teal/40" />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-md-teal/15 to-md-teal/5 shadow-sm border border-md-teal/10">
+                        {settings.enabled ? (
+                          <Volume2 className="h-5 w-5 text-md-teal" />
+                        ) : (
+                          <VolumeX className="h-5 w-5 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div>
+                        <h2 className="font-semibold text-foreground">QR Scanner Sounds</h2>
+                        <p className="text-xs text-muted-foreground">Audio feedback for scans</p>
+                      </div>
+                    </div>
+                    <Switch checked={settings.enabled} onCheckedChange={toggleSound} />
+                  </div>
+                </div>
+
+                {settings.enabled && (
+                  <div className="px-6 pb-6 space-y-5">
+                    {/* Volume */}
+                    <div className="p-4 rounded-xl bg-muted/30 border border-border/50 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Gauge className="h-4 w-4 text-muted-foreground" />
+                          <p className="text-sm font-medium">Volume</p>
+                        </div>
+                        <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                          {settings.volume}%
+                        </span>
+                      </div>
+                      <Slider
+                        value={[settings.volume]}
+                        onValueChange={([value]) => setVolume(value)}
+                        max={100}
+                        min={10}
+                        step={10}
+                        className="w-full"
+                      />
+                    </div>
+
+                    {/* Sound Toggles in a 2-col grid on large */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <SoundCard
+                        title="Approval Sound"
+                        description="Successful scan feedback"
+                        icon={<CheckCircle2 className="h-4 w-4 text-[hsl(var(--md-green))]" />}
+                        iconBg="bg-[hsl(var(--md-green))]/10"
+                        checked={settings.approveSound}
+                        onCheckedChange={toggleApproveSound}
+                        onTest={() => playSound('approve')}
+                      />
+                      <SoundCard
+                        title="Denial Sound"
+                        description="Failed scan feedback"
+                        icon={<AlertTriangle className="h-4 w-4 text-destructive" />}
+                        iconBg="bg-destructive/10"
+                        checked={settings.denySound}
+                        onCheckedChange={toggleDenySound}
+                        onTest={() => playSound('deny')}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-border bg-card overflow-hidden relative">
+                <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center rounded-2xl">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted mb-3">
+                    <Lock className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <p className="font-semibold text-foreground">QR Scanner Sounds</p>
+                  <p className="text-xs text-muted-foreground mt-1">Upgrade to Standard plan to unlock</p>
+                </div>
+                <div className="opacity-20 px-6 py-10">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-md-teal/15">
+                      <Volume2 className="h-5 w-5 text-md-teal" />
+                    </div>
+                    <div>
+                      <h2 className="font-semibold">QR Scanner Sounds</h2>
+                      <p className="text-sm text-muted-foreground">Customize audio feedback</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <AuditLogsViewer isOpen={isAuditLogsOpen} onClose={() => setIsAuditLogsOpen(false)} />
     </DashboardLayout>
+  );
+}
+
+/* ---------- Sub-components ---------- */
+
+function InfoRow({ icon: Icon, label, value, capitalize, badge }: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  capitalize?: boolean;
+  badge?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-3 py-3 border-b border-border/40 last:border-b-0">
+      <Icon className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+      <span className="text-xs text-muted-foreground w-24 shrink-0 uppercase tracking-wider">{label}</span>
+      <div className="flex-1 min-w-0">
+        {badge ? (
+          <span className={cn(
+            "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold",
+            "bg-primary/10 text-primary capitalize"
+          )}>
+            <Sparkles className="h-3 w-3" />
+            {value}
+          </span>
+        ) : (
+          <p className={cn("text-sm font-medium text-foreground truncate", capitalize && "capitalize")}>
+            {value}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SoundCard({ title, description, icon, iconBg, checked, onCheckedChange, onTest }: {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  iconBg: string;
+  checked: boolean;
+  onCheckedChange: () => void;
+  onTest: () => void;
+}) {
+  return (
+    <div className="p-4 rounded-xl border border-border/50 transition-all hover:bg-muted/30 hover:border-border space-y-3">
+      <div className="flex items-center gap-3">
+        <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", iconBg)}>
+          {icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate">{title}</p>
+          <p className="text-[11px] text-muted-foreground">{description}</p>
+        </div>
+      </div>
+      <div className="flex items-center justify-between pt-2 border-t border-border/40">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+          onClick={onTest}
+        >
+          <Play className="h-3 w-3 mr-1" />
+          Preview
+        </Button>
+        <Switch checked={checked} onCheckedChange={onCheckedChange} />
+      </div>
+    </div>
   );
 }
