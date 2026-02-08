@@ -22,6 +22,8 @@ import {
   Trash2,
   FileText,
   Sheet,
+  CreditCard,
+  Clock,
 } from "lucide-react";
 import {
   Dialog,
@@ -49,6 +51,15 @@ interface MemberRow {
   expiry_date?: string;
   plan_name?: string;
   notes?: string;
+  // Attendance fields
+  total_visits?: string;
+  last_visit_date?: string;
+  check_in_dates?: string; // comma-separated dates
+  // Payment fields
+  payment_amount?: string;
+  payment_date?: string;
+  payment_mode?: string;
+  transaction_id?: string;
 }
 
 interface ParsedRow {
@@ -78,7 +89,7 @@ export function BulkMemberImport() {
   const [isParsing, setIsParsing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
-  const [importResults, setImportResults] = useState<{ success: number; failed: number }>({ success: 0, failed: 0 });
+  const [importResults, setImportResults] = useState<{ success: number; failed: number; attendance: number; payments: number }>({ success: 0, failed: 0, attendance: 0, payments: 0 });
   const [step, setStep] = useState<"upload" | "configure-plans" | "preview" | "importing" | "complete">("upload");
   
   // Detected plans from CSV
@@ -104,6 +115,7 @@ export function BulkMemberImport() {
   });
 
   const headerMap: Record<string, keyof MemberRow> = {
+    // Member fields
     "full_name": "full_name",
     "name": "full_name",
     "member_name": "full_name",
@@ -125,6 +137,36 @@ export function BulkMemberImport() {
     "notes": "notes",
     "note": "notes",
     "remarks": "notes",
+    // Attendance fields
+    "total_visits": "total_visits",
+    "visits": "total_visits",
+    "visit_count": "total_visits",
+    "attendance_count": "total_visits",
+    "last_visit": "last_visit_date",
+    "last_visit_date": "last_visit_date",
+    "last_checkin": "last_visit_date",
+    "last_check_in": "last_visit_date",
+    "check_in_dates": "check_in_dates",
+    "checkin_dates": "check_in_dates",
+    "attendance_dates": "check_in_dates",
+    "attendance": "check_in_dates",
+    // Payment fields
+    "payment_amount": "payment_amount",
+    "amount_paid": "payment_amount",
+    "amount": "payment_amount",
+    "fee": "payment_amount",
+    "fees": "payment_amount",
+    "payment_date": "payment_date",
+    "paid_on": "payment_date",
+    "paid_date": "payment_date",
+    "payment_mode": "payment_mode",
+    "pay_mode": "payment_mode",
+    "mode_of_payment": "payment_mode",
+    "payment_method": "payment_mode",
+    "transaction_id": "transaction_id",
+    "txn_id": "transaction_id",
+    "reference": "transaction_id",
+    "ref_no": "transaction_id",
   };
 
   const normalizeDate = (dateValue: any): string => {
@@ -161,6 +203,13 @@ export function BulkMemberImport() {
     return dateStr;
   };
 
+  const normalizePaymentMode = (mode: string): "cash" | "upi" | "card" => {
+    const m = mode.toLowerCase().trim();
+    if (["upi", "gpay", "phonepe", "paytm", "google_pay", "google pay"].includes(m)) return "upi";
+    if (["card", "credit", "debit", "credit_card", "debit_card", "credit card", "debit card"].includes(m)) return "card";
+    return "cash";
+  };
+
   const parseExcel = useCallback((buffer: ArrayBuffer): Partial<MemberRow>[] => {
     const workbook = XLSX.read(buffer, { type: "array" });
     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -182,9 +231,11 @@ export function BulkMemberImport() {
         }
       });
 
-      // Normalize dates (handles Excel serial numbers)
+      // Normalize dates
       if (row.start_date) row.start_date = normalizeDate(row.start_date);
       if (row.expiry_date) row.expiry_date = normalizeDate(row.expiry_date);
+      if (row.last_visit_date) row.last_visit_date = normalizeDate(row.last_visit_date);
+      if (row.payment_date) row.payment_date = normalizeDate(row.payment_date);
       
       // Clean phone number
       if (row.phone) row.phone = String(row.phone).replace(/\D/g, "").slice(-10);
@@ -215,6 +266,8 @@ export function BulkMemberImport() {
       // Normalize dates
       if (row.start_date) row.start_date = normalizeDate(row.start_date);
       if (row.expiry_date) row.expiry_date = normalizeDate(row.expiry_date);
+      if (row.last_visit_date) row.last_visit_date = normalizeDate(row.last_visit_date);
+      if (row.payment_date) row.payment_date = normalizeDate(row.payment_date);
       
       // Clean phone number
       if (row.phone) row.phone = row.phone.replace(/\D/g, "").slice(-10);
@@ -222,6 +275,10 @@ export function BulkMemberImport() {
       return row;
     });
   }, []);
+
+  // Detect if file has attendance or payment data
+  const hasAttendanceData = parsedData.some(r => r.data.total_visits || r.data.last_visit_date || r.data.check_in_dates);
+  const hasPaymentData = parsedData.some(r => r.data.payment_amount);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -273,6 +330,10 @@ export function BulkMemberImport() {
 
       setParsedData(validatedRows);
 
+      // Detect extra data
+      const hasAtt = rows.some(r => r.total_visits || r.last_visit_date || r.check_in_dates);
+      const hasPay = rows.some(r => r.payment_amount);
+
       // Extract unique plan names
       const planCounts: Record<string, number> = {};
       rows.forEach(row => {
@@ -310,7 +371,13 @@ export function BulkMemberImport() {
       }
 
       setDetectedPlans(detected);
-      toast.success(`Found ${rows.length} members in ${isExcel ? "Excel" : "CSV"} file`);
+
+      const extras: string[] = [];
+      if (hasAtt) extras.push("attendance");
+      if (hasPay) extras.push("payment");
+      const extraMsg = extras.length > 0 ? ` (with ${extras.join(" & ")} data)` : "";
+
+      toast.success(`Found ${rows.length} members${extraMsg} in ${isExcel ? "Excel" : "CSV"} file`);
       setStep("configure-plans");
     } catch (error: any) {
       toast.error("Failed to parse file: " + error.message);
@@ -343,7 +410,6 @@ export function BulkMemberImport() {
   };
 
   const createPlansAndProceed = async () => {
-    // Validate all plans have name, duration, and price
     const invalidPlans = detectedPlans.filter(p => !p.name.trim() || p.duration_days <= 0 || p.price < 0);
     if (invalidPlans.length > 0) {
       toast.error("Please fill in all plan details (name, duration, price)");
@@ -353,10 +419,8 @@ export function BulkMemberImport() {
     const planIdMap: Record<string, string> = {};
 
     try {
-      // Create or update plans
       for (const plan of detectedPlans) {
         if (plan.existingId) {
-          // Update existing plan
           const { error } = await supabase
             .from("membership_plans")
             .update({ duration_days: plan.duration_days, price: plan.price })
@@ -365,7 +429,6 @@ export function BulkMemberImport() {
           if (error) throw error;
           planIdMap[plan.name.toLowerCase()] = plan.existingId;
         } else {
-          // Create new plan
           const { data, error } = await supabase
             .from("membership_plans")
             .insert({
@@ -385,7 +448,6 @@ export function BulkMemberImport() {
 
       setCreatedPlanIds(planIdMap);
       
-      // Update parsed data with plan IDs and calculated dates
       const today = format(new Date(), "yyyy-MM-dd");
       
       const updatedRows = parsedData.map(row => {
@@ -393,7 +455,6 @@ export function BulkMemberImport() {
         const planId = planIdMap[planName];
         const plan = detectedPlans.find(p => p.name.toLowerCase() === planName);
         
-        // Calculate expiry if not provided
         let startDate = row.data.start_date || today;
         let expiryDate = row.data.expiry_date;
         
@@ -422,8 +483,6 @@ export function BulkMemberImport() {
       });
 
       setParsedData(updatedRows);
-      
-      // Invalidate plans cache
       queryClient.invalidateQueries({ queryKey: ["membership-plans"] });
       
       toast.success(`${detectedPlans.filter(p => p.isNew).length} new plans created!`);
@@ -445,11 +504,17 @@ export function BulkMemberImport() {
     setImportProgress(0);
     let success = 0;
     let failed = 0;
+    let attendanceCount = 0;
+    let paymentCount = 0;
 
     for (let i = 0; i < validRows.length; i++) {
       const row = validRows[i];
       try {
-        const { error } = await supabase.from("members").insert({
+        // Calculate total_visits and last_visit_at from data
+        const totalVisits = row.data.total_visits ? parseInt(row.data.total_visits) || 0 : 0;
+        const lastVisitAt = row.data.last_visit_date || null;
+
+        const { data: memberData, error } = await supabase.from("members").insert({
           gym_id: gymId,
           full_name: row.data.full_name,
           phone: row.data.phone,
@@ -459,7 +524,9 @@ export function BulkMemberImport() {
           plan_id: row.planId || null,
           plan_name: row.data.plan_name || null,
           notes: row.data.notes || null,
-        });
+          total_visits: totalVisits,
+          last_visit_at: lastVisitAt,
+        }).select("id").single();
 
         if (error) {
           if (error.message.includes("unique") || error.message.includes("duplicate")) {
@@ -469,6 +536,55 @@ export function BulkMemberImport() {
           }
         } else {
           success++;
+          const memberId = memberData.id;
+
+          // Import attendance records if check_in_dates provided
+          if (row.data.check_in_dates) {
+            const dates = row.data.check_in_dates.split(/[;|,]/).map(d => d.trim()).filter(Boolean);
+            const attendanceRows = dates.map(dateStr => {
+              const normalized = normalizeDate(dateStr);
+              return {
+                gym_id: gymId!,
+                member_id: memberId,
+                check_in_at: normalized ? `${normalized}T09:00:00` : new Date().toISOString(),
+                source: "manual" as const,
+                notes: "Imported via bulk import",
+              };
+            }).filter(a => a.check_in_at);
+
+            if (attendanceRows.length > 0) {
+              const { error: attError } = await supabase.from("attendance").insert(attendanceRows);
+              if (!attError) {
+                attendanceCount += attendanceRows.length;
+              }
+            }
+          }
+
+          // Import payment record if payment_amount provided
+          if (row.data.payment_amount) {
+            const amount = parseFloat(row.data.payment_amount);
+            if (amount > 0) {
+              const payMode = normalizePaymentMode(row.data.payment_mode || "cash");
+              const payDate = row.data.payment_date || row.data.start_date || format(new Date(), "yyyy-MM-dd");
+
+              const { error: payError } = await supabase.from("payments").insert({
+                gym_id: gymId!,
+                member_id: memberId,
+                amount,
+                payment_mode: payMode,
+                status: "completed",
+                plan_id: row.planId || null,
+                plan_name: row.data.plan_name || null,
+                new_start_date: row.data.start_date,
+                new_expiry_date: row.data.expiry_date,
+                notes: `Imported via bulk import${row.data.transaction_id ? ` (Ref: ${row.data.transaction_id})` : ""}`,
+                transaction_id: row.data.transaction_id || null,
+              });
+              if (!payError) {
+                paymentCount++;
+              }
+            }
+          }
         }
       } catch (error) {
         failed++;
@@ -491,18 +607,20 @@ export function BulkMemberImport() {
       plans_created: newPlansCreated,
     });
 
-    setImportResults({ success, failed });
+    setImportResults({ success, failed, attendance: attendanceCount, payments: paymentCount });
     setIsImporting(false);
     setStep("complete");
     queryClient.invalidateQueries({ queryKey: ["members"] });
     queryClient.invalidateQueries({ queryKey: ["import-logs"] });
+    queryClient.invalidateQueries({ queryKey: ["attendance"] });
+    queryClient.invalidateQueries({ queryKey: ["payments"] });
   };
 
   const downloadCSVTemplate = () => {
-    const template = `full_name,phone,email,plan_name,start_date,expiry_date,notes
-John Doe,9876543210,john@example.com,Monthly,2025-01-01,2025-02-01,New member
-Jane Smith,8765432109,,Quarterly,2025-01-15,2025-04-15,
-Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,VIP member`;
+    const template = `full_name,phone,email,plan_name,start_date,expiry_date,total_visits,last_visit_date,payment_amount,payment_mode,payment_date,transaction_id,notes
+John Doe,9876543210,john@example.com,Monthly,2025-01-01,2025-02-01,12,2025-01-28,1000,upi,2025-01-01,TXN123,New member
+Jane Smith,8765432109,,Quarterly,2025-01-15,2025-04-15,5,2025-01-20,2500,cash,2025-01-15,,
+Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,30,2025-02-01,8000,card,2025-01-01,REF456,VIP member`;
     
     const blob = new Blob([template], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -514,32 +632,23 @@ Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,VIP member`;
   };
 
   const downloadExcelTemplate = () => {
-    // Create sample data
     const templateData = [
-      ["full_name", "phone", "email", "plan_name", "start_date", "expiry_date", "notes"],
-      ["John Doe", "9876543210", "john@example.com", "Monthly", "2025-01-01", "2025-02-01", "New member"],
-      ["Jane Smith", "8765432109", "", "Quarterly", "2025-01-15", "2025-04-15", ""],
-      ["Mike Johnson", "7654321098", "mike@test.com", "Annual", "2025-01-01", "2026-01-01", "VIP member"],
+      ["full_name", "phone", "email", "plan_name", "start_date", "expiry_date", "total_visits", "last_visit_date", "payment_amount", "payment_mode", "payment_date", "transaction_id", "notes"],
+      ["John Doe", "9876543210", "john@example.com", "Monthly", "2025-01-01", "2025-02-01", 12, "2025-01-28", 1000, "upi", "2025-01-01", "TXN123", "New member"],
+      ["Jane Smith", "8765432109", "", "Quarterly", "2025-01-15", "2025-04-15", 5, "2025-01-20", 2500, "cash", "2025-01-15", "", ""],
+      ["Mike Johnson", "7654321098", "mike@test.com", "Annual", "2025-01-01", "2026-01-01", 30, "2025-02-01", 8000, "card", "2025-01-01", "REF456", "VIP member"],
     ];
 
-    // Create workbook and worksheet
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(templateData);
 
-    // Set column widths
     ws["!cols"] = [
-      { wch: 20 }, // full_name
-      { wch: 15 }, // phone
-      { wch: 25 }, // email
-      { wch: 15 }, // plan_name
-      { wch: 12 }, // start_date
-      { wch: 12 }, // expiry_date
-      { wch: 30 }, // notes
+      { wch: 20 }, { wch: 15 }, { wch: 25 }, { wch: 15 },
+      { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 15 },
+      { wch: 15 }, { wch: 14 }, { wch: 12 }, { wch: 15 }, { wch: 30 },
     ];
 
     XLSX.utils.book_append_sheet(wb, ws, "Members");
-
-    // Generate and download file
     XLSX.writeFile(wb, "member_import_template.xlsx");
   };
 
@@ -548,7 +657,7 @@ Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,VIP member`;
     setParsedData([]);
     setStep("upload");
     setImportProgress(0);
-    setImportResults({ success: 0, failed: 0 });
+    setImportResults({ success: 0, failed: 0, attendance: 0, payments: 0 });
     setDetectedPlans([]);
     setCreatedPlanIds({});
   };
@@ -577,7 +686,7 @@ Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,VIP member`;
               Bulk Import Members
             </DialogTitle>
             <DialogDescription>
-              {step === "upload" && "Upload a CSV or Excel file with member details"}
+              {step === "upload" && "Upload a CSV or Excel file with member details, attendance & payment data"}
               {step === "configure-plans" && "Configure membership plans found in your file"}
               {step === "preview" && "Review and confirm import"}
               {step === "importing" && "Importing members..."}
@@ -627,7 +736,7 @@ Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,VIP member`;
                 <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                   <div>
                     <p className="font-medium text-sm">Need a template?</p>
-                    <p className="text-xs text-muted-foreground">Download with sample data to get started quickly</p>
+                    <p className="text-xs text-muted-foreground">Download with sample data including attendance & payments</p>
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={downloadExcelTemplate} className="gap-2">
@@ -652,6 +761,23 @@ Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,VIP member`;
                     <li><code className="bg-muted px-1 rounded">plan_name</code> / <code className="bg-muted px-1 rounded">membership</code> - We'll detect & create plans</li>
                     <li><code className="bg-muted px-1 rounded">start_date</code>, <code className="bg-muted px-1 rounded">expiry_date</code>, <code className="bg-muted px-1 rounded">email</code>, <code className="bg-muted px-1 rounded">notes</code></li>
                   </ul>
+                  <p className="font-medium text-foreground mt-2 flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5" /> Attendance columns:
+                  </p>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    <li><code className="bg-muted px-1 rounded">total_visits</code> / <code className="bg-muted px-1 rounded">visits</code> - Total visit count</li>
+                    <li><code className="bg-muted px-1 rounded">last_visit_date</code> / <code className="bg-muted px-1 rounded">last_checkin</code></li>
+                    <li><code className="bg-muted px-1 rounded">check_in_dates</code> - Semicolon-separated dates</li>
+                  </ul>
+                  <p className="font-medium text-foreground mt-2 flex items-center gap-1">
+                    <CreditCard className="h-3.5 w-3.5" /> Payment columns:
+                  </p>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    <li><code className="bg-muted px-1 rounded">payment_amount</code> / <code className="bg-muted px-1 rounded">amount_paid</code> / <code className="bg-muted px-1 rounded">fee</code></li>
+                    <li><code className="bg-muted px-1 rounded">payment_mode</code> - cash, upi, card</li>
+                    <li><code className="bg-muted px-1 rounded">payment_date</code> / <code className="bg-muted px-1 rounded">paid_on</code></li>
+                    <li><code className="bg-muted px-1 rounded">transaction_id</code> / <code className="bg-muted px-1 rounded">ref_no</code></li>
+                  </ul>
                   <p className="text-xs mt-3 text-muted-foreground">
                     💡 <span className="font-medium">Pro tip:</span> Export your existing member list from any software and upload directly!
                   </p>
@@ -661,7 +787,7 @@ Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,VIP member`;
 
             {step === "configure-plans" && (
               <div className="space-y-6">
-                <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-3 flex-wrap p-4 bg-muted/50 rounded-lg">
                   <Badge variant="outline" className="gap-1">
                     <FileSpreadsheet className="h-3 w-3" />
                     {parsedData.length} members found
@@ -676,6 +802,18 @@ Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,VIP member`;
                     <Badge className="gap-1 bg-md-green/10 text-md-green border-md-green/20">
                       <CheckCircle className="h-3 w-3" />
                       {existingPlansCount} existing
+                    </Badge>
+                  )}
+                  {hasAttendanceData && (
+                    <Badge className="gap-1 bg-purple-500/10 text-purple-600 border-purple-500/20">
+                      <Clock className="h-3 w-3" />
+                      Attendance data
+                    </Badge>
+                  )}
+                  {hasPaymentData && (
+                    <Badge className="gap-1 bg-amber-500/10 text-amber-600 border-amber-500/20">
+                      <CreditCard className="h-3 w-3" />
+                      Payment data
                     </Badge>
                   )}
                 </div>
@@ -773,7 +911,7 @@ Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,VIP member`;
 
             {step === "preview" && (
               <div className="space-y-4">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 flex-wrap">
                   <Badge variant="outline" className="gap-1">
                     <CheckCircle className="h-3 w-3 text-md-green" />
                     {validCount} valid
@@ -782,6 +920,18 @@ Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,VIP member`;
                     <Badge variant="destructive" className="gap-1">
                       <XCircle className="h-3 w-3" />
                       {invalidCount} errors
+                    </Badge>
+                  )}
+                  {hasAttendanceData && (
+                    <Badge variant="outline" className="gap-1 text-purple-600">
+                      <Clock className="h-3 w-3" />
+                      + Attendance
+                    </Badge>
+                  )}
+                  {hasPaymentData && (
+                    <Badge variant="outline" className="gap-1 text-amber-600">
+                      <CreditCard className="h-3 w-3" />
+                      + Payments
                     </Badge>
                   )}
                 </div>
@@ -797,6 +947,8 @@ Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,VIP member`;
                         <TableHead>Plan</TableHead>
                         <TableHead>Start</TableHead>
                         <TableHead>Expiry</TableHead>
+                        {hasAttendanceData && <TableHead>Visits</TableHead>}
+                        {hasPaymentData && <TableHead>Payment</TableHead>}
                         <TableHead>Errors</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -816,6 +968,26 @@ Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,VIP member`;
                           <TableCell>{row.data.plan_name || "-"}</TableCell>
                           <TableCell>{row.data.start_date || "-"}</TableCell>
                           <TableCell>{row.data.expiry_date || "-"}</TableCell>
+                          {hasAttendanceData && (
+                            <TableCell className="text-sm">
+                              {row.data.total_visits || row.data.check_in_dates ? (
+                                <span className="text-purple-600">
+                                  {row.data.total_visits || "—"}
+                                  {row.data.check_in_dates && ` (${row.data.check_in_dates.split(/[;|,]/).filter(Boolean).length} dates)`}
+                                </span>
+                              ) : "-"}
+                            </TableCell>
+                          )}
+                          {hasPaymentData && (
+                            <TableCell className="text-sm">
+                              {row.data.payment_amount ? (
+                                <span className="text-amber-600">
+                                  ₹{row.data.payment_amount}
+                                  {row.data.payment_mode && ` (${row.data.payment_mode})`}
+                                </span>
+                              ) : "-"}
+                            </TableCell>
+                          )}
                           <TableCell className="text-xs text-destructive max-w-[200px] truncate">
                             {row.errors.join("; ")}
                           </TableCell>
@@ -835,6 +1007,7 @@ Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,VIP member`;
                     </Button>
                     <Button onClick={handleImport} disabled={validCount === 0}>
                       Import {validCount} Members
+                      {(hasAttendanceData || hasPaymentData) && " + Data"}
                     </Button>
                   </div>
                 </div>
@@ -846,7 +1019,7 @@ Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,VIP member`;
                 <Loader2 className="h-12 w-12 mx-auto animate-spin text-primary" />
                 <div>
                   <p className="text-lg font-medium">Importing members...</p>
-                  <p className="text-sm text-muted-foreground">Please don't close this window</p>
+                  <p className="text-sm text-muted-foreground">Including attendance & payment records where available</p>
                 </div>
                 <Progress value={importProgress} className="w-full" />
                 <p className="text-sm text-muted-foreground">{importProgress}% complete</p>
@@ -864,6 +1037,22 @@ Mike Johnson,7654321098,mike@test.com,Annual,2025-01-01,2026-01-01,VIP member`;
                       <>, <span className="text-destructive font-medium">{importResults.failed}</span> failed</>
                     )}
                   </p>
+                  {(importResults.attendance > 0 || importResults.payments > 0) && (
+                    <div className="mt-3 flex items-center justify-center gap-4 text-sm">
+                      {importResults.attendance > 0 && (
+                        <span className="flex items-center gap-1 text-purple-600">
+                          <Clock className="h-4 w-4" />
+                          {importResults.attendance} attendance records
+                        </span>
+                      )}
+                      {importResults.payments > 0 && (
+                        <span className="flex items-center gap-1 text-amber-600">
+                          <CreditCard className="h-4 w-4" />
+                          {importResults.payments} payment records
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
                 {importResults.failed > 0 && (
                   <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
