@@ -109,7 +109,7 @@ export function DashboardSearch({ members, onMemberClick }: DashboardSearchProps
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 sm:w-[380px] mt-2 rounded-xl border border-border bg-popover shadow-xl shadow-black/10 z-50 overflow-hidden animate-fade-in">
+        <div className="absolute top-full left-0 right-0 sm:w-[380px] mt-2 rounded-xl border border-border bg-card shadow-2xl shadow-black/30 z-[100] overflow-hidden animate-fade-in" style={{ backgroundColor: 'hsl(var(--card))' }}>
           {filtered.length === 0 ? (
             <div className="px-4 py-8 text-center">
               <Search className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
