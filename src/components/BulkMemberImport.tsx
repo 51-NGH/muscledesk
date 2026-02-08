@@ -506,6 +506,9 @@ export function BulkMemberImport() {
     let failed = 0;
     let attendanceCount = 0;
     let paymentCount = 0;
+    const importedMemberIds: string[] = [];
+    const importedAttendanceIds: string[] = [];
+    const importedPaymentIds: string[] = [];
 
     for (let i = 0; i < validRows.length; i++) {
       const row = validRows[i];
@@ -537,6 +540,7 @@ export function BulkMemberImport() {
         } else {
           success++;
           const memberId = memberData.id;
+          importedMemberIds.push(memberId);
 
           // Import attendance records if check_in_dates provided
           if (row.data.check_in_dates) {
@@ -553,9 +557,10 @@ export function BulkMemberImport() {
             }).filter(a => a.check_in_at);
 
             if (attendanceRows.length > 0) {
-              const { error: attError } = await supabase.from("attendance").insert(attendanceRows);
-              if (!attError) {
-                attendanceCount += attendanceRows.length;
+              const { data: attData, error: attError } = await supabase.from("attendance").insert(attendanceRows).select("id");
+              if (!attError && attData) {
+                attendanceCount += attData.length;
+                attData.forEach(a => importedAttendanceIds.push(a.id));
               }
             }
           }
@@ -567,7 +572,7 @@ export function BulkMemberImport() {
               const payMode = normalizePaymentMode(row.data.payment_mode || "cash");
               const payDate = row.data.payment_date || row.data.start_date || format(new Date(), "yyyy-MM-dd");
 
-              const { error: payError } = await supabase.from("payments").insert({
+              const { data: payData, error: payError } = await supabase.from("payments").insert({
                 gym_id: gymId!,
                 member_id: memberId,
                 amount,
@@ -579,9 +584,10 @@ export function BulkMemberImport() {
                 new_expiry_date: row.data.expiry_date,
                 notes: `Imported via bulk import${row.data.transaction_id ? ` (Ref: ${row.data.transaction_id})` : ""}`,
                 transaction_id: row.data.transaction_id || null,
-              });
-              if (!payError) {
+              }).select("id").single();
+              if (!payError && payData) {
                 paymentCount++;
+                importedPaymentIds.push(payData.id);
               }
             }
           }
@@ -593,7 +599,7 @@ export function BulkMemberImport() {
       setImportProgress(Math.round(((i + 1) / validRows.length) * 100));
     }
 
-    // Log the import
+    // Log the import with tracked IDs for revert
     const newPlansCreated = detectedPlans.filter(p => p.isNew && !p.existingId).length;
     const fileExt = file?.name.split('.').pop()?.toLowerCase() || 'csv';
     
@@ -605,7 +611,10 @@ export function BulkMemberImport() {
       success_count: success,
       failure_count: failed,
       plans_created: newPlansCreated,
-    });
+      imported_member_ids: importedMemberIds,
+      imported_attendance_ids: importedAttendanceIds,
+      imported_payment_ids: importedPaymentIds,
+    } as any);
 
     setImportResults({ success, failed, attendance: attendanceCount, payments: paymentCount });
     setIsImporting(false);
