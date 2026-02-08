@@ -216,11 +216,7 @@ serve(async (req) => {
 
     // Classify
     if (apiResponse.ok) {
-      // Upsert rate limit (only on sent)
-      await supabase.rpc('upsert_whatsapp_rate_limit' as never, { _gym_id: effectiveGymId } as never).catch(() => {
-        // Fallback: direct upsert via raw approach won't work, use insert with conflict
-      });
-      // Direct upsert
+      // Upsert rate limit counter
       const today = new Date().toISOString().split('T')[0];
       await supabase.from('whatsapp_rate_limits').upsert(
         { gym_id: effectiveGymId, date: today, message_count: currentCount + 1 },
