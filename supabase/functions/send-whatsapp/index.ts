@@ -9,7 +9,7 @@ const corsHeaders = {
 // Template variable definitions (named lowercase)
 const TEMPLATE_VARIABLES: Record<string, string[]> = {
   welcome_emai: ['member_name', 'gym_name'],
-  payment_received: ['member_name', 'amount', 'gym_name'],
+  payment_received: ['member_name', 'amount', 'expiry_date', 'gym_name'],
   membership_expiry_reminder: ['member_name', 'expiry_date', 'gym_name'],
 };
 
