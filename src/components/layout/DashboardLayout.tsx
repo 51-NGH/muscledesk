@@ -47,8 +47,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {/* Main Content */}
-      <main className="lg:ml-[220px] min-h-screen min-h-[100dvh] px-4 pt-[70px] pb-6 lg:pt-6 lg:px-6 lg:pb-6 transition-colors duration-300">
-        {children}
+      <main className="lg:ml-[220px] min-h-screen min-h-[100dvh] px-4 pt-[70px] pb-6 lg:pt-6 lg:px-8 lg:pb-6 transition-colors duration-300">
+        <div className="mx-auto max-w-[1400px]">
+          {children}
+        </div>
       </main>
     </div>
   );
