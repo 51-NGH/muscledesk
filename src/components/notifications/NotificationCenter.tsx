@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, forwardRef } from "react";
 import { Bell, AlertTriangle, Clock, CreditCard, CheckCircle2, ChevronRight, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +27,7 @@ interface Notification {
   daysRemaining?: number;
 }
 
-export function NotificationCenter() {
+export const NotificationCenter = forwardRef<HTMLDivElement>(function NotificationCenter(_props, ref) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { data: expiringMembers = [] } = useExpiringMembers(14);
@@ -333,4 +333,6 @@ export function NotificationCenter() {
       </SheetContent>
     </Sheet>
   );
-}
+});
+
+NotificationCenter.displayName = "NotificationCenter";
