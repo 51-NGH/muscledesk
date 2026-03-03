@@ -14,6 +14,7 @@ import {
   Fingerprint,
   MessageCircle,
   RefreshCw,
+  UserPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,6 +26,7 @@ import muscleDeskLogo from "@/assets/muscledesk-logo.png";
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Members", url: "/members", icon: Users },
+  { title: "Leads", url: "/leads", icon: UserPlus },
   { title: "Attendance", url: "/attendance", icon: Calendar },
   { title: "Fingerprint", url: "/fingerprint-devices", icon: Fingerprint },
   { title: "Plans", url: "/plans", icon: CreditCard },
