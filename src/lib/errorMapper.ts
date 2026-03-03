@@ -103,6 +103,11 @@ export const mapAuthError = (error: Error | unknown): string => {
     return 'Your session has expired. Please sign in again.';
   }
 
+  // Network/connectivity issues
+  if (msg.includes('failed to fetch') || msg.includes('fetch') || msg.includes('network') || msg.includes('cors')) {
+    return 'Unable to reach authentication service. Please check your internet and try again.';
+  }
+
   // Log the actual error for debugging (only in development)
   if (import.meta.env.DEV) {
     console.error('Auth error:', error);
