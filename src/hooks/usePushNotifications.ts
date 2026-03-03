@@ -1,7 +1,13 @@
+/// <reference lib="webworker" />
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useMemberAuth } from '@/contexts/MemberAuthContext';
 import { toast } from 'sonner';
+
+// Extend ServiceWorkerRegistration to include pushManager
+interface PushServiceWorkerRegistration extends ServiceWorkerRegistration {
+  pushManager: PushManager;
+}
 
 const VAPID_PUBLIC_KEY = 'BKWMQGb7OADchqYYxRVnXMdYhIzitIk5P1bKFNiNvyvo4dd7u2YSRsWLJ6zghOlJ5TUQ_GgzjwRqthb7PusBRnE';
 
@@ -46,7 +52,7 @@ export function usePushNotifications() {
     if (!member?.id) return;
 
     try {
-      const registration = await navigator.serviceWorker.ready;
+      const registration = await navigator.serviceWorker.ready as PushServiceWorkerRegistration;
       const subscription = await registration.pushManager.getSubscription();
       
       if (subscription) {
@@ -91,7 +97,7 @@ export function usePushNotifications() {
 
       // Subscribe to push
       const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
-      const subscription = await registration.pushManager.subscribe({
+      const subscription = await (registration as PushServiceWorkerRegistration).pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
       });
@@ -132,7 +138,7 @@ export function usePushNotifications() {
     try {
       setIsLoading(true);
 
-      const registration = await navigator.serviceWorker.ready;
+      const registration = await navigator.serviceWorker.ready as PushServiceWorkerRegistration;
       const subscription = await registration.pushManager.getSubscription();
       
       if (subscription) {
