@@ -151,30 +151,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password,
       });
 
+    const retryWithRecovery = async () => {
+      // quick retry
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      const { error: retryError } = await attemptSignIn();
+      if (!retryError || !isNetworkFetchError(retryError)) {
+        return { error: retryError as Error | null };
+      }
+
+      // hard recovery retry
+      await recoverAuthNetworkState();
+      const { error: postRecoveryError } = await attemptSignIn();
+      return { error: postRecoveryError as Error | null };
+    };
+
     try {
       const { error } = await attemptSignIn();
+
+      // IMPORTANT: Supabase may return network failures as `error` without throwing
+      if (error && isNetworkFetchError(error)) {
+        return await retryWithRecovery();
+      }
+
       return { error: error as Error | null };
     } catch (error) {
       if (isNetworkFetchError(error)) {
         try {
-          await new Promise((resolve) => setTimeout(resolve, 800));
-          const { error: retryError } = await attemptSignIn();
-          return { error: retryError as Error | null };
-        } catch (retryCatchError) {
-          if (!isNetworkFetchError(retryCatchError)) {
-            return { error: retryCatchError as Error };
-          }
-
-          // Hard recovery for stale service worker/cache corruption issues
-          await recoverAuthNetworkState();
-
-          try {
-            const { error: postRecoveryError } = await attemptSignIn();
-            return { error: postRecoveryError as Error | null };
-          } catch (finalError) {
-            console.error("Sign-in failed after recovery:", finalError);
-            return { error: finalError as Error };
-          }
+          return await retryWithRecovery();
+        } catch (finalError) {
+          console.error("Sign-in failed after recovery:", finalError);
+          return { error: finalError as Error };
         }
       }
 
