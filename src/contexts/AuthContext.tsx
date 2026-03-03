@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
 
 type AppRole = "super_admin" | "gym_owner" | "staff";
 
@@ -21,6 +20,29 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const isNetworkFetchError = (error: unknown) => {
+  const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+  return message.includes("failed to fetch") || message.includes("network") || message.includes("cors");
+};
+
+const recoverAuthNetworkState = async () => {
+  try {
+    if ("serviceWorker" in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    }
+
+    if ("caches" in window) {
+      const cacheKeys = await caches.keys();
+      await Promise.all(cacheKeys.map((key) => caches.delete(key)));
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  } catch (recoveryError) {
+    console.error("Auth recovery failed:", recoveryError);
+  }
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -31,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -133,18 +155,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await attemptSignIn();
       return { error: error as Error | null };
     } catch (error) {
-      const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
-      const isFetchError = message.includes("failed to fetch") || message.includes("network") || message.includes("cors");
-
-      // One retry for transient network/CORS hiccups
-      if (isFetchError) {
+      if (isNetworkFetchError(error)) {
         try {
           await new Promise((resolve) => setTimeout(resolve, 800));
           const { error: retryError } = await attemptSignIn();
           return { error: retryError as Error | null };
         } catch (retryCatchError) {
-          console.error("Sign-in retry failed:", retryCatchError);
-          return { error: retryCatchError as Error };
+          if (!isNetworkFetchError(retryCatchError)) {
+            return { error: retryCatchError as Error };
+          }
+
+          // Hard recovery for stale service worker/cache corruption issues
+          await recoverAuthNetworkState();
+
+          try {
+            const { error: postRecoveryError } = await attemptSignIn();
+            return { error: postRecoveryError as Error | null };
+          } catch (finalError) {
+            console.error("Sign-in failed after recovery:", finalError);
+            return { error: finalError as Error };
+          }
         }
       }
 
@@ -204,3 +234,4 @@ export function useAuth() {
   }
   return context;
 }
+
