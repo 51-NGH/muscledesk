@@ -123,13 +123,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
+    const attemptSignIn = async () =>
+      supabase.auth.signInWithPassword({
         email,
         password,
       });
+
+    try {
+      const { error } = await attemptSignIn();
       return { error: error as Error | null };
     } catch (error) {
+      const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+      const isFetchError = message.includes("failed to fetch") || message.includes("network") || message.includes("cors");
+
+      // One retry for transient network/CORS hiccups
+      if (isFetchError) {
+        try {
+          await new Promise((resolve) => setTimeout(resolve, 800));
+          const { error: retryError } = await attemptSignIn();
+          return { error: retryError as Error | null };
+        } catch (retryCatchError) {
+          console.error("Sign-in retry failed:", retryCatchError);
+          return { error: retryCatchError as Error };
+        }
+      }
+
       console.error("Unexpected sign-in error:", error);
       return { error: error as Error };
     }
