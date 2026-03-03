@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, Lock, Eye, EyeOff, Loader2, User, TrendingUp, Users, Calendar, ChartBar } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Loader2, User, TrendingUp, Users, Calendar, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import { mapAuthError } from "@/lib/errorMapper";
 import muscleDeskLogo from "@/assets/muscledesk-logo.png";
@@ -265,7 +265,7 @@ export default function Login() {
               </div>
               <div className="flex items-center gap-3 text-white/90">
                 <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                  <ChartBar className="w-3.5 h-3.5" />
+                  <BarChart3 className="w-3.5 h-3.5" />
                 </div>
                 <span className="text-sm font-medium">Advanced analytics & insights</span>
               </div>
