@@ -823,6 +823,129 @@ export type Database = {
           },
         ]
       }
+      lead_activities: {
+        Row: {
+          activity_type: Database["public"]["Enums"]["lead_activity_type"]
+          created_at: string
+          description: string | null
+          gym_id: string
+          id: string
+          lead_id: string
+          performed_by: string | null
+        }
+        Insert: {
+          activity_type: Database["public"]["Enums"]["lead_activity_type"]
+          created_at?: string
+          description?: string | null
+          gym_id: string
+          id?: string
+          lead_id: string
+          performed_by?: string | null
+        }
+        Update: {
+          activity_type?: Database["public"]["Enums"]["lead_activity_type"]
+          created_at?: string
+          description?: string | null
+          gym_id?: string
+          id?: string
+          lead_id?: string
+          performed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_activities_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_activities_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          assigned_to: string | null
+          converted_member_id: string | null
+          created_at: string
+          deleted_at: string | null
+          email: string | null
+          follow_up_count: number
+          full_name: string
+          gym_id: string
+          id: string
+          interest_plan: string | null
+          last_contacted_at: string | null
+          next_follow_up_at: string | null
+          notes: string | null
+          phone: string
+          source: Database["public"]["Enums"]["lead_source"]
+          status: Database["public"]["Enums"]["lead_status"]
+          temperature: Database["public"]["Enums"]["lead_temperature"]
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          converted_member_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          email?: string | null
+          follow_up_count?: number
+          full_name: string
+          gym_id: string
+          id?: string
+          interest_plan?: string | null
+          last_contacted_at?: string | null
+          next_follow_up_at?: string | null
+          notes?: string | null
+          phone: string
+          source?: Database["public"]["Enums"]["lead_source"]
+          status?: Database["public"]["Enums"]["lead_status"]
+          temperature?: Database["public"]["Enums"]["lead_temperature"]
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          converted_member_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          email?: string | null
+          follow_up_count?: number
+          full_name?: string
+          gym_id?: string
+          id?: string
+          interest_plan?: string | null
+          last_contacted_at?: string | null
+          next_follow_up_at?: string | null
+          notes?: string | null
+          phone?: string
+          source?: Database["public"]["Enums"]["lead_source"]
+          status?: Database["public"]["Enums"]["lead_status"]
+          temperature?: Database["public"]["Enums"]["lead_temperature"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_converted_member_id_fkey"
+            columns: ["converted_member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       members: {
         Row: {
           auth_user_id: string | null
@@ -1620,6 +1743,18 @@ export type Database = {
           total_members: number
         }[]
       }
+      get_lead_analytics: {
+        Args: { _gym_id: string }
+        Returns: {
+          average_conversion_time_days: number
+          conversion_rate: number
+          converted_leads_this_month: number
+          hot_leads_count: number
+          new_leads_this_month: number
+          overdue_followups_count: number
+          total_leads: number
+        }[]
+      }
       get_member_by_auth_user: {
         Args: { _user_id: string }
         Returns: {
@@ -1750,6 +1885,23 @@ export type Database = {
         | "maintenance"
         | "other"
       gym_plan: "lite" | "standard" | "pro"
+      lead_activity_type:
+        | "call"
+        | "whatsapp"
+        | "visit"
+        | "trial"
+        | "note"
+        | "status_change"
+      lead_source: "instagram" | "walk_in" | "referral" | "website" | "other"
+      lead_status:
+        | "new"
+        | "contacted"
+        | "trial_booked"
+        | "trial_done"
+        | "interested"
+        | "not_interested"
+        | "converted"
+      lead_temperature: "hot" | "warm" | "cold"
       member_status: "active" | "expiring_soon" | "expired" | "blocked"
       payment_mode: "cash" | "upi" | "card"
       payment_status: "completed" | "pending" | "failed"
@@ -1890,6 +2042,25 @@ export const Constants = {
         "other",
       ],
       gym_plan: ["lite", "standard", "pro"],
+      lead_activity_type: [
+        "call",
+        "whatsapp",
+        "visit",
+        "trial",
+        "note",
+        "status_change",
+      ],
+      lead_source: ["instagram", "walk_in", "referral", "website", "other"],
+      lead_status: [
+        "new",
+        "contacted",
+        "trial_booked",
+        "trial_done",
+        "interested",
+        "not_interested",
+        "converted",
+      ],
+      lead_temperature: ["hot", "warm", "cold"],
       member_status: ["active", "expiring_soon", "expired", "blocked"],
       payment_mode: ["cash", "upi", "card"],
       payment_status: ["completed", "pending", "failed"],
