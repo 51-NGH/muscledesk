@@ -25,6 +25,7 @@ export interface Lead {
   follow_up_count: number;
   notes: string | null;
   converted_member_id: string | null;
+  trial_scheduled_at: string | null;
   created_at: string;
   updated_at: string;
 }
