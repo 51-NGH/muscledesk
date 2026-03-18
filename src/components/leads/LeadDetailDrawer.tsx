@@ -16,6 +16,7 @@ import {
 import {
   Phone, Mail, Calendar, Clock, Flame, Snowflake, Zap,
   MessageCircle, PhoneCall, Eye, StickyNote, ArrowUpRight, Trash2,
+  CalendarCheck,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { useLeadActivities, useUpdateLead, useDeleteLead, useLogLeadActivity, useConvertLead } from "@/hooks/useLeads";
@@ -49,6 +50,12 @@ const activityIcons: Record<LeadActivityType, React.ReactNode> = {
   status_change: <ArrowUpRight className="h-3.5 w-3.5" />,
 };
 
+const normalizePhone = (phone: string) => {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 10) return `91${digits}`;
+  return digits;
+};
+
 interface Props {
   lead: Lead | null;
   open: boolean;
@@ -77,6 +84,22 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: Props) {
 
   const handleTempChange = (temperature: LeadTemperature) => {
     updateLead.mutate({ id: lead.id, temperature });
+  };
+
+  const handleTrialDateChange = (dateStr: string) => {
+    const trialDate = dateStr ? new Date(dateStr + "T10:00:00").toISOString() : null;
+    updateLead.mutate({
+      id: lead.id,
+      trial_scheduled_at: trialDate,
+      ...(dateStr ? { status: "trial_booked" as LeadStatus } : {}),
+    });
+    if (dateStr) {
+      logActivity.mutate({
+        lead_id: lead.id,
+        activity_type: "trial",
+        description: `Trial scheduled for ${format(new Date(dateStr), "dd MMM yyyy")}`,
+      });
+    }
   };
 
   const handleLogActivity = () => {
@@ -140,6 +163,28 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: Props) {
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
+
+            {/* Quick Action Buttons */}
+            <div className="flex gap-2 mt-3">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 flex-1"
+                onClick={() => window.open(`https://wa.me/${normalizePhone(lead.phone)}`, "_blank")}
+              >
+                <MessageCircle className="h-3.5 w-3.5 text-[hsl(var(--md-green))]" />
+                WhatsApp
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 flex-1"
+                onClick={() => window.open(`tel:${lead.phone}`)}
+              >
+                <PhoneCall className="h-3.5 w-3.5 text-[hsl(var(--md-blue))]" />
+                Call
+              </Button>
+            </div>
           </SheetHeader>
 
           <ScrollArea className="flex-1">
@@ -174,6 +219,26 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: Props) {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              {/* Trial Date Scheduling */}
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <CalendarCheck className="h-3.5 w-3.5" />
+                  Trial Date
+                </Label>
+                <Input
+                  type="date"
+                  value={lead.trial_scheduled_at ? format(new Date(lead.trial_scheduled_at), "yyyy-MM-dd") : ""}
+                  onChange={(e) => handleTrialDateChange(e.target.value)}
+                  min={new Date().toISOString().split("T")[0]}
+                  className="h-9"
+                />
+                {lead.trial_scheduled_at && (
+                  <p className="text-xs text-[hsl(var(--md-green))]">
+                    Trial on {format(new Date(lead.trial_scheduled_at), "dd MMM yyyy")}
+                  </p>
+                )}
               </div>
 
               {/* Info Cards */}
