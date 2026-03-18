@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Phone, Mail, Clock, Flame, Snowflake, Zap } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { Phone, Mail, Clock, Flame, Snowflake, Zap, MessageCircle, CalendarCheck } from "lucide-react";
+import { formatDistanceToNow, isToday } from "date-fns";
 import type { Lead, LeadStatus } from "@/hooks/useLeads";
 import { useUpdateLead } from "@/hooks/useLeads";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -21,6 +22,12 @@ const tempIcons = {
   hot: <Flame className="h-3.5 w-3.5 text-[hsl(var(--md-red))]" />,
   warm: <Zap className="h-3.5 w-3.5 text-[hsl(var(--md-orange))]" />,
   cold: <Snowflake className="h-3.5 w-3.5 text-[hsl(var(--md-blue))]" />,
+};
+
+const normalizePhone = (phone: string) => {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 10) return `91${digits}`;
+  return digits;
 };
 
 interface Props {
@@ -89,16 +96,24 @@ export function LeadKanbanBoard({ leads, isLoading, onSelectLead }: Props) {
                       <span className="truncate">{lead.phone}</span>
                     </div>
 
-                    {lead.email && (
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Mail className="h-3 w-3" />
-                        <span className="truncate">{lead.email}</span>
-                      </div>
-                    )}
-
                     {lead.interest_plan && (
                       <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                         {lead.interest_plan}
+                      </Badge>
+                    )}
+
+                    {/* Trial date badge */}
+                    {lead.trial_scheduled_at && col.status === "trial_booked" && (
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] gap-1 ${
+                          isToday(new Date(lead.trial_scheduled_at))
+                            ? "border-[hsl(var(--md-green))]/30 text-[hsl(var(--md-green))]"
+                            : "border-[hsl(var(--md-orange))]/30 text-[hsl(var(--md-orange))]"
+                        }`}
+                      >
+                        <CalendarCheck className="h-3 w-3" />
+                        {isToday(new Date(lead.trial_scheduled_at)) ? "Trial today" : formatDistanceToNow(new Date(lead.trial_scheduled_at), { addSuffix: true })}
                       </Badge>
                     )}
 
@@ -116,8 +131,35 @@ export function LeadKanbanBoard({ leads, isLoading, onSelectLead }: Props) {
                       </div>
                     )}
 
-                    <div className="text-[10px] text-muted-foreground/60">
-                      {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
+                    {/* Quick action buttons */}
+                    <div className="flex items-center gap-1 pt-1 border-t border-border/40">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-[hsl(var(--md-green))]"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(`https://wa.me/${normalizePhone(lead.phone)}`, "_blank");
+                        }}
+                        title="WhatsApp"
+                      >
+                        <MessageCircle className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-[hsl(var(--md-blue))]"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(`tel:${lead.phone}`);
+                        }}
+                        title="Call"
+                      >
+                        <Phone className="h-3 w-3" />
+                      </Button>
+                      <span className="text-[10px] text-muted-foreground/60 ml-auto">
+                        {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
+                      </span>
                     </div>
                   </div>
                 </Card>

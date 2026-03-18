@@ -1,0 +1,1 @@
+ALTER TABLE public.leads ADD COLUMN trial_scheduled_at timestamp with time zone DEFAULT NULL;

@@ -887,6 +887,7 @@ export type Database = {
           source: Database["public"]["Enums"]["lead_source"]
           status: Database["public"]["Enums"]["lead_status"]
           temperature: Database["public"]["Enums"]["lead_temperature"]
+          trial_scheduled_at: string | null
           updated_at: string
         }
         Insert: {
@@ -907,6 +908,7 @@ export type Database = {
           source?: Database["public"]["Enums"]["lead_source"]
           status?: Database["public"]["Enums"]["lead_status"]
           temperature?: Database["public"]["Enums"]["lead_temperature"]
+          trial_scheduled_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -927,6 +929,7 @@ export type Database = {
           source?: Database["public"]["Enums"]["lead_source"]
           status?: Database["public"]["Enums"]["lead_status"]
           temperature?: Database["public"]["Enums"]["lead_temperature"]
+          trial_scheduled_at?: string | null
           updated_at?: string
         }
         Relationships: [
