@@ -325,6 +325,26 @@ export function useConvertLead() {
         performed_by: user?.id || null,
       });
 
+      // Auto-action: Send welcome WhatsApp (fire-and-forget, don't block conversion)
+      try {
+        await supabase.functions.invoke("send-member-welcome", {
+          body: { member_id: member.id },
+        });
+      } catch (e) {
+        console.warn("Welcome message failed (non-blocking):", e);
+      }
+
+      // Auto-action: Generate portal access if member has email
+      if (member.email) {
+        try {
+          await supabase.functions.invoke("create-member-portal-access", {
+            body: { member_id: member.id },
+          });
+        } catch (e) {
+          console.warn("Portal access creation failed (non-blocking):", e);
+        }
+      }
+
       return member;
     },
     onSuccess: () => {
@@ -332,7 +352,7 @@ export function useConvertLead() {
       queryClient.invalidateQueries({ queryKey: ["members"] });
       queryClient.invalidateQueries({ queryKey: ["lead-analytics"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      toast.success("Lead converted to member! 🎉");
+      toast.success("Lead converted to member! 🎉 Welcome message sent.");
     },
     onError: (error: Error) => {
       toast.error(mapDatabaseError(error));
