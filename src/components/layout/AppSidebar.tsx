@@ -161,30 +161,45 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
               </NavLink>
             </li>
           )}
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.url;
-            
-            // Staff can only see Dashboard, Members (readonly), and Attendance
-            if (role === "staff" && !["Dashboard", "Members", "Attendance"].includes(item.title)) {
-              return null;
-            }
-            
+          {navSections.map((section, sIdx) => {
+            const visibleItems = section.items.filter((item) => {
+              if (role === "staff" && !["Dashboard", "Members", "Attendance"].includes(item.title)) {
+                return false;
+              }
+              return true;
+            });
+            if (visibleItems.length === 0) return null;
+
             return (
-              <li key={item.title}>
-                <NavLink
-                  to={item.url}
-                  onClick={handleNavClick}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
-                >
-                  <item.icon className="h-5 w-5" />
-                  <span>{item.title}</span>
-                </NavLink>
-              </li>
+              <div key={sIdx}>
+                {section.label && (
+                  <li className="px-3 pt-3 pb-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                      {section.label}
+                    </span>
+                  </li>
+                )}
+                {visibleItems.map((item) => {
+                  const isActive = location.pathname === item.url;
+                  return (
+                    <li key={item.title}>
+                      <NavLink
+                        to={item.url}
+                        onClick={handleNavClick}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                          isActive
+                            ? "bg-primary text-primary-foreground"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        )}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        <span>{item.title}</span>
+                      </NavLink>
+                    </li>
+                  );
+                })}
+              </div>
             );
           })}
         </ul>
