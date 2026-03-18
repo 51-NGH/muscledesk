@@ -6,11 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// MSG91 API endpoint
-const MSG91_API_URL = 'https://api.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/';
-
-// Template variable definitions: maps template name to ordered body variable names
-// Variables are mapped as body_1, body_2, body_3, body_4 in MSG91 format
+// Template variable definitions (named lowercase)
 const TEMPLATE_VARIABLES: Record<string, string[]> = {
   welcome_emai: ['member_name', 'gym_name'],
   payment_received: ['member_name', 'amount', 'expiry_date', 'gym_name'],
@@ -30,53 +26,51 @@ const PLAN_RATE_LIMITS: Record<string, number> = {
 };
 
 function normalizeIndianPhone(raw: string): string | null {
+  // Strip spaces, +, -, (, )
   const cleaned = raw.replace(/[\s+\-()]/g, '');
+  
+  // If starts with 91 and length 12 → valid
   if (cleaned.startsWith('91') && cleaned.length === 12) {
     const local = cleaned.substring(2);
     if (/^[6-9]\d{9}$/.test(local)) return cleaned;
     return null;
   }
+  
+  // If 10 digits starting with 6-9 → prepend 91
   if (cleaned.length === 10 && /^[6-9]\d{9}$/.test(cleaned)) {
     return '91' + cleaned;
   }
+  
   return null;
 }
 
-function buildMsg91Payload(
+function buildTemplatePayload(
   templateName: string,
   variables: Record<string, string>,
-  phone: string,
-  integratedNumber: string
+  phone: string
 ): object {
   const varNames = TEMPLATE_VARIABLES[templateName];
   if (!varNames) throw new Error(`Unknown template: ${templateName}`);
 
-  // Build components object with body_1, body_2, etc.
-  const components: Record<string, { type: string; value: string }> = {};
-  varNames.forEach((name, index) => {
-    components[`body_${index + 1}`] = {
-      type: 'text',
-      value: variables[name] || '',
-    };
-  });
+  const parameters = varNames.map(name => ({
+    type: 'text',
+    parameter_name: name,
+    text: variables[name] || '',
+  }));
 
   return {
-    integrated_number: integratedNumber,
-    content_type: 'template',
-    payload: {
-      messaging_product: 'whatsapp',
-      type: 'template',
-      template: {
-        name: templateName,
-        language: { code: 'en', policy: 'deterministic' },
-        namespace: null,
-        to_and_components: [
-          {
-            to: [phone],
-            components,
-          },
-        ],
-      },
+    messaging_product: 'whatsapp',
+    to: phone,
+    type: 'template',
+    template: {
+      name: templateName,
+      language: { code: 'en' },
+      components: [
+        {
+          type: 'body',
+          parameters,
+        },
+      ],
     },
   };
 }
@@ -88,8 +82,8 @@ serve(async (req) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const msg91AuthKey = Deno.env.get('MSG91_AUTH_KEY');
-  const integratedNumber = Deno.env.get('MSG91_INTEGRATED_NUMBER');
+  const whatsappToken = Deno.env.get('WHATSAPP_ACCESS_TOKEN');
+  const phoneNumberId = Deno.env.get('WHATSAPP_PHONE_NUMBER_ID');
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
@@ -134,6 +128,7 @@ serve(async (req) => {
       responseStatus: number | null,
       responseBody: object | null
     ) => {
+      // Fire-and-forget log
       supabase.from('whatsapp_logs').insert({
         gym_id: effectiveGymId,
         member_id: member.id,
@@ -151,7 +146,7 @@ serve(async (req) => {
         status,
         error: errorMessage,
       }), {
-        status: 200,
+        status: status === 'sent' ? 200 : 200, // always 200 for internal calls
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     };
@@ -162,9 +157,9 @@ serve(async (req) => {
       return logAndReturn('skipped', `Template '${template_name}' not allowed on ${gym.plan} plan`, null, null, null, null);
     }
 
-    // Check MSG91 credentials
-    if (!msg91AuthKey || !integratedNumber) {
-      return logAndReturn('skipped', 'MSG91 credentials not configured', null, null, null, null);
+    // Check WhatsApp credentials
+    if (!whatsappToken || !phoneNumberId) {
+      return logAndReturn('skipped', 'WhatsApp credentials not configured', null, null, null, null);
     }
 
     // Phone normalization
@@ -190,30 +185,30 @@ serve(async (req) => {
       return logAndReturn('skipped', `Daily rate limit (${rateLimit}) exceeded`, normalizedPhone, null, null, null);
     }
 
-    // Build variables
+    // Build payload with named variables
     const variables: Record<string, string> = custom_variables || {
       member_name: member.full_name.split(' ')[0],
       gym_name: gym.name,
       expiry_date: member.expiry_date || '',
       amount: '',
     };
+    const payload = buildTemplatePayload(template_name, variables, normalizedPhone);
 
-    // Build MSG91 payload
-    const payload = buildMsg91Payload(template_name, variables, normalizedPhone, integratedNumber);
-
-    // Call MSG91 API
+    // Call Meta API
     let apiResponse: Response;
     let apiBody: unknown;
     try {
-      apiResponse = await fetch(MSG91_API_URL, {
-        method: 'POST',
-        headers: {
-          'authkey': msg91AuthKey,
-          'Content-Type': 'application/json',
-          'accept': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
+      apiResponse = await fetch(
+        `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${whatsappToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        }
+      );
       apiBody = await apiResponse.json();
     } catch (networkErr) {
       return logAndReturn('failed', `Network error: ${networkErr instanceof Error ? networkErr.message : 'Unknown'}`, normalizedPhone, payload, null, null);
@@ -230,8 +225,8 @@ serve(async (req) => {
 
       return logAndReturn('sent', null, normalizedPhone, payload, apiResponse.status, apiBody as object);
     } else {
-      const errMsg = typeof apiBody === 'object' && apiBody !== null
-        ? JSON.stringify(apiBody)
+      const errMsg = (apiBody as Record<string, unknown>)?.error
+        ? JSON.stringify((apiBody as Record<string, unknown>).error)
         : `HTTP ${apiResponse.status}`;
       return logAndReturn('failed', errMsg, normalizedPhone, payload, apiResponse.status, apiBody as object);
     }
