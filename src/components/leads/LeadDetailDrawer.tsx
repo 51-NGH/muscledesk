@@ -141,7 +141,7 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: Props) {
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="w-full sm:max-w-lg p-0 flex flex-col">
+        <SheetContent className="w-[100vw] sm:max-w-lg p-0 flex flex-col" side="right">
           <SheetHeader className="p-6 pb-4 border-b border-border">
             <div className="flex items-start justify-between gap-2">
               <div>
