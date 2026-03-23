@@ -232,7 +232,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           member_id,
-          template_name: 'welcome_emai',
+          template_name: 'welcome_message',
           gym_id: member.gym_id,
         }),
       });

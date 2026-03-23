@@ -6,9 +6,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Template variable definitions (named lowercase)
+// MSG91 WhatsApp API endpoint
+const MSG91_API_URL = 'https://api.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/';
+
+// Template variable definitions — body_1, body_2, etc. mapped in order
 const TEMPLATE_VARIABLES: Record<string, string[]> = {
-  welcome_emai: ['member_name', 'gym_name'],
+  welcome_message: ['member_name', 'gym_name'],
   payment_received: ['member_name', 'amount', 'expiry_date', 'gym_name'],
   membership_expiry_reminder: ['member_name', 'expiry_date', 'gym_name'],
 };
@@ -17,7 +20,7 @@ const TEMPLATE_VARIABLES: Record<string, string[]> = {
 const PLAN_ALLOWED_TEMPLATES: Record<string, string[]> = {
   lite: [],
   standard: ['membership_expiry_reminder'],
-  pro: ['welcome_emai', 'payment_received', 'membership_expiry_reminder'],
+  pro: ['welcome_message', 'payment_received', 'membership_expiry_reminder'],
 };
 
 const PLAN_RATE_LIMITS: Record<string, number> = {
@@ -26,25 +29,20 @@ const PLAN_RATE_LIMITS: Record<string, number> = {
 };
 
 function normalizeIndianPhone(raw: string): string | null {
-  // Strip spaces, +, -, (, )
   const cleaned = raw.replace(/[\s+\-()]/g, '');
-  
-  // If starts with 91 and length 12 → valid
   if (cleaned.startsWith('91') && cleaned.length === 12) {
     const local = cleaned.substring(2);
     if (/^[6-9]\d{9}$/.test(local)) return cleaned;
     return null;
   }
-  
-  // If 10 digits starting with 6-9 → prepend 91
   if (cleaned.length === 10 && /^[6-9]\d{9}$/.test(cleaned)) {
     return '91' + cleaned;
   }
-  
   return null;
 }
 
-function buildTemplatePayload(
+function buildMsg91Payload(
+  integratedNumber: string,
   templateName: string,
   variables: Record<string, string>,
   phone: string
@@ -52,25 +50,35 @@ function buildTemplatePayload(
   const varNames = TEMPLATE_VARIABLES[templateName];
   if (!varNames) throw new Error(`Unknown template: ${templateName}`);
 
-  const parameters = varNames.map(name => ({
-    type: 'text',
-    parameter_name: name,
-    text: variables[name] || '',
-  }));
+  // Build components object: body_1, body_2, body_3, etc.
+  const components: Record<string, { type: string; value: string }> = {};
+  varNames.forEach((name, index) => {
+    components[`body_${index + 1}`] = {
+      type: 'text',
+      value: variables[name] || '',
+    };
+  });
 
   return {
-    messaging_product: 'whatsapp',
-    to: phone,
-    type: 'template',
-    template: {
-      name: templateName,
-      language: { code: 'en' },
-      components: [
-        {
-          type: 'body',
-          parameters,
+    integrated_number: integratedNumber,
+    content_type: 'template',
+    payload: {
+      messaging_product: 'whatsapp',
+      type: 'template',
+      template: {
+        name: templateName,
+        language: {
+          code: 'en',
+          policy: 'deterministic',
         },
-      ],
+        namespace: null,
+        to_and_components: [
+          {
+            to: [phone],
+            components,
+          },
+        ],
+      },
     },
   };
 }
@@ -82,8 +90,8 @@ serve(async (req) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const whatsappToken = Deno.env.get('WHATSAPP_ACCESS_TOKEN');
-  const phoneNumberId = Deno.env.get('WHATSAPP_PHONE_NUMBER_ID');
+  const msg91AuthKey = Deno.env.get('MSG91_AUTH_KEY');
+  const integratedNumber = Deno.env.get('MSG91_INTEGRATED_NUMBER');
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
@@ -128,7 +136,6 @@ serve(async (req) => {
       responseStatus: number | null,
       responseBody: object | null
     ) => {
-      // Fire-and-forget log
       supabase.from('whatsapp_logs').insert({
         gym_id: effectiveGymId,
         member_id: member.id,
@@ -146,7 +153,7 @@ serve(async (req) => {
         status,
         error: errorMessage,
       }), {
-        status: status === 'sent' ? 200 : 200, // always 200 for internal calls
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     };
@@ -157,9 +164,9 @@ serve(async (req) => {
       return logAndReturn('skipped', `Template '${template_name}' not allowed on ${gym.plan} plan`, null, null, null, null);
     }
 
-    // Check WhatsApp credentials
-    if (!whatsappToken || !phoneNumberId) {
-      return logAndReturn('skipped', 'WhatsApp credentials not configured', null, null, null, null);
+    // Check MSG91 credentials
+    if (!msg91AuthKey || !integratedNumber) {
+      return logAndReturn('skipped', 'MSG91 credentials not configured', null, null, null, null);
     }
 
     // Phone normalization
@@ -185,36 +192,35 @@ serve(async (req) => {
       return logAndReturn('skipped', `Daily rate limit (${rateLimit}) exceeded`, normalizedPhone, null, null, null);
     }
 
-    // Build payload with named variables
+    // Build variables
     const variables: Record<string, string> = custom_variables || {
       member_name: member.full_name.split(' ')[0],
       gym_name: gym.name,
       expiry_date: member.expiry_date || '',
       amount: '',
     };
-    const payload = buildTemplatePayload(template_name, variables, normalizedPhone);
 
-    // Call Meta API
+    // Build MSG91 payload
+    const payload = buildMsg91Payload(integratedNumber, template_name, variables, normalizedPhone);
+
+    // Call MSG91 API
     let apiResponse: Response;
     let apiBody: unknown;
     try {
-      apiResponse = await fetch(
-        `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${whatsappToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      apiResponse = await fetch(MSG91_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'authkey': msg91AuthKey,
+        },
+        body: JSON.stringify(payload),
+      });
       apiBody = await apiResponse.json();
     } catch (networkErr) {
       return logAndReturn('failed', `Network error: ${networkErr instanceof Error ? networkErr.message : 'Unknown'}`, normalizedPhone, payload, null, null);
     }
 
-    // Classify
+    // Classify response
     if (apiResponse.ok) {
       // Upsert rate limit counter
       const today = new Date().toISOString().split('T')[0];
@@ -225,8 +231,8 @@ serve(async (req) => {
 
       return logAndReturn('sent', null, normalizedPhone, payload, apiResponse.status, apiBody as object);
     } else {
-      const errMsg = (apiBody as Record<string, unknown>)?.error
-        ? JSON.stringify((apiBody as Record<string, unknown>).error)
+      const errMsg = typeof apiBody === 'object' && apiBody !== null
+        ? JSON.stringify(apiBody)
         : `HTTP ${apiResponse.status}`;
       return logAndReturn('failed', errMsg, normalizedPhone, payload, apiResponse.status, apiBody as object);
     }
