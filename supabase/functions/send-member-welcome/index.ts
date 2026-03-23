@@ -224,7 +224,7 @@ serve(async (req) => {
 
     // Send WhatsApp welcome (fire-and-forget, never blocks email)
     try {
-      await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
+      const waResponse = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -236,6 +236,8 @@ serve(async (req) => {
           gym_id: member.gym_id,
         }),
       });
+      const waResult = await waResponse.json();
+      console.log('WhatsApp welcome result:', JSON.stringify(waResult));
     } catch (waErr) {
       console.error('WhatsApp welcome failed (non-blocking):', waErr);
     }
