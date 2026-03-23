@@ -9,11 +9,29 @@ const corsHeaders = {
 // MSG91 WhatsApp API endpoint
 const MSG91_API_URL = 'https://api.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/';
 
-// Template variable definitions — body_1, body_2, etc. mapped in order
-const TEMPLATE_VARIABLES: Record<string, string[]> = {
-  welcome_message: ['member_name', 'gym_name'],
-  payment_received: ['member_name', 'amount', 'expiry_date', 'gym_name'],
-  membership_expiry_reminder: ['member_name', 'expiry_date', 'gym_name'],
+type TemplateConfig = {
+  providerName: string;
+  languageCode: string;
+  variables: string[];
+};
+
+// Internal template names mapped to provider template settings
+const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
+  welcome_message: {
+    providerName: 'welcome_message',
+    languageCode: 'en_US',
+    variables: ['member_name', 'gym_name'],
+  },
+  payment_received: {
+    providerName: 'payment_received',
+    languageCode: 'en_US',
+    variables: ['member_name', 'amount', 'expiry_date', 'gym_name'],
+  },
+  membership_expiry_reminder: {
+    providerName: 'membership_expiry_reminder',
+    languageCode: 'en_US',
+    variables: ['member_name', 'expiry_date', 'gym_name'],
+  },
 };
 
 // Plan access rules
@@ -47,12 +65,11 @@ function buildMsg91Payload(
   variables: Record<string, string>,
   phone: string
 ): object {
-  const varNames = TEMPLATE_VARIABLES[templateName];
-  if (!varNames) throw new Error(`Unknown template: ${templateName}`);
+  const templateConfig = TEMPLATE_CONFIGS[templateName];
+  if (!templateConfig) throw new Error(`Unknown template: ${templateName}`);
 
-  // Build components object: body_1, body_2, body_3, etc.
   const components: Record<string, { type: string; value: string }> = {};
-  varNames.forEach((name, index) => {
+  templateConfig.variables.forEach((name, index) => {
     components[`body_${index + 1}`] = {
       type: 'text',
       value: variables[name] || '',
@@ -66,9 +83,9 @@ function buildMsg91Payload(
       messaging_product: 'whatsapp',
       type: 'template',
       template: {
-        name: templateName,
+        name: templateConfig.providerName,
         language: {
-          code: 'en',
+          code: templateConfig.languageCode,
           policy: 'deterministic',
         },
         namespace: null,
@@ -103,7 +120,7 @@ serve(async (req) => {
       });
     }
 
-    if (!TEMPLATE_VARIABLES[template_name]) {
+    if (!TEMPLATE_CONFIGS[template_name]) {
       return new Response(JSON.stringify({ success: false, error: `Unknown template: ${template_name}` }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
