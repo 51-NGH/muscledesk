@@ -1,0 +1,1 @@
+ALTER TABLE public.whatsapp_logs DROP CONSTRAINT whatsapp_logs_member_id_fkey; ALTER TABLE public.whatsapp_logs ADD CONSTRAINT whatsapp_logs_member_id_fkey FOREIGN KEY (member_id) REFERENCES public.members(id) ON DELETE CASCADE;
