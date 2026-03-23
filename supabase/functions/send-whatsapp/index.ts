@@ -19,17 +19,17 @@ type TemplateConfig = {
 const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
   welcome_message: {
     providerName: 'welcome_message',
-    languageCode: 'en_US',
+    languageCode: 'en',
     variables: ['member_name', 'gym_name'],
   },
   payment_received: {
     providerName: 'payment_received',
-    languageCode: 'en_US',
+    languageCode: 'en',
     variables: ['member_name', 'amount', 'expiry_date', 'gym_name'],
   },
   membership_expiry_reminder: {
     providerName: 'membership_expiry_reminder',
-    languageCode: 'en_US',
+    languageCode: 'en',
     variables: ['member_name', 'expiry_date', 'gym_name'],
   },
 };
