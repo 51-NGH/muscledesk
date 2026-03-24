@@ -15,6 +15,12 @@ type TemplateConfig = {
   variables: string[];
 };
 
+type Msg91TemplateComponent = {
+  type: 'text';
+  value: string;
+  parameter_name: string;
+};
+
 // Internal template names mapped to provider template settings
 const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
   welcome_message: {
@@ -68,10 +74,11 @@ function buildMsg91Payload(
   const templateConfig = TEMPLATE_CONFIGS[templateName];
   if (!templateConfig) throw new Error(`Unknown template: ${templateName}`);
 
-  const components: Record<string, { type: string; value: string }> = {};
+  const components: Record<string, Msg91TemplateComponent> = {};
   templateConfig.variables.forEach((name, index) => {
     components[`body_${index + 1}`] = {
       type: 'text',
+      parameter_name: name,
       value: variables[name] || '',
     };
   });
