@@ -438,7 +438,7 @@ function RemindersContent() {
             <div className="space-y-3">
               <div className="bg-muted/50 rounded-lg p-4 border">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                  SMS Preview ({config.label})
+                  WhatsApp Preview ({config.label})
                 </p>
                 <p className="text-sm text-foreground leading-relaxed">
                   {activeTab === "expiring_soon" && (
