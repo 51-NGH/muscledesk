@@ -156,7 +156,7 @@ export default function Reminders() {
 
 function RemindersContent() {
   const { data, isLoading } = useReminderMembers();
-  const { gymData } = useAuth();
+  const { gymId } = useAuth();
   const [activeTab, setActiveTab] = useState<ReminderCategory>("expiring_soon");
   const [selectedMembers, setSelectedMembers] = useState<Record<ReminderCategory, string[]>>({
     expiring_soon: [],
