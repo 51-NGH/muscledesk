@@ -36,6 +36,7 @@ const navSections = [
     items: [
       { title: "Members", url: "/members", icon: Users },
       { title: "Leads", url: "/leads", icon: UserPlus },
+      { title: "Gmail Leads", url: "/gmail-leads", icon: Inbox },
     ],
   },
   {

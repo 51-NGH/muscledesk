@@ -160,6 +160,7 @@ const App = () => (
                   <Route path="/chat" element={<ProtectedRoute><GymChat /></ProtectedRoute>} />
                   <Route path="/renewal-requests" element={<ProtectedRoute><RenewalRequests /></ProtectedRoute>} />
                   <Route path="/leads" element={<ProtectedRoute><Leads /></ProtectedRoute>} />
+                  <Route path="/gmail-leads" element={<ProtectedRoute><GmailLeads /></ProtectedRoute>} />
                   <Route path="/super-admin" element={<ProtectedRoute requireRole="super_admin"><SuperAdmin /></ProtectedRoute>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
