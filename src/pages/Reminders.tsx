@@ -156,13 +156,14 @@ export default function Reminders() {
 
 function RemindersContent() {
   const { data, isLoading } = useReminderMembers();
-  const sendSms = useSendSmsReminder();
+  const { gymData } = useAuth();
   const [activeTab, setActiveTab] = useState<ReminderCategory>("expiring_soon");
   const [selectedMembers, setSelectedMembers] = useState<Record<ReminderCategory, string[]>>({
     expiring_soon: [],
     recently_expired: [],
     inactive: [],
   });
+  const [isSending, setIsSending] = useState(false);
 
   const members = useMemo(() => {
     if (!data) return [];
@@ -192,10 +193,37 @@ function RemindersContent() {
     }));
   };
 
-  const handleSendSms = () => {
+  const handleSendWhatsApp = useCallback(() => {
     if (selected.length === 0) return;
-    sendSms.mutate({ memberIds: selected, category: activeTab });
-  };
+    const gymName = gymData?.name || 'your gym';
+    const selectedMembersList = members.filter((m) => selected.includes(m.id));
+    
+    let sent = 0;
+    let skipped = 0;
+
+    setIsSending(true);
+
+    for (const member of selectedMembersList) {
+      const phone = normalizeIndianPhone(member.phone || '');
+      if (!phone) {
+        skipped++;
+        continue;
+      }
+      const days = differenceInDays(parseISO(member.expiry_date), new Date());
+      const message = getWhatsAppMessage(activeTab, member.full_name, gymName, days);
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
+      sent++;
+    }
+
+    setIsSending(false);
+
+    if (sent > 0) {
+      toast.success(`Opened WhatsApp for ${sent} member${sent > 1 ? 's' : ''}${skipped > 0 ? ` (${skipped} skipped - invalid phone)` : ''}`);
+    } else {
+      toast.warning(`No valid phone numbers found (${skipped} skipped)`);
+    }
+  }, [selected, members, activeTab, gymData]);
 
   const getDaysText = (expiryDate: string) => {
     const days = differenceInDays(parseISO(expiryDate), new Date());
