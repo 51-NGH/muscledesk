@@ -252,7 +252,7 @@ function RemindersContent() {
           bgColor: "bg-orange-100 dark:bg-orange-900/30",
           description: "Members whose membership expires within 14 days",
           emptyText: "No members expiring soon — all memberships are active!",
-          smsLabel: "Send Renewal Reminder",
+          smsLabel: "Send WhatsApp Reminder",
         };
       case "recently_expired":
         return {
@@ -263,7 +263,7 @@ function RemindersContent() {
           bgColor: "bg-destructive/10",
           description: "Members whose membership expired in the last 30 days",
           emptyText: "No recently expired memberships — great retention!",
-          smsLabel: "Send Re-activation SMS",
+          smsLabel: "Send Re-activation Message",
         };
       case "inactive":
         return {
