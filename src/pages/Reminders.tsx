@@ -99,39 +99,31 @@ function useReminderMembers() {
   });
 }
 
-function useSendSmsReminder() {
-  const { gymId } = useAuth();
-  const queryClient = useQueryClient();
+function normalizeIndianPhone(raw: string): string | null {
+  const cleaned = raw.replace(/[\s+\-()]/g, '');
+  if (cleaned.startsWith('91') && cleaned.length === 12) {
+    const local = cleaned.substring(2);
+    if (/^[6-9]\d{9}$/.test(local)) return cleaned;
+    return null;
+  }
+  if (cleaned.length === 10 && /^[6-9]\d{9}$/.test(cleaned)) {
+    return '91' + cleaned;
+  }
+  return null;
+}
 
-  return useMutation({
-    mutationFn: async ({
-      memberIds,
-      category,
-    }: {
-      memberIds: string[];
-      category: ReminderCategory;
-    }) => {
-      if (!gymId) throw new Error("No gym selected");
-      const { data, error } = await supabase.functions.invoke("send-sms-reminder", {
-        body: { gym_id: gymId, member_ids: memberIds, category },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      return data;
-    },
-    onSuccess: (data) => {
-      const msg = `SMS sent: ${data.sent} delivered, ${data.failed} failed, ${data.skipped} skipped`;
-      if (data.sent > 0) {
-        toast.success(msg);
-      } else {
-        toast.warning(msg);
-      }
-      queryClient.invalidateQueries({ queryKey: ["reminder-members"] });
-    },
-    onError: (err: Error) => {
-      toast.error(`Failed to send reminders: ${err.message}`);
-    },
-  });
+function getWhatsAppMessage(category: ReminderCategory, memberName: string, gymName: string, days: number): string {
+  const firstName = memberName.split(' ')[0];
+  switch (category) {
+    case 'expiring_soon':
+      return days === 0
+        ? `Hi ${firstName}, your ${gymName} membership expires today! Renew now to avoid interruption. Visit your gym or call us.`
+        : `Hi ${firstName}, your ${gymName} membership expires in ${days} days. Renew now to continue your fitness journey!`;
+    case 'recently_expired':
+      return `Hi ${firstName}, your ${gymName} membership expired ${Math.abs(days)} days ago. Renew today and get back on track!`;
+    case 'inactive':
+      return `Hi ${firstName}, we miss you at ${gymName}! Your membership has lapsed. Come back with a special renewal offer - contact us today!`;
+  }
 }
 
 export default function Reminders() {
