@@ -15,6 +15,7 @@ import {
   MessageCircle,
   RefreshCw,
   UserPlus,
+  Inbox,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,6 +36,7 @@ const navSections = [
     items: [
       { title: "Members", url: "/members", icon: Users },
       { title: "Leads", url: "/leads", icon: UserPlus },
+      { title: "Gmail Leads", url: "/gmail-leads", icon: Inbox },
     ],
   },
   {
