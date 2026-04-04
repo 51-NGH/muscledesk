@@ -31,6 +31,7 @@ import FingerprintDevices from "./pages/FingerprintDevices";
 import GymChat from "./pages/GymChat";
 import RenewalRequests from "./pages/RenewalRequests";
 import Leads from "./pages/Leads";
+import GmailLeads from "./pages/GmailLeads";
 
 // Member portal pages
 import MemberLogin from "./pages/member/MemberLogin";
