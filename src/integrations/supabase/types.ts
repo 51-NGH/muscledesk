@@ -383,6 +383,135 @@ export type Database = {
           },
         ]
       }
+      email_leads: {
+        Row: {
+          assigned_to: string | null
+          converted_member_id: string | null
+          created_at: string
+          deleted_at: string | null
+          email_body: string | null
+          follow_up_count: number
+          gmail_message_id: string | null
+          gmail_thread_id: string | null
+          gym_id: string
+          id: string
+          last_contacted_at: string | null
+          lead_status: Database["public"]["Enums"]["email_lead_status"]
+          next_follow_up_at: string | null
+          notes: string | null
+          sender_email: string
+          sender_name: string | null
+          source: string
+          subject: string | null
+          temperature: Database["public"]["Enums"]["lead_temperature"]
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          converted_member_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          email_body?: string | null
+          follow_up_count?: number
+          gmail_message_id?: string | null
+          gmail_thread_id?: string | null
+          gym_id: string
+          id?: string
+          last_contacted_at?: string | null
+          lead_status?: Database["public"]["Enums"]["email_lead_status"]
+          next_follow_up_at?: string | null
+          notes?: string | null
+          sender_email: string
+          sender_name?: string | null
+          source?: string
+          subject?: string | null
+          temperature?: Database["public"]["Enums"]["lead_temperature"]
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          converted_member_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          email_body?: string | null
+          follow_up_count?: number
+          gmail_message_id?: string | null
+          gmail_thread_id?: string | null
+          gym_id?: string
+          id?: string
+          last_contacted_at?: string | null
+          lead_status?: Database["public"]["Enums"]["email_lead_status"]
+          next_follow_up_at?: string | null
+          notes?: string | null
+          sender_email?: string
+          sender_name?: string | null
+          source?: string
+          subject?: string | null
+          temperature?: Database["public"]["Enums"]["lead_temperature"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_leads_converted_member_id_fkey"
+            columns: ["converted_member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_leads_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_reply_logs: {
+        Row: {
+          created_at: string
+          email_lead_id: string
+          gmail_message_id: string | null
+          gym_id: string
+          id: string
+          message: string
+          sent_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          email_lead_id: string
+          gmail_message_id?: string | null
+          gym_id: string
+          id?: string
+          message: string
+          sent_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          email_lead_id?: string
+          gmail_message_id?: string | null
+          gym_id?: string
+          id?: string
+          message?: string
+          sent_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_reply_logs_email_lead_id_fkey"
+            columns: ["email_lead_id"]
+            isOneToOne: false
+            referencedRelation: "email_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_reply_logs_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           amount: number
@@ -519,6 +648,56 @@ export type Database = {
             columns: ["member_id"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gmail_integrations: {
+        Row: {
+          access_token: string
+          connected_at: string
+          created_at: string
+          email_address: string
+          gym_id: string
+          id: string
+          is_active: boolean
+          last_sync_at: string | null
+          refresh_token: string
+          token_expiry: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          connected_at?: string
+          created_at?: string
+          email_address: string
+          gym_id: string
+          id?: string
+          is_active?: boolean
+          last_sync_at?: string | null
+          refresh_token: string
+          token_expiry?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          connected_at?: string
+          created_at?: string
+          email_address?: string
+          gym_id?: string
+          id?: string
+          is_active?: boolean
+          last_sync_at?: string | null
+          refresh_token?: string
+          token_expiry?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gmail_integrations_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: true
+            referencedRelation: "gyms"
             referencedColumns: ["id"]
           },
         ]
@@ -864,6 +1043,101 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_email_filters: {
+        Row: {
+          created_at: string
+          filter_location: string
+          gym_id: string
+          id: string
+          is_active: boolean
+          keyword: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          filter_location?: string
+          gym_id: string
+          id?: string
+          is_active?: boolean
+          keyword: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          filter_location?: string
+          gym_id?: string
+          id?: string
+          is_active?: boolean
+          keyword?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_email_filters_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_followups: {
+        Row: {
+          assigned_to: string | null
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          email_lead_id: string
+          follow_up_at: string
+          gym_id: string
+          id: string
+          notes: string | null
+          reminder_sent: boolean
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          email_lead_id: string
+          follow_up_at: string
+          gym_id: string
+          id?: string
+          notes?: string | null
+          reminder_sent?: boolean
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          email_lead_id?: string
+          follow_up_at?: string
+          gym_id?: string
+          id?: string
+          notes?: string | null
+          reminder_sent?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_followups_email_lead_id_fkey"
+            columns: ["email_lead_id"]
+            isOneToOne: false
+            referencedRelation: "email_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_followups_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
             referencedColumns: ["id"]
           },
         ]
@@ -1881,6 +2155,14 @@ export type Database = {
     Enums: {
       app_role: "super_admin" | "gym_owner" | "staff"
       attendance_source: "qr" | "manual" | "fingerprint"
+      email_lead_status:
+        | "new"
+        | "contacted"
+        | "interested"
+        | "trial"
+        | "negotiation"
+        | "converted"
+        | "not_interested"
       expense_category:
         | "rent"
         | "salary"
@@ -2037,6 +2319,15 @@ export const Constants = {
     Enums: {
       app_role: ["super_admin", "gym_owner", "staff"],
       attendance_source: ["qr", "manual", "fingerprint"],
+      email_lead_status: [
+        "new",
+        "contacted",
+        "interested",
+        "trial",
+        "negotiation",
+        "converted",
+        "not_interested",
+      ],
       expense_category: [
         "rent",
         "salary",
