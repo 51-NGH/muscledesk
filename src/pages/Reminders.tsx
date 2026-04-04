@@ -232,7 +232,7 @@ function RemindersContent() {
     } else {
       toast.warning(`No valid phone numbers found (${skipped} skipped)`);
     }
-  }, [selected, members, activeTab, gymData]);
+  }, [selected, members, activeTab, gymInfo]);
 
   const getDaysText = (expiryDate: string) => {
     const days = differenceInDays(parseISO(expiryDate), new Date());
