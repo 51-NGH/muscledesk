@@ -204,7 +204,7 @@ function RemindersContent() {
 
   const handleSendWhatsApp = useCallback(() => {
     if (selected.length === 0) return;
-    const gymName = gymData?.name || 'your gym';
+    const gymName = gymInfo?.name || 'your gym';
     const selectedMembersList = members.filter((m) => selected.includes(m.id));
     
     let sent = 0;
