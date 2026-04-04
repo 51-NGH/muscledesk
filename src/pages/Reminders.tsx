@@ -274,7 +274,7 @@ function RemindersContent() {
           bgColor: "bg-muted",
           description: "Members who expired 30-90 days ago",
           emptyText: "No lapsed members in this period.",
-          smsLabel: "Send Win-back SMS",
+          smsLabel: "Send Win-back Message",
         };
     }
   };
