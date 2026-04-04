@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { UpgradeRequiredPage } from "@/components/UpgradeOverlay";
 import { useGymPlanFeatures } from "@/hooks/useGymPlanFeatures";
@@ -9,11 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { AlertCircle, MessageSquare, Send, Clock, UserX, CalendarClock, CheckCircle2 } from "lucide-react";
+import { MessageSquare, Send, Clock, UserX, CalendarClock, CheckCircle2 } from "lucide-react";
 import { differenceInDays, parseISO, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -100,39 +99,31 @@ function useReminderMembers() {
   });
 }
 
-function useSendSmsReminder() {
-  const { gymId } = useAuth();
-  const queryClient = useQueryClient();
+function normalizeIndianPhone(raw: string): string | null {
+  const cleaned = raw.replace(/[\s+\-()]/g, '');
+  if (cleaned.startsWith('91') && cleaned.length === 12) {
+    const local = cleaned.substring(2);
+    if (/^[6-9]\d{9}$/.test(local)) return cleaned;
+    return null;
+  }
+  if (cleaned.length === 10 && /^[6-9]\d{9}$/.test(cleaned)) {
+    return '91' + cleaned;
+  }
+  return null;
+}
 
-  return useMutation({
-    mutationFn: async ({
-      memberIds,
-      category,
-    }: {
-      memberIds: string[];
-      category: ReminderCategory;
-    }) => {
-      if (!gymId) throw new Error("No gym selected");
-      const { data, error } = await supabase.functions.invoke("send-sms-reminder", {
-        body: { gym_id: gymId, member_ids: memberIds, category },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      return data;
-    },
-    onSuccess: (data) => {
-      const msg = `SMS sent: ${data.sent} delivered, ${data.failed} failed, ${data.skipped} skipped`;
-      if (data.sent > 0) {
-        toast.success(msg);
-      } else {
-        toast.warning(msg);
-      }
-      queryClient.invalidateQueries({ queryKey: ["reminder-members"] });
-    },
-    onError: (err: Error) => {
-      toast.error(`Failed to send reminders: ${err.message}`);
-    },
-  });
+function getWhatsAppMessage(category: ReminderCategory, memberName: string, gymName: string, days: number): string {
+  const firstName = memberName.split(' ')[0];
+  switch (category) {
+    case 'expiring_soon':
+      return days === 0
+        ? `Hi ${firstName}, your ${gymName} membership expires today! Renew now to avoid interruption. Visit your gym or call us.`
+        : `Hi ${firstName}, your ${gymName} membership expires in ${days} days. Renew now to continue your fitness journey!`;
+    case 'recently_expired':
+      return `Hi ${firstName}, your ${gymName} membership expired ${Math.abs(days)} days ago. Renew today and get back on track!`;
+    case 'inactive':
+      return `Hi ${firstName}, we miss you at ${gymName}! Your membership has lapsed. Come back with a special renewal offer - contact us today!`;
+  }
 }
 
 export default function Reminders() {
@@ -165,13 +156,23 @@ export default function Reminders() {
 
 function RemindersContent() {
   const { data, isLoading } = useReminderMembers();
-  const sendSms = useSendSmsReminder();
+  const { gymId } = useAuth();
+  const { data: gymInfo } = useQuery({
+    queryKey: ["gym-name", gymId],
+    queryFn: async () => {
+      if (!gymId) return null;
+      const { data } = await supabase.from("gyms").select("name").eq("id", gymId).single();
+      return data;
+    },
+    enabled: !!gymId,
+  });
   const [activeTab, setActiveTab] = useState<ReminderCategory>("expiring_soon");
   const [selectedMembers, setSelectedMembers] = useState<Record<ReminderCategory, string[]>>({
     expiring_soon: [],
     recently_expired: [],
     inactive: [],
   });
+  const [isSending, setIsSending] = useState(false);
 
   const members = useMemo(() => {
     if (!data) return [];
@@ -201,10 +202,37 @@ function RemindersContent() {
     }));
   };
 
-  const handleSendSms = () => {
+  const handleSendWhatsApp = useCallback(() => {
     if (selected.length === 0) return;
-    sendSms.mutate({ memberIds: selected, category: activeTab });
-  };
+    const gymName = gymInfo?.name || 'your gym';
+    const selectedMembersList = members.filter((m) => selected.includes(m.id));
+    
+    let sent = 0;
+    let skipped = 0;
+
+    setIsSending(true);
+
+    for (const member of selectedMembersList) {
+      const phone = normalizeIndianPhone(member.phone || '');
+      if (!phone) {
+        skipped++;
+        continue;
+      }
+      const days = differenceInDays(parseISO(member.expiry_date), new Date());
+      const message = getWhatsAppMessage(activeTab, member.full_name, gymName, days);
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
+      sent++;
+    }
+
+    setIsSending(false);
+
+    if (sent > 0) {
+      toast.success(`Opened WhatsApp for ${sent} member${sent > 1 ? 's' : ''}${skipped > 0 ? ` (${skipped} skipped - invalid phone)` : ''}`);
+    } else {
+      toast.warning(`No valid phone numbers found (${skipped} skipped)`);
+    }
+  }, [selected, members, activeTab, gymInfo]);
 
   const getDaysText = (expiryDate: string) => {
     const days = differenceInDays(parseISO(expiryDate), new Date());
@@ -224,7 +252,7 @@ function RemindersContent() {
           bgColor: "bg-orange-100 dark:bg-orange-900/30",
           description: "Members whose membership expires within 14 days",
           emptyText: "No members expiring soon — all memberships are active!",
-          smsLabel: "Send Renewal Reminder",
+          smsLabel: "Send WhatsApp Reminder",
         };
       case "recently_expired":
         return {
@@ -235,7 +263,7 @@ function RemindersContent() {
           bgColor: "bg-destructive/10",
           description: "Members whose membership expired in the last 30 days",
           emptyText: "No recently expired memberships — great retention!",
-          smsLabel: "Send Re-activation SMS",
+          smsLabel: "Send Re-activation Message",
         };
       case "inactive":
         return {
@@ -246,7 +274,7 @@ function RemindersContent() {
           bgColor: "bg-muted",
           description: "Members who expired 30-90 days ago",
           emptyText: "No lapsed members in this period.",
-          smsLabel: "Send Win-back SMS",
+          smsLabel: "Send Win-back Message",
         };
     }
   };
@@ -258,7 +286,7 @@ function RemindersContent() {
     <DashboardLayout>
       <PageHeader
         title="Renewal Reminders"
-        description="One-click SMS reminders for 3 member categories"
+        description="One-click WhatsApp messages for 3 member categories"
       />
 
       {/* Summary Cards */}
@@ -410,7 +438,7 @@ function RemindersContent() {
             <div className="space-y-3">
               <div className="bg-muted/50 rounded-lg p-4 border">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                  SMS Preview ({config.label})
+                  WhatsApp Preview ({config.label})
                 </p>
                 <p className="text-sm text-foreground leading-relaxed">
                   {activeTab === "expiring_soon" && (
@@ -434,19 +462,19 @@ function RemindersContent() {
             </div>
 
             <Button
-              onClick={handleSendSms}
-              disabled={selected.length === 0 || sendSms.isPending}
+              onClick={handleSendWhatsApp}
+              disabled={selected.length === 0 || isSending}
               className="w-full gap-2"
               size="lg"
             >
               <Send className="h-5 w-5" />
-              {sendSms.isPending
-                ? `Sending to ${selected.length}...`
+              {isSending
+                ? `Opening WhatsApp...`
                 : `${config.smsLabel} (${selected.length})`}
             </Button>
 
             <p className="text-xs text-center text-muted-foreground">
-              SMS sent via MSG91 • Logged in message history
+              Opens WhatsApp with pre-filled message for each member
             </p>
 
             {/* Quick Stats */}
