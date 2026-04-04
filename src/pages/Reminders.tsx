@@ -462,19 +462,19 @@ function RemindersContent() {
             </div>
 
             <Button
-              onClick={handleSendSms}
-              disabled={selected.length === 0 || sendSms.isPending}
+              onClick={handleSendWhatsApp}
+              disabled={selected.length === 0 || isSending}
               className="w-full gap-2"
               size="lg"
             >
               <Send className="h-5 w-5" />
-              {sendSms.isPending
-                ? `Sending to ${selected.length}...`
+              {isSending
+                ? `Opening WhatsApp...`
                 : `${config.smsLabel} (${selected.length})`}
             </Button>
 
             <p className="text-xs text-center text-muted-foreground">
-              SMS sent via MSG91 • Logged in message history
+              Opens WhatsApp with pre-filled message for each member
             </p>
 
             {/* Quick Stats */}
