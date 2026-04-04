@@ -286,7 +286,7 @@ function RemindersContent() {
     <DashboardLayout>
       <PageHeader
         title="Renewal Reminders"
-        description="One-click SMS reminders for 3 member categories"
+        description="One-click WhatsApp messages for 3 member categories"
       />
 
       {/* Summary Cards */}
