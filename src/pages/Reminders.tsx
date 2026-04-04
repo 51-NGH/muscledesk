@@ -157,6 +157,15 @@ export default function Reminders() {
 function RemindersContent() {
   const { data, isLoading } = useReminderMembers();
   const { gymId } = useAuth();
+  const { data: gymInfo } = useQuery({
+    queryKey: ["gym-name", gymId],
+    queryFn: async () => {
+      if (!gymId) return null;
+      const { data } = await supabase.from("gyms").select("name").eq("id", gymId).single();
+      return data;
+    },
+    enabled: !!gymId,
+  });
   const [activeTab, setActiveTab] = useState<ReminderCategory>("expiring_soon");
   const [selectedMembers, setSelectedMembers] = useState<Record<ReminderCategory, string[]>>({
     expiring_soon: [],
