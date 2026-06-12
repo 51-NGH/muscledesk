@@ -7,5 +7,6 @@ MuscleDesk is an authenticated application; most surfaces are gated behind owner
 ## Pages
 
 - [Home](/): MuscleDesk product overview and gym-owner sign-in entry point.
+- [MuscleDesk vs Gymdesk](/compare/muscledesk-vs-gymdesk): Honest comparison of MuscleDesk and Gymdesk for Indian gym owners — pricing, member portal, attendance, WhatsApp follow-ups, and market fit.
 - [Owner / Staff Login](/login): Sign in for gym owners and staff to access the management dashboard.
 - [Member Login](/member/login): PIN-based sign-in for gym members to access their personal portal.
