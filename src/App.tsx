@@ -142,6 +142,9 @@ const App = () => (
               </MemberAuthProvider>
             } />
 
+            {/* Public marketing/SEO routes (no auth) */}
+            <Route path="/compare/muscledesk-vs-gymdesk" element={<CompareGymdesk />} />
+
             {/* Admin Routes - wrapped in AuthProvider */}
             <Route path="/*" element={
               <AuthProvider>
