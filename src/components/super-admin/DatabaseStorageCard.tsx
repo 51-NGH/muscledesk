@@ -119,6 +119,59 @@ export function DatabaseStorageCard() {
               </div>
             </div>
 
+            <div className="rounded-lg border p-4 bg-muted/30">
+              <h4 className="text-sm font-semibold mb-1">Per-Member Storage Footprint</h4>
+              <p className="text-xs text-muted-foreground mb-2">
+                Average size of one member row (incl. indexes) in the <code>members</code> table.
+              </p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold">{data.avg_per_member_pretty}</span>
+                <span className="text-xs text-muted-foreground">per member</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Cloud disk capacity: <strong>{data.disk_capacity_pretty}</strong> · Theoretical max members at this size:{" "}
+                <strong>
+                  {data.avg_bytes_per_member > 0
+                    ? Math.floor(data.disk_capacity_bytes / data.avg_bytes_per_member).toLocaleString()
+                    : "—"}
+                </strong>
+              </p>
+            </div>
+
+            {data.plan_limits.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold mb-2">Plan Tier Capacity</h4>
+                <div className="space-y-2">
+                  {data.plan_limits.map((p) => {
+                    const cap = p.gym_count * p.member_limit;
+                    const pct = cap > 0 ? Math.min(100, Math.round((p.member_count / cap) * 100)) : 0;
+                    const limitLabel = p.member_limit >= 999999 ? "Unlimited" : p.member_limit.toLocaleString();
+                    return (
+                      <div key={p.plan} className="rounded-lg border p-3">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold capitalize">{p.plan}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {p.gym_count} {p.gym_count === 1 ? "gym" : "gyms"} · {limitLabel} members/gym
+                            </span>
+                          </div>
+                          <span className="text-sm font-mono">
+                            {p.member_count.toLocaleString()}
+                            {cap > 0 && p.member_limit < 999999 && (
+                              <span className="text-muted-foreground"> / {cap.toLocaleString()}</span>
+                            )}
+                          </span>
+                        </div>
+                        {cap > 0 && p.member_limit < 999999 && <Progress value={pct} className="h-1.5" />}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+
+
             {data.largest_tables.length > 0 && (
               <div>
                 <h4 className="text-sm font-semibold mb-2">Largest Tables</h4>
