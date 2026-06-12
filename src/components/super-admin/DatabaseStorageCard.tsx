@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Database, HardDrive, Activity, RefreshCw } from "lucide-react";
+import { Database, HardDrive, Activity, RefreshCw, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 
@@ -16,10 +16,16 @@ interface LargestTable {
 interface StorageStats {
   database_size_bytes: number;
   database_size_pretty: string;
+  disk_capacity_bytes: number;
+  disk_capacity_pretty: string;
+  disk_used_pct: number;
   wal_size_bytes: number;
   wal_size_pretty: string;
   connections: number;
   max_connections: number;
+  total_members: number;
+  max_members: number;
+  total_gyms: number;
   largest_tables: LargestTable[];
   measured_at: string;
 }
@@ -36,6 +42,7 @@ export function DatabaseStorageCard() {
   });
 
   const connPct = data ? Math.round((data.connections / data.max_connections) * 100) : 0;
+  const memberPct = data && data.max_members > 0 ? Math.round((data.total_members / data.max_members) * 100) : 0;
 
   return (
     <Card>
@@ -43,7 +50,7 @@ export function DatabaseStorageCard() {
         <div>
           <CardTitle className="flex items-center gap-2">
             <Database className="h-5 w-5" />
-            Database Storage
+            Database Storage & Capacity
           </CardTitle>
           <CardDescription>
             {data ? `Updated ${formatDistanceToNow(new Date(data.measured_at), { addSuffix: true })}` : "Live database metrics"}
@@ -60,12 +67,30 @@ export function DatabaseStorageCard() {
           <p className="text-sm text-destructive">{(error as Error).message}</p>
         ) : data ? (
           <>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-lg border p-4">
                 <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                  <HardDrive className="h-4 w-4" /> Database Size
+                  <HardDrive className="h-4 w-4" /> Database Storage
                 </div>
-                <p className="text-2xl font-bold">{data.database_size_pretty}</p>
+                <p className="text-2xl font-bold">
+                  {data.database_size_pretty}
+                  <span className="text-base text-muted-foreground font-normal"> / {data.disk_capacity_pretty}</span>
+                </p>
+                <Progress value={data.disk_used_pct} className="h-1.5 mt-2" />
+                <p className="text-xs text-muted-foreground mt-1">{data.disk_used_pct}% used</p>
+              </div>
+              <div className="rounded-lg border p-4">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+                  <Users className="h-4 w-4" /> Members Capacity
+                </div>
+                <p className="text-2xl font-bold">
+                  {data.total_members.toLocaleString()}
+                  <span className="text-base text-muted-foreground font-normal"> / {data.max_members.toLocaleString()}</span>
+                </p>
+                <Progress value={memberPct} className="h-1.5 mt-2" />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {memberPct}% used across {data.total_gyms} {data.total_gyms === 1 ? "gym" : "gyms"}
+                </p>
               </div>
               <div className="rounded-lg border p-4">
                 <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
