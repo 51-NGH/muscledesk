@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { MemberLayout } from "@/components/member-portal/MemberLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeMemberPortal, invokeMemberAuth } from "@/lib/memberPortalClient";
 import { format, parseISO } from "date-fns";
 import { Megaphone, Loader2, AlertTriangle, Info, Bell } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -51,7 +52,7 @@ export default function MemberAnnouncements() {
     queryKey: ["member-announcements", member?.id],
     queryFn: async () => {
       if (!member) return [];
-      const { data, error } = await supabase.functions.invoke("member-portal-data", {
+      const { data, error } = await invokeMemberPortal( {
         body: { action: "get-announcements", member_id: member.id }
       });
       if (error) throw error;

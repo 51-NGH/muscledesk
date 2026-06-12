@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { MemberLayout } from "@/components/member-portal/MemberLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeMemberPortal, invokeMemberAuth } from "@/lib/memberPortalClient";
 import { format, parseISO, isToday, isYesterday, isThisWeek } from "date-fns";
 import { Clock, Calendar, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 
@@ -20,7 +21,7 @@ export default function MemberAttendance() {
       if (!member) return [];
       
       // Use edge function with service role to bypass RLS
-      const { data, error } = await supabase.functions.invoke("member-auth", {
+      const { data, error } = await invokeMemberAuth( {
         body: { action: "get-attendance", member_id: member.id, limit: 50 }
       });
 

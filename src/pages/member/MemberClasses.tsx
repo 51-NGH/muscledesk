@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { MemberLayout } from "@/components/member-portal/MemberLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeMemberPortal, invokeMemberAuth } from "@/lib/memberPortalClient";
 import { format, parseISO } from "date-fns";
 import { 
   Calendar, Loader2, Users, Clock, MapPin, 
@@ -40,7 +41,7 @@ export default function MemberClasses() {
     queryKey: ["member-classes", member?.id],
     queryFn: async () => {
       if (!member) return [];
-      const { data, error } = await supabase.functions.invoke("member-portal-data", {
+      const { data, error } = await invokeMemberPortal( {
         body: { action: "get-classes", member_id: member.id }
       });
       if (error) throw error;
@@ -52,7 +53,7 @@ export default function MemberClasses() {
   const bookMutation = useMutation({
     mutationFn: async (scheduleId: string) => {
       if (!member) throw new Error("Not logged in");
-      const { data, error } = await supabase.functions.invoke("member-portal-data", {
+      const { data, error } = await invokeMemberPortal( {
         body: {
           action: "book-class",
           member_id: member.id,
@@ -75,7 +76,7 @@ export default function MemberClasses() {
   const cancelMutation = useMutation({
     mutationFn: async (bookingId: string) => {
       if (!member) throw new Error("Not logged in");
-      const { data, error } = await supabase.functions.invoke("member-portal-data", {
+      const { data, error } = await invokeMemberPortal( {
         body: {
           action: "cancel-booking",
           member_id: member.id,

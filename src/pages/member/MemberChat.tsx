@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { MemberLayout } from "@/components/member-portal/MemberLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeMemberPortal, invokeMemberAuth } from "@/lib/memberPortalClient";
 import { format, parseISO, isToday, isYesterday } from "date-fns";
 import { 
   MessageCircle, Loader2, Check, CheckCheck, 
@@ -64,7 +65,7 @@ export default function MemberChat() {
     queryKey: ["member-chat", member?.id],
     queryFn: async () => {
       if (!member) return { messages: [], unread_count: 0 };
-      const { data, error } = await supabase.functions.invoke("member-portal-data", {
+      const { data, error } = await invokeMemberPortal( {
         body: { action: "get-chat-messages", member_id: member.id, limit: 100 }
       });
       if (error) throw error;
@@ -77,7 +78,7 @@ export default function MemberChat() {
   const markReadMutation = useMutation({
     mutationFn: async (messageIds: string[]) => {
       if (!member || messageIds.length === 0) return;
-      await supabase.functions.invoke("member-portal-data", {
+      await invokeMemberPortal( {
         body: { 
           action: "mark-messages-read", 
           member_id: member.id,
