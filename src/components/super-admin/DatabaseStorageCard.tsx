@@ -13,6 +13,13 @@ interface LargestTable {
   size_bytes: number;
 }
 
+interface PlanLimit {
+  plan: string;
+  member_limit: number;
+  gym_count: number;
+  member_count: number;
+}
+
 interface StorageStats {
   database_size_bytes: number;
   database_size_pretty: string;
@@ -26,6 +33,9 @@ interface StorageStats {
   total_members: number;
   max_members: number;
   total_gyms: number;
+  avg_bytes_per_member: number;
+  avg_per_member_pretty: string;
+  plan_limits: PlanLimit[];
   largest_tables: LargestTable[];
   measured_at: string;
 }
