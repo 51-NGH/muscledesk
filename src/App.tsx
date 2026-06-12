@@ -32,6 +32,7 @@ import GymChat from "./pages/GymChat";
 import RenewalRequests from "./pages/RenewalRequests";
 import Leads from "./pages/Leads";
 import GmailLeads from "./pages/GmailLeads";
+import CompareGymdesk from "./pages/CompareGymdesk";
 
 // Member portal pages
 import MemberLogin from "./pages/member/MemberLogin";
