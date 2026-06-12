@@ -8,11 +8,42 @@ const corsHeaders = {
 
 interface PortalRequest {
   action: string;
-  member_id: string;
+  member_id?: string;
   gym_id?: string;
   data?: Record<string, unknown>;
   limit?: number;
+  session_token?: string;
 }
+
+// ---------- HMAC session token verification ----------
+// Must match the algorithm used in supabase/functions/member-auth/index.ts
+const SIGNING_SECRET = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+async function hmac(payload: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(SIGNING_SECRET),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload));
+  let s = btoa(String.fromCharCode(...new Uint8Array(sig)));
+  return s.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+async function verifySessionToken(token: string | undefined | null): Promise<string | null> {
+  if (!token || typeof token !== "string") return null;
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+  const [memberId, expStr, sig] = parts;
+  const exp = parseInt(expStr, 10);
+  if (!Number.isFinite(exp) || exp < Math.floor(Date.now() / 1000)) return null;
+  const expected = await hmac(`${memberId}.${exp}`);
+  if (expected.length !== sig.length) return null;
+  let diff = 0;
+  for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ sig.charCodeAt(i);
+  return diff === 0 ? memberId : null;
+}
+// ------------------------------------------------------
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -22,22 +53,30 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    
+
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
-    const { action, member_id, gym_id, data, limit = 50 }: PortalRequest = await req.json();
+    const { action, member_id: body_member_id, gym_id, data, limit = 50, session_token }: PortalRequest = await req.json();
 
-    if (!member_id) {
-      return new Response(JSON.stringify({ error: "member_id required" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
+    // Verify HMAC session token — authoritative source for member_id.
+    const verifiedMemberId = await verifySessionToken(session_token);
+    if (!verifiedMemberId) {
+      return new Response(JSON.stringify({ error: "Unauthorized: invalid or expired session" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
+    if (body_member_id && body_member_id !== verifiedMemberId) {
+      return new Response(JSON.stringify({ error: "Forbidden: session does not match requested member" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+    const member_id = verifiedMemberId;
 
-    // Get member's gym_id if not provided
+    // Resolve gym_id from members table (ignore client-supplied gym_id for safety).
     let memberGymId = gym_id;
-    if (!memberGymId) {
+    {
       const { data: member } = await supabaseAdmin
         .from("members")
         .select("gym_id")
@@ -45,6 +84,7 @@ serve(async (req) => {
         .single();
       memberGymId = member?.gym_id;
     }
+
 
     // =================== WORKOUT SESSIONS ===================
     if (action === "get-workouts") {

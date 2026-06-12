@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { MemberLayout } from "@/components/member-portal/MemberLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeMemberPortal, invokeMemberAuth } from "@/lib/memberPortalClient";
 import { format, parseISO } from "date-fns";
 import { 
   Ruler, Plus, Trash2, Loader2, TrendingUp, TrendingDown, 
@@ -50,7 +51,7 @@ export default function MemberMeasurements() {
     queryKey: ["member-measurements", member?.id],
     queryFn: async () => {
       if (!member) return [];
-      const { data, error } = await supabase.functions.invoke("member-portal-data", {
+      const { data, error } = await invokeMemberPortal( {
         body: { action: "get-measurements", member_id: member.id }
       });
       if (error) throw error;
@@ -62,7 +63,7 @@ export default function MemberMeasurements() {
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!member) throw new Error("Not logged in");
-      const { data, error } = await supabase.functions.invoke("member-portal-data", {
+      const { data, error } = await invokeMemberPortal( {
         body: {
           action: "add-measurement",
           member_id: member.id,
@@ -99,7 +100,7 @@ export default function MemberMeasurements() {
   const deleteMutation = useMutation({
     mutationFn: async (measurementId: string) => {
       if (!member) throw new Error("Not logged in");
-      const { data, error } = await supabase.functions.invoke("member-portal-data", {
+      const { data, error } = await invokeMemberPortal( {
         body: {
           action: "delete-measurement",
           member_id: member.id,

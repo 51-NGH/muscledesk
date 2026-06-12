@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { MemberLayout } from "@/components/member-portal/MemberLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeMemberPortal, invokeMemberAuth } from "@/lib/memberPortalClient";
 import { Target, Loader2, Trophy, Flame, Calendar, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -30,7 +31,7 @@ export default function MemberGoals() {
     queryKey: ["member-goals", member?.id],
     queryFn: async () => {
       if (!member) return null;
-      const { data, error } = await supabase.functions.invoke("member-portal-data", {
+      const { data, error } = await invokeMemberPortal( {
         body: { action: "get-goal-progress", member_id: member.id }
       });
       if (error) throw error;
@@ -42,7 +43,7 @@ export default function MemberGoals() {
   const setGoalMutation = useMutation({
     mutationFn: async ({ goal_type, target_visits }: { goal_type: "weekly" | "monthly"; target_visits: number }) => {
       if (!member) throw new Error("Not logged in");
-      const { data, error } = await supabase.functions.invoke("member-portal-data", {
+      const { data, error } = await invokeMemberPortal( {
         body: {
           action: "set-goal",
           member_id: member.id,

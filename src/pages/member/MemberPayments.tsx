@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { MemberLayout } from "@/components/member-portal/MemberLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeMemberPortal, invokeMemberAuth } from "@/lib/memberPortalClient";
 import { format, parseISO } from "date-fns";
 import { CreditCard, Calendar, Loader2, Receipt, IndianRupee, AlertCircle } from "lucide-react";
 
@@ -34,7 +35,7 @@ export default function MemberPayments() {
       if (!member) return [];
       
       // Use edge function with service role to bypass RLS
-      const { data, error } = await supabase.functions.invoke("member-auth", {
+      const { data, error } = await invokeMemberAuth( {
         body: { action: "get-payments", member_id: member.id, limit: 50 }
       });
 

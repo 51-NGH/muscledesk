@@ -5,6 +5,7 @@ import { OfflineIndicator } from "@/components/offline/OfflineIndicator";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
 import { useMemberRealtimeSubscription } from "@/hooks/useMemberRealtimeSubscription";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeMemberPortal } from "@/lib/memberPortalClient";
 import { 
   Home, 
   QrCode, 
@@ -75,7 +76,7 @@ export function MemberLayout({ children, title, showBack, containerRef }: Member
     if (!member?.id || !member?.gym_id) return;
     
     try {
-      const { data, error } = await supabase.functions.invoke('member-portal-data', {
+      const { data, error } = await invokeMemberPortal( {
         body: { 
           action: 'get-unread-count',
           member_id: member.id,

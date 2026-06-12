@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemberAuth } from "@/contexts/MemberAuthContext";
 import { MemberLayout } from "@/components/member-portal/MemberLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeMemberPortal, invokeMemberAuth } from "@/lib/memberPortalClient";
 import { format, parseISO } from "date-fns";
 import { 
   RefreshCw, Loader2, CreditCard, Send, Check, Clock,
@@ -51,7 +52,7 @@ export default function MemberRenewal() {
     queryKey: ["member-plans", member?.id],
     queryFn: async () => {
       if (!member) return [];
-      const { data, error } = await supabase.functions.invoke("member-portal-data", {
+      const { data, error } = await invokeMemberPortal( {
         body: { action: "get-plans", member_id: member.id }
       });
       if (error) throw error;
@@ -64,7 +65,7 @@ export default function MemberRenewal() {
     queryKey: ["member-renewal-requests", member?.id],
     queryFn: async () => {
       if (!member) return [];
-      const { data, error } = await supabase.functions.invoke("member-portal-data", {
+      const { data, error } = await invokeMemberPortal( {
         body: { action: "get-renewal-requests", member_id: member.id }
       });
       if (error) throw error;
@@ -76,7 +77,7 @@ export default function MemberRenewal() {
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!member) throw new Error("Not logged in");
-      const { data, error } = await supabase.functions.invoke("member-portal-data", {
+      const { data, error } = await invokeMemberPortal( {
         body: {
           action: "create-renewal-request",
           member_id: member.id,

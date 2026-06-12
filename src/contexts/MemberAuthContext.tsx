@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeMemberAuth } from "@/lib/memberPortalClient";
 
 interface MemberSession {
   token: string;
@@ -97,7 +98,7 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
 
     try {
       // Use service role via edge function to fetch member data
-      const { data, error } = await supabase.functions.invoke("member-auth", {
+      const { data, error } = await invokeMemberAuth({
         body: { action: "get-member", member_id: memberId }
       });
 
@@ -210,7 +211,7 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke("member-auth", {
+      const { data, error } = await invokeMemberAuth({
         body: { action: "login", email, pin }
       });
 
