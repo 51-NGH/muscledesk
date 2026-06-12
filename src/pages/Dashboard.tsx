@@ -267,7 +267,7 @@ export default function Dashboard() {
         <div className="lg:col-span-2 rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 relative overflow-hidden flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-base sm:text-lg font-semibold text-foreground">Weekly Attendance</h3>
+              <h2 className="text-base sm:text-lg font-semibold text-foreground">Weekly Attendance</h2>
               <p className="text-xs sm:text-sm text-muted-foreground">Member check-ins this week</p>
             </div>
             <Button variant="ghost" size="sm" onClick={() => navigate("/attendance")} className="hidden sm:flex group">
@@ -390,7 +390,7 @@ export default function Dashboard() {
         <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-base sm:text-lg font-semibold text-foreground">Today's Check-ins</h3>
+              <h2 className="text-base sm:text-lg font-semibold text-foreground">Today's Check-ins</h2>
               <p className="text-xs sm:text-sm text-md-green">{todayAttendance.length} members</p>
             </div>
             <Button variant="ghost" size="icon" onClick={() => navigate("/attendance")} className="h-8 w-8">
@@ -451,7 +451,7 @@ export default function Dashboard() {
         <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 relative overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-base sm:text-lg font-semibold text-foreground">Recent Members</h3>
+              <h2 className="text-base sm:text-lg font-semibold text-foreground">Recent Members</h2>
               <p className="text-xs sm:text-sm text-muted-foreground">Latest registrations</p>
             </div>
             <Button variant="ghost" size="sm" onClick={() => navigate("/members")} className="hidden sm:flex group">
@@ -543,7 +543,7 @@ export default function Dashboard() {
         <div className="rounded-xl border border-border bg-card p-4 sm:p-5 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 relative overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-base sm:text-lg font-semibold text-foreground">Recent Payments</h3>
+              <h2 className="text-base sm:text-lg font-semibold text-foreground">Recent Payments</h2>
               <p className="text-xs sm:text-sm text-muted-foreground">Latest transactions</p>
             </div>
             <Button variant="ghost" size="sm" onClick={() => navigate("/payments")} className="hidden sm:flex group">
