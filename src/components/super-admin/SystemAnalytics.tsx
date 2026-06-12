@@ -4,6 +4,7 @@ import { Building2, Users, DollarSign, TrendingUp, Activity, Calendar } from "lu
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DatabaseStorageCard } from "./DatabaseStorageCard";
 
 export function SystemAnalytics() {
   // Fetch all gyms
@@ -138,6 +139,9 @@ export function SystemAnalytics() {
           subtitle="Across all gyms"
         />
       </div>
+
+      {/* Database Storage */}
+      <DatabaseStorageCard />
 
       {/* Gym-wise Breakdown */}
       <Card>

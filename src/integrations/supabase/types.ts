@@ -1994,6 +1994,7 @@ export type Database = {
           date: string
         }[]
       }
+      get_db_storage_stats: { Args: never; Returns: Json }
       get_expiring_members: {
         Args: { _days_ahead?: number; _gym_id: string }
         Returns: {
