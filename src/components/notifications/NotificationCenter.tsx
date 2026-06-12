@@ -225,6 +225,7 @@ export const NotificationCenter = forwardRef<HTMLDivElement>(function Notificati
           variant="ghost"
           size="icon"
           className="relative h-9 w-9 rounded-xl hover:bg-accent transition-all duration-300 hover:scale-105"
+          aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
         >
           <Bell className="h-[18px] w-[18px]" />
           {unreadCount > 0 && (

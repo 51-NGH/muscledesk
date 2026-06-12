@@ -1,0 +1,11 @@
+# MuscleDesk
+
+> MuscleDesk is a complete gym management SaaS for Indian gym owners — member management, attendance (QR & fingerprint), payments, plans, leads, and a self-service member portal.
+
+MuscleDesk is an authenticated application; most surfaces are gated behind owner, staff, or member login. The pages below are public entry points.
+
+## Pages
+
+- [Home](/): MuscleDesk product overview and gym-owner sign-in entry point.
+- [Owner / Staff Login](/login): Sign in for gym owners and staff to access the management dashboard.
+- [Member Login](/member/login): PIN-based sign-in for gym members to access their personal portal.
